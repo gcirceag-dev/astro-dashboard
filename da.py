@@ -796,7 +796,7 @@ with tab1:
                 jd_v = gaseste_faza_principala(acum_local.year, acum_local.month, faza_v)
                 
             dt_v = jd_to_datetime(jd_v)
-            st.text(f"    - [VIITOR] {nume_faze[faza_v]]:<14} : {dt_v.strftime('%d-%m-%Y %H:%M:%S')}")
+            st.text(f"    - [VIITOR] {nume_faze[faza_v]:<14} : {dt_v.strftime('%d-%m-%Y %H:%M:%S')}")
             
     except Exception as e:
         st.text(f"  Eroare la calculul fazelor Lunii: {e}")
