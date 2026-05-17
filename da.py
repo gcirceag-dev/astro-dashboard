@@ -754,7 +754,7 @@ with tab1:
         except Exception as e:
             text_sl_bloc += f"    - Eroare date dinamice: {e}\n"
         text_sl_bloc += "\n"
-    st.code(text_sl_bloc, language="text")
+    st.text(text_sl_bloc)
 
     st.text("[DINAMICA ȘI FAZELE LUNII]")
     try:
@@ -789,7 +789,7 @@ with tab1:
             dt_v = jd_to_datetime(jd_v)
             text_faze_bloc += f"    - [VIITOR] {nume_faze[faza_v]} : {dt_v.strftime('%d-%m-%Y %H:%M:%S')}\n"
             jd_cursor = jd_v + 1.0  
-        st.code(text_faze_bloc, language="text")
+        st.text(text_faze_bloc)
     except Exception as e:
         st.text(f"  - Eroare la calculul dinamic al fazelor Lunii: {e}")
 
@@ -829,7 +829,7 @@ with tab1:
             jd_pct = gaseste_moment_cardinal(an_curent, unghi)
             dt_pct = jd_to_datetime(jd_pct)
             txt_c += f"    - {nume_pct} : {dt_pct.strftime('%d-%m-%Y %H:%M:%S')}\n"
-        st.code(txt_c, language="text")
+        st.text(txt_c)
 
 # =====================================================================
 # BUCATA 3 DIN 5: CONSTRUIREA TABULUI 2 (ASTRO - PARTEA I)
@@ -882,7 +882,7 @@ with tab2:
             txt_ca += f"  - {eticheta:<15} : {pozitie_text}\n"
     except Exception as e:
         txt_ca += f"  - Eroare la calculul caselor astrologice: {e}\n"
-    st.code(txt_ca, language="text")
+     st.text(txt_ca)
     st.text("")
 
     # Executarea și afișarea Planetelor Standard
@@ -898,7 +898,7 @@ with tab2:
             coordonate_totale[nume] = p['lon_pura']
         except Exception as e:
             txt_ps += f"  - {nume:<15} : Eroare la calcul: {e}\n"
-    st.code(txt_ps, language="text")
+     st.text(txt_ps)
 
     # Expander: Noduri și Puncte Fictive Complete
     with st.expander("Noduri și puncte fictive"):
@@ -918,7 +918,7 @@ with tab2:
                     coordonate_totale[f"Nod Sud ({tip_nod})"] = lon_sud
             except Exception as e:
                 pass
-        st.code(txt_pf, language="text")
+         st.text(txt_pf)
 
     # Expander: Asteroizi Principali Compleți
     with st.expander("Asteroizi principali"):
@@ -931,7 +931,7 @@ with tab2:
                 coordonate_totale[nume] = p['lon_pura']
             except Exception as e:
                 pass
-        st.code(txt_as, language="text")
+         st.text(txt_as)
 
     # Expander: Planete Uraniene (Hamburg)
     with st.expander("Planete uraniene & esoterice"):
@@ -944,7 +944,7 @@ with tab2:
                 coordonate_totale[nume] = p['lon_pura']
             except Exception as e:
                 pass
-        st.code(txt_ur, language="text")
+         st.text(txt_ur)
 
     # Expander: Stele Fixe Majore
     with st.expander("Stele fixe majore"):
@@ -957,7 +957,7 @@ with tab2:
                 coordonate_totale[nume_afisat] = s['lon_pura']
             except Exception as e:
                 pass
-        st.code(txt_sf, language="text")
+         st.text(txt_sf)
 
     # Expander: Evaluarea Forței Planetare și Scorul Cosmic Global
     with st.expander("Evaluarea dinamică a forței planetare"):
@@ -992,7 +992,7 @@ with tab2:
         scor_cosmic_global = total_eficienta_colectata / numar_planete_evaluate if numar_planete_evaluate > 0 else 0.0
         txt_f += "=" * 60 + "\n"
         txt_f += f"[SCORUL COSMIC GLOBAL AL MOMENTULUI]\n  - Indice de eficienta planetara totala: {scor_cosmic_global:.1f}%\n"
-        st.code(txt_f, language="text")
+        st.text(txt_f)
 
     # Expander: Puncte Arabe Majore
     with st.expander("Puncte arabe majore"):
@@ -1053,7 +1053,7 @@ with tab3:
                 txt_asp += f"{linie_aspect}\n"
         else: 
             txt_asp = "  - Nu s-au gasit aspecte unghiulare stranse sub aceasta limita.\n"
-        st.code(txt_asp, language="text")
+        st.text(txt_asp)
     except Exception as e: 
         st.text(f"  - Eroare aspecte: {e}")
 
