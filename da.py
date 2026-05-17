@@ -614,11 +614,11 @@ def calculeaza_toate_aspectele(toate_coordonatele, orba_maxima=6.0):
     return [item[1] for item in aspecte_temporare]
 
 # =====================================================================
-# BLOCUL 9: EXECUTARE ȘI AFIȘARE DATE (BUCATA 1: SOARE ȘI LUNĂ)
+# BLOCUL 9: INTERFAȚA GRAFICĂ (BUCATA 1: TABEL CURAT SOARE - LUNĂ)
 # =====================================================================
 st.set_page_config(page_title="Astro Dashboard", page_icon="🌌", layout="wide")
 
-# Forțare fundal alb pur și text negru pur peste tot în aplicație
+# CSS global: fundal alb pur, text negru pur, font monospace uniform
 st.markdown(
     """
     <style>
@@ -629,37 +629,39 @@ st.markdown(
         font-family: monospace !important;
         font-size: 14px !important;
     }
+    button[title="Copy to clipboard"] { display: none !important; }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Inițializarea celor 3 tab-uri principale cerute
 tab1, tab2, tab3 = st.tabs(["Soare - Luna", "Astro", "Aspecte"])
 
 with tab1:
+    corpuri_luna_soare = {"Soare": swe.SUN, "Luna": swe.MOON}
+    date_orizont_soare = {}
+    lon_soare_acum = 0.0
     
-    corpuri = {"SOARE": swe.SUN, "LUNA": swe.MOON}
+    # Construim setul de date simplificat pentru tabelul nativ
     luna_soare_date = []
-    
-    # Executăm calculele pentru ambele corpuri
-    for nume, corp_id in corpuri.items():
+    for nume, corp_id in corpuri_luna_soare.items():
         try:
             ore_orizont = calculeaza_evenimente_orizont(jd_miez, corp_id, geopos_lista)
             date_tr = calculeaza_date_timp_real(jd_acum, corp_id)
             
             rasarit_t = jd_to_datetime(ore_orizont["Rasarit"]).strftime('%H:%M:%S') if ore_orizont["Rasarit"] else "N/A"
-            tranzit_t = jd_to_datetime(ore_orizont["Tranzit (Meridian)"]).strftime('%H:%M:%S') if ore_orizont["Tranzit (Meridian)"] else "N/A"
+            meridian_t = jd_to_datetime(ore_orizont["Tranzit (Meridian)"]).strftime('%H:%M:%S') if ore_orizont["Tranzit (Meridian)"] else "N/A"
             apus_t = jd_to_datetime(ore_orizont["Apus"]).strftime('%H:%M:%S') if ore_orizont["Apus"] else "N/A"
             
             if corp_id == swe.SUN:
                 lon_soare_acum = date_tr["lon_ecliptica"]
                 date_orizont_soare = ore_orizont
                 
+            # Adăugăm rândul curat în matrice
             luna_soare_date.append({
                 "Corp": nume,
                 "Răsărit": rasarit_t,
-                "Tranzit": tranzit_t,
+                "Meridian": meridian_t,
                 "Apus": apus_t,
                 "Altitudine": format_grade(date_tr['altitudine']),
                 "Azimut": format_grade(date_tr['azimut']),
@@ -668,9 +670,19 @@ with tab1:
             })
         except:
             pass
-            
-    # Afișăm tabelul cu linii fine nativ din Streamlit
-    st.table(luna_soare_date)
+
+    # Randăm tabelul nativ Streamlit, fin, aliniat la stânga și cu auto-wrap activat
+    st.dataframe(
+        luna_soare_date,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Corp": st.column_config.TextColumn("Corp", width="small"),
+            "Răsărit": st.column_config.TextColumn("Răsărit", width="small"),
+            "Meridian": st.column_config.TextColumn("Meridian", width="small"),
+            "Apus": st.column_config.TextColumn("Apus", width="small")
+        }
+    )
 
 
 
