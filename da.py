@@ -614,51 +614,22 @@ def calculeaza_toate_aspectele(toate_coordonatele, orba_maxima=6.0):
     return [item[1] for item in aspecte_temporare]
 
 # =====================================================================
-# BLOCUL 9: INTERFAȚA WEB RESPONSIVE (BUCATA 1: CONFIGURARE ȘI TABEL LUNĂ/SOARE)
+# BLOCUL 9: INTERFAȚA WEB RESPONSIVE (BUCATA 1: SOARE ȘI LUNĂ PE VERTICALĂ)
 # =====================================================================
 st.set_page_config(page_title="Astro Dashboard", page_icon="🌌", layout="wide")
 
-# CSS Master Global: Elimină nativ orice fundal colorat sau cutie gri din Streamlit
 st.markdown(
     """
     <style>
-    .stApp, div[data-testid="stAppViewContainer"] {
+    .stApp, div[data-testid="stAppViewContainer"], table, tr, td, th {
         background-color: #FFFFFF !important;
         background: #FFFFFF !important;
-    }
-    body, p, span, div, th, td {
         color: #000000 !important;
         font-family: monospace !important;
         font-size: 14px !important;
     }
-    .stTabs [data-baseweb="tab-list"] {
-        background-color: #FFFFFF !important;
-        border-bottom: 1px solid #000000 !important;
-    }
-    .stTabs [data-baseweb="tab"] {
-        color: #000000 !important;
-        background-color: #FFFFFF !important;
-        font-family: monospace !important;
-    }
-    /* Eliminare stil implicit tabele Streamlit */
-    table {
-        border-collapse: collapse !important;
-        width: 100% !important;
-        max-width: 600px !important; /* Blochează lățirea pe tot ecranul */
-        margin-top: 10px !important;
-    }
-    th {
-        border-bottom: 2px solid #000000 !important;
-        text-align: left !important;
-        padding: 6px 8px !important;
-        font-weight: bold !important;
-    }
-    td {
-        border-bottom: 1px solid #E0E0E0 !important; /* Linii fine și discrete */
-        text-align: left !important;
-        padding: 6px 8px !important;
-        white-space: normal !important; /* Auto-wrap forțat pe mobil */
-    }
+    th { border-bottom: 2px solid #000000 !important; text-align: left !important; }
+    td { border-bottom: 1px solid #E0E0E0 !important; text-align: left !important; }
     </style>
     """,
     unsafe_allow_html=True
@@ -667,58 +638,69 @@ st.markdown(
 tab1, tab2, tab3 = st.tabs(["Soare - Luna", "Astro", "Aspecte"])
 
 with tab1:
-    corpuri_luna_soare = {"Soare": swe.SUN, "Luna": swe.MOON}
+    geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     date_orizont_soare = {}
     lon_soare_acum = 0.0
-    
-    # Construim Capul de Tabel HTML (Linii fine, aliniat la stânga)
-    html_tabel = """
-    <table>
-        <tr>
-            <th>Corp</th>
-            <th>Răsărit</th>
-            <th>Meridian</th>
-            <th>Apus</th>
-            <th>Altitudine</th>
-            <th>Azimut</th>
-            <th>Distanță (km)</th>
-            <th>Viteză (km/s)</th>
-        </tr>
-    """
-    
-    for nume, corp_id in corpuri_luna_soare.items():
-        try:
-            ore_orizont = calculeaza_evenimente_orizont(jd_miez, corp_id, geopos_lista)
-            date_tr = calculeaza_date_timp_real(jd_acum, corp_id)
-            
-            rasarit_t = jd_to_datetime(ore_orizont["Rasarit"]).strftime('%H:%M:%S') if ore_orizont["Rasarit"] else "N/A"
-            meridian_t = jd_to_datetime(ore_orizont["Tranzit (Meridian)"]).strftime('%H:%M:%S') if ore_orizont["Tranzit (Meridian)"] else "N/A"
-            apus_t = jd_to_datetime(ore_orizont["Apus"]).strftime('%H:%M:%S') if ore_orizont["Apus"] else "N/A"
-            
-            if corp_id == swe.SUN:
-                lon_soare_acum = date_tr["lon_ecliptica"]
-                date_orizont_soare = ore_orizont
-                
-            # Adăugăm rândurile direct în formatul fin HTML
-            html_tabel += f"""
-            <tr>
-                <td><b>{nume}</b></td>
-                <td>{rasarit_t}</td>
-                <td>{meridian_t}</td>
-                <td>{apus_t}</td>
-                <td>{format_grade(date_tr['altitudine'])}</td>
-                <td>{format_grade(date_tr['azimut'])}</td>
-                <td>{date_tr['distanta']:,.2f}</td>
-                <td>{date_tr['viteza']:.4f}</td>
-            </tr>
-            """
-        except:
-            pass
-            
-    html_tabel += "</table>"
-    
-    # Afișăm tabelul HTML curat pe ecran
-    st.markdown(html_tabel, unsafe_allow_html=True)
+
+    # 1. DATE EXCLUSIV PENTRU SOARE (CURGERE PE VERTICALĂ)
+    st.text("Soare")
+    try:
+        ore_s = calculeaza_evenimente_orizont(jd_miez, swe.SUN, geopos_lista)
+        date_tr_s = calculeaza_date_timp_real(jd_acum, swe.SUN)
+        
+        lon_soare_acum = date_tr_s["lon_ecliptica"]
+        date_orizont_soare = ore_s
+        
+        rasarit_s = jd_to_datetime(ore_s["Rasarit"]).strftime('%H:%M:%S') if ore_s["Rasarit"] else "N/A"
+        meridian_s = jd_to_datetime(ore_s["Tranzit (Meridian)"]).strftime('%H:%M:%S') if ore_s["Tranzit (Meridian)"] else "N/A"
+        apus_s = jd_to_datetime(ore_s["Apus"]).strftime('%H:%M:%S') if ore_s["Apus"] else "N/A"
+
+        tabel_soare_html = f"""
+        <table>
+            <tr><th colspan="2">Evenimente zilnice de baza</th></tr>
+            <tr><td>Rasarit</td><td>{rasarit_s}</td></tr>
+            <tr><td>Meridian</td><td>{meridian_s}</td></tr>
+            <tr><td>Apus</td><td>{apus_s}</td></tr>
+            <tr><th colspan="2">Date reale</th></tr>
+            <tr><td>Altitudine</td><td>{format_grade(date_tr_s['altitudine'])}</td></tr>
+            <tr><td>Azimut (de la Nord)</td><td>{format_grade(date_tr_s['azimut'])}</td></tr>
+            <tr><td>Distanta curenta</td><td>{date_tr_s['distanta']:,.2f} km</td></tr>
+            <tr><td>Viteza orbitala</td><td>{date_tr_s['viteza']:.4f} km/s</td></tr>
+        </table>
+        """
+        st.markdown(tabel_soare_html, unsafe_allow_html=True)
+    except Exception as e:
+        st.text(f"Eroare date Soare: {e}")
+
+    st.text("") # Distanțare între ele
+
+    # 2. DATE EXCLUSIV PENTRU LUNĂ (CURGERE PE VERTICALĂ)
+    st.text("Luna")
+    try:
+        ore_l = calculeaza_evenimente_orizont(jd_miez, swe.MOON, geopos_lista)
+        date_tr_l = calculeaza_date_timp_real(jd_acum, swe.MOON)
+        
+        rasarit_l = jd_to_datetime(ore_l["Rasarit"]).strftime('%H:%M:%S') if ore_l["Rasarit"] else "N/A"
+        meridian_l = jd_to_datetime(ore_l["Tranzit (Meridian)"]).strftime('%H:%M:%S') if ore_l["Tranzit (Meridian)"] else "N/A"
+        apus_l = jd_to_datetime(ore_l["Apus"]).strftime('%H:%M:%S') if ore_l["Apus"] else "N/A"
+
+        tabel_luna_html = f"""
+        <table>
+            <tr><th colspan="2">Evenimente zilnice de baza</th></tr>
+            <tr><td>Rasarit</td><td>{rasarit_l}</td></tr>
+            <tr><td>Meridian</td><td>{meridian_l}</td></tr>
+            <tr><td>Apus</td><td>{apus_l}</td></tr>
+            <tr><th colspan="2">Date reale</th></tr>
+            <tr><td>Altitudine</td><td>{format_grade(date_tr_l['altitudine'])}</td></tr>
+            <tr><td>Azimut (de la Nord)</td><td>{format_grade(date_tr_l['azimut'])}</td></tr>
+            <tr><td>Distanta curenta</td><td>{date_tr_l['distanta']:,.2f} km</td></tr>
+            <tr><td>Viteza orbitala</td><td>{date_tr_l['viteza']:.4f} km/s</td></tr>
+        </table>
+        """
+        st.markdown(tabel_luna_html, unsafe_allow_html=True)
+    except Exception as e:
+        st.text(f"Eroare date Luna: {e}")
+
 
 
 
