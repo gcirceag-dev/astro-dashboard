@@ -850,8 +850,16 @@ with tab2:
     st.text("")
 
     st.text("[POZIȚII ASTROLOGICE TROPICALE]")
+    st.text("[POZIȚII ASTROLOGICE TROPICALE]")
     st.text("--- PLANETE STANDARD ---")
     coordonate_totale = {}
+    
+    # --- REPARAȚIE: Adăugăm dicționarul tău original direct aici în memorie ---
+    planete_standard = {
+        "Soare": swe.SUN, "Luna": swe.MOON, "Mercur": swe.MERCURY, "Venus": swe.VENUS,
+        "Marte": swe.MARS, "Jupiter": swe.JUPITER, "Saturn": swe.SATURN,
+        "Uranus": swe.URANUS, "Neptun": swe.NEPTUNE, "Pluto": swe.PLUTO
+    }
     
     for nume, corp_id in planete_standard.items():
         try:
