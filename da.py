@@ -5,6 +5,10 @@ from datetime import datetime, timedelta
 import pytz
 import swisseph as swe
 
+# --- CORECOȚIE ABSOLUTĂ: Adaugă linia asta aici, în capul fișierului! ---
+st.set_page_config(page_title="Astro Dashboard", page_icon="🌌", layout="wide")
+# -----------------------------------------------------------------------
+
 # =====================================================================
 # BLOCUL 1: CONFIGURARE, COORDONATE FIXE ȘI CĂI
 # =====================================================================
@@ -619,10 +623,6 @@ geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
 delta_t_zile = swe.deltat(jd_acum) / 86400.0
 jd_et_planete = jd_acum + delta_t_zile
 jd_ut_case = jd_acum
-
-# --- REPARATIE: MUTATĂ PE PRIMA POZIȚIE ABSOLUTĂ DIN SCRIPT ---
-st.set_page_config(page_title="Astro Dashboard", page_icon="🌌", layout="wide")
-# --------------------------------------------------------------
 
 # 1. LOGICA DE TIMP ȘI CALENDAR ÎN LIMBA ROMÂNĂ
 ZILE_RO = {
