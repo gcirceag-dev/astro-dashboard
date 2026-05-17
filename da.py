@@ -748,7 +748,7 @@ with tab1:
             # Afișarea Manzilei Lunare atașată direct sub datele fizice ale Lunii
             if corp_id == swe.MOON:
                 res_luna_brut = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
-                lon_luna_brut = res_luna_brut[0]
+                lon_luna_brut = res_luna_brut[0]  # Schimbat din res_luna_brut[0][0] în res_luna_brut[0]
                 m_luna = determina_manzila_araba(lon_luna_brut)
                 st.text(f"    Manzil al-Qamar: Statia {m_luna['numar']:02d}/28 - {m_luna['nume_arab']} ({m_luna['traducere']}) | Pozitie: {m_luna['progres_text']}")
         except Exception as e:
@@ -1159,7 +1159,7 @@ except: pass
 
 res_soare_json = swe.calc_ut(jd_et_planete, swe.SUN, swe.FLG_SWIEPH)
 res_luna_json = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
-elongatie_act = (res_luna_json[0][0] - res_soare_json[0][0]) % 360.0
+elongatie_act = (res_luna_json[0] - res_soare_json[0]) % 360.0
 
 date_export_interfata = {
     "configurare": {
