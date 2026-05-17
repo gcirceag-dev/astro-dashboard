@@ -1042,6 +1042,16 @@ with tab2:
     # Expander 6: Panou Filosofic / Puncte Arabe Majore
     case_brute, ascmc_brut = swe.houses(jd_ut_case, float(LATITUDINE), float(LONGITUDINE), b'P')
     l_asc = ascmc_brut[0]
+    
+    # --- REPARAȚIE OBLIGATORIE: Definim explicit pilonii din dicționarul global ---
+    l_soare = coordonate_totale.get("Soare", 0.0)
+    l_luna = coordonate_totale.get("Luna", 0.0)
+    l_mercur = coordonate_totale.get("Mercur", 0.0)
+    l_venus = coordonate_totale.get("Venus", 0.0)
+    l_marte = coordonate_totale.get("Marte", 0.0)
+    l_jupiter = coordonate_totale.get("Jupiter", 0.0)
+    # -----------------------------------------------------------------------------
+    
     casa_soare = determina_casa_planetei(l_soare, jd_ut_case)
     este_harta_diurna = casa_soare >= 7
 
