@@ -833,7 +833,8 @@ with tab1:
     dt_r = date_orizont_soare.get("Rasarit")
     dt_a = date_orizont_soare.get("Apus")
     if dt_r and dt_a:
-        durata_zi_ore = (dt_a - dt_r).total_seconds() / 3600.0
+        # --- REPARAȚIE CHIRURGICALĂ: Forțăm conversia corectă în secunde brute ---
+        durata_zi_ore = abs((dt_a - dt_r).total_seconds()) / 3600.0
         durata_noapte_ore = 24.0 - durata_zi_ore
         
         st.text("[DURATE CALENDARISTICE ȘI CRONOCRAȚI PLANETARI]")
