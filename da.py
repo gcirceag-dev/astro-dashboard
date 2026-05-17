@@ -969,7 +969,12 @@ with tab2:
             except: pass
         st.code(text_st_bloc, language="text")
 
-    with st.expander("Evaluarea dinamică a forței planetare"):
+        with st.expander("Evaluarea dinamică a forței planetare"):
+        # --- REPARAȚIE OBLIGATORIE: Inițializăm variabilele de scor în memorie ---
+        scoruri_planete_json = {}
+        total_eficienta_colectata = 0.0
+        numar_planete_evaluate = 0
+        # ------------------------------------------------------------------------
         text_forta_bloc = ""
         l_soare_eval = coordonate_totale.get("Soare", 0.0)
         for nume_p in ["Soare", "Luna", "Mercur", "Venus", "Marte", "Jupiter", "Saturn", "Uranus", "Neptun", "Pluto"]:
