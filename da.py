@@ -671,7 +671,7 @@ st.markdown(
     }
     </style>
     """,
-    unsafe_html=True
+    unsafe_allow_html=True
 )
 
 # 3. LOGICA EXTRACTION GUVERNATORI PENTRU HEADER
