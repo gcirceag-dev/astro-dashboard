@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timedelta
 import pytz
 import swisseph as swe
+import pandas as pd
 
 # =====================================================================
 # CONFIGURARE STREAMLIT
@@ -871,7 +872,7 @@ except Exception as e:
     date_output["puncte_arabe"] = [f"Eroare la calculul Punctelor Arabe: {e}"]
 
 # =====================================================================
-# AFIȘAREA STREAMLIT - ORGANIZATĂ PE TAB-URI
+# AFIȘAREA STREAMLIT - ORGANIZATĂ PE TAB-URI CU TABELE
 # =====================================================================
 
 st.title("🌙 AstroCalcul Pro")
@@ -884,74 +885,105 @@ tab1, tab2, tab3 = st.tabs(["🌞 Soare & Lună", "⭐ Astro", "🔮 Aspecte & F
 # TAB 1 - SOARE & LUNĂ
 # =====================================================================
 with tab1:
-    # Soarele
+    # Soarele - două tabele
     st.subheader("☀️ SOARELE")
+    
     col1, col2 = st.columns(2)
+    
     with col1:
-        st.markdown("**Evenimente zilnice de bază:**")
-        for ev, ora in date_output.get("SOARE_orizont", {}).items():
-            st.text(f"  - {ev:<22} : {ora}")
+        df_soare_ev = pd.DataFrame(
+            list(date_output.get("SOARE_orizont", {}).items()),
+            columns=["Eveniment", "Ora"]
+        )
+        st.dataframe(df_soare_ev, hide_index=True, use_container_width=False)
+    
     with col2:
-        st.markdown("**Date fizice în timp real:**")
-        for key, val in date_output.get("SOARE_fizice", {}).items():
-            st.text(f"  - {key:<22} : {val}")
+        df_soare_fiz = pd.DataFrame(
+            list(date_output.get("SOARE_fizice", {}).items()),
+            columns=["Parametru", "Valoare"]
+        )
+        st.dataframe(df_soare_fiz, hide_index=True, use_container_width=False)
     
     st.divider()
     
     # Luna
     st.subheader("🌙 LUNA")
+    
     col1, col2 = st.columns(2)
+    
     with col1:
-        st.markdown("**Evenimente zilnice de bază:**")
-        for ev, ora in date_output.get("LUNA_orizont", {}).items():
-            st.text(f"  - {ev:<22} : {ora}")
+        df_luna_ev = pd.DataFrame(
+            list(date_output.get("LUNA_orizont", {}).items()),
+            columns=["Eveniment", "Ora"]
+        )
+        st.dataframe(df_luna_ev, hide_index=True, use_container_width=False)
+    
     with col2:
-        st.markdown("**Date fizice în timp real:**")
-        for key, val in date_output.get("LUNA_fizice", {}).items():
-            if key != "eroare":
-                st.text(f"  - {key:<22} : {val}")
+        date_luna_fiz = {k: v for k, v in date_output.get("LUNA_fizice", {}).items() if k != "eroare"}
         if date_output.get("LUNA_manzila"):
-            st.text(f"  - Manzil al-Qamar (Luna) : {date_output['LUNA_manzila']}")
+            date_luna_fiz["Manzil al-Qamar"] = date_output["LUNA_manzila"]
+        df_luna_fiz = pd.DataFrame(
+            list(date_luna_fiz.items()),
+            columns=["Parametru", "Valoare"]
+        )
+        st.dataframe(df_luna_fiz, hide_index=True, use_container_width=False)
     
     st.divider()
     
     # Dinamica Lunii
     st.subheader("🌙 DINAMICA ȘI FAZELE LUNII")
+    
     if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
         ld = date_output["luna_dinamica"]
-        st.text(f"  - Faza curenta             : {ld['faza']}")
-        st.text(f"  - Iluminare disc           : {ld['iluminare']}")
-        st.text(f"  - Varsta Lunii             : {ld['varsta']}")
-        st.text(f"  - Arcul Soli-Lunar         : {ld['arc_soli_lunar']}")
-        st.text("Momentele fazelor principale (Cronologic):")
-        for faza in date_output.get("faze_luna", []):
-            st.text(f"    - {faza}")
+        df_luna_din = pd.DataFrame(
+            list(ld.items()),
+            columns=["Parametru", "Valoare"]
+        )
+        st.dataframe(df_luna_din, hide_index=True, use_container_width=False)
+        
+        st.markdown("**Momentele fazelor principale:**")
+        df_faze = pd.DataFrame(
+            [faza.split(" : ") for faza in date_output.get("faze_luna", [])],
+            columns=["Faza", "Data și ora"]
+        )
+        st.dataframe(df_faze, hide_index=True, use_container_width=False)
     
     st.divider()
     
     # Durate și guvernatori
-    st.subheader("⏰ DURATE CALENDARISTICE ȘI CRONOCRAȚI PLANETARI")
-    st.text(f"  - Durata zilei             : {date_output.get('durata_zi', 'N/A')}")
-    st.text(f"  - Durata noptii            : {date_output.get('durata_noapte', 'N/A')}")
-    st.markdown("**--- GUVERNATORI TIMP REAL ---**")
-    st.text(f"  - GUVERNATORUL ZILEI     : {date_output.get('guvernator_zi', 'N/A')}")
-    st.text(f"  - GUVERNATORUL OREI ACUM : {date_output.get('guvernator_ora', 'N/A')} | Interval activ: {date_output.get('interval_ora', 'N/A')}")
+    st.subheader("⏰ DURATE CALENDARISTICE")
+    
+    df_durate = pd.DataFrame([
+        ["Durata zilei", date_output.get('durata_zi', 'N/A')],
+        ["Durata nopții", date_output.get('durata_noapte', 'N/A')],
+        ["Guvernatorul zilei", date_output.get('guvernator_zi', 'N/A')],
+        ["Guvernatorul orei", f"{date_output.get('guvernator_ora', 'N/A')} ({date_output.get('interval_ora', 'N/A')})"]
+    ], columns=["Parametru", "Valoare"])
+    st.dataframe(df_durate, hide_index=True, use_container_width=False)
     
     # Ore planetare cu expander
     with st.expander("📋 ORE PLANETARE DE ZI"):
-        for ora in date_output.get("ore_zi", []):
-            st.text(ora)
+        df_ore_zi = pd.DataFrame(
+            [ora.split(" : ") for ora in date_output.get("ore_zi", [])],
+            columns=["Ora planetară", "Interval"]
+        )
+        st.dataframe(df_ore_zi, hide_index=True, use_container_width=False)
     
     with st.expander("🌙 ORE PLANETARE DE NOAPTE"):
-        for ora in date_output.get("ore_noapte", []):
-            st.text(ora)
+        df_ore_noapte = pd.DataFrame(
+            [ora.split(" : ") for ora in date_output.get("ore_noapte", [])],
+            columns=["Ora planetară", "Interval"]
+        )
+        st.dataframe(df_ore_noapte, hide_index=True, use_container_width=False)
     
     # Anotimpuri cu expander
     with st.expander("🍂 ANOTIMPURI ȘI PUNCTE CARDINALE"):
-        st.text(f"  - Anotimpul curent (Nord)  : {date_output.get('anotimp', 'N/A')}")
-        st.text("Momentele exacte ale anului curent:")
-        for pct in date_output.get("puncte_cardinale", []):
-            st.text(f"    - {pct}")
+        st.markdown(f"**Anotimpul curent:** {date_output.get('anotimp', 'N/A')}")
+        df_cardinale = pd.DataFrame(
+            [pct.split(" : ") for pct in date_output.get("puncte_cardinale", [])],
+            columns=["Eveniment", "Data și ora"]
+        )
+        st.dataframe(df_cardinale, hide_index=True, use_container_width=False)
 
 # =====================================================================
 # TAB 2 - ASTRO
@@ -960,65 +992,100 @@ with tab2:
     # Case astrologice
     st.subheader("🏠 CASE ASTROLOGICE ȘI AXE - PLACIDUS")
     if "case_astrologice" in date_output and "eroare" not in date_output["case_astrologice"]:
-        for casa, pozitie in date_output["case_astrologice"].items():
-            st.text(f"  - {casa:<15} : {pozitie}")
-    else:
-        st.text("Eroare la calculul caselor")
+        df_case = pd.DataFrame(
+            list(date_output["case_astrologice"].items()),
+            columns=["Casă", "Poziție"]
+        )
+        st.dataframe(df_case, hide_index=True, use_container_width=False)
     
     st.divider()
     
-    # Poziții astrologice
+    # Poziții planete standard
     st.subheader("⭐ POZIȚII ASTROLOGICE TROPICALE")
-    st.markdown("**--- PLANETE STANDARD ---**")
-    for planeta in date_output.get("planete", []):
-        st.text(f"  {planeta}")
+    st.markdown("**Planete standard**")
     
-    with st.expander("📋 NODURI ȘI PUNCTE FICTIVE"):
-        for punct in date_output.get("puncte_fictive", []):
-            st.text(f"  {punct}")
+    df_planete = pd.DataFrame(
+        [p.split(" : ") for p in date_output.get("planete", [])],
+        columns=["Planetă", "Detalii"]
+    )
+    st.dataframe(df_planete, hide_index=True, use_container_width=False)
     
-    with st.expander("🌠 ASTEROIZI PRINCIPALI"):
-        for ast in date_output.get("asteroizi", []):
-            st.text(f"  {ast}")
+    with st.expander("📋 Noduri și puncte fictive"):
+        df_fictive = pd.DataFrame(
+            [p.split(" : ") for p in date_output.get("puncte_fictive", [])],
+            columns=["Punct", "Detalii"]
+        )
+        st.dataframe(df_fictive, hide_index=True, use_container_width=False)
     
-    with st.expander("🪐 PLANETE URANIENE (HAMBURG) & ESOTERICE"):
-        for ur in date_output.get("uraniene", []):
-            st.text(f"  {ur}")
+    with st.expander("🌠 Asteroizi principali"):
+        df_asteroizi = pd.DataFrame(
+            [a.split(" : ") for a in date_output.get("asteroizi", [])],
+            columns=["Asteroid", "Detalii"]
+        )
+        st.dataframe(df_asteroizi, hide_index=True, use_container_width=False)
     
-    with st.expander("✨ STELE FIXE MAJORE"):
-        for stea in date_output.get("stele", []):
-            st.text(f"  {stea}")
+    with st.expander("🪐 Planete uraniene"):
+        df_uraniene = pd.DataFrame(
+            [u.split(" : ") for u in date_output.get("uraniene", [])],
+            columns=["Planetă", "Detalii"]
+        )
+        st.dataframe(df_uraniene, hide_index=True, use_container_width=False)
+    
+    with st.expander("✨ Stele fixe"):
+        df_stele = pd.DataFrame(
+            [s.split(" : ") for s in date_output.get("stele", [])],
+            columns=["Stea", "Detalii"]
+        )
+        st.dataframe(df_stele, hide_index=True, use_container_width=False)
     
     st.divider()
     
     # Scoruri planetare
-    st.subheader("📊 EVALUAREA DINAMICĂ A FORȚEI PLANETARE (SCORURI DE TRANZIT)")
+    st.subheader("📊 EVALUAREA FORȚEI PLANETARE")
+    
+    scoruri_date = []
     for scor in date_output.get("scoruri", []):
-        st.text(f"  {scor}")
+        parts = scor.split(" -> ")
+        if len(parts) == 2:
+            scoruri_date.append([parts[0], parts[1]])
+    
+    if scoruri_date:
+        df_scoruri = pd.DataFrame(scoruri_date, columns=["Planetă", "Evaluare"])
+        st.dataframe(df_scoruri, hide_index=True, use_container_width=False)
     
     st.divider()
     
     # Scor cosmic
-    st.subheader("🌌 SCORUL COSMIC GLOBAL AL MOMENTULUI")
+    st.subheader("🌌 SCORUL COSMIC GLOBAL")
     scor = date_output.get("scor_cosmic", 0)
-    st.progress(int(scor), text=f"Indice de eficiență planetară totală: {scor:.1f}%")
+    st.progress(int(scor))
+    st.metric("Indice de eficiență planetară totală", f"{scor:.1f}%")
 
 # =====================================================================
 # TAB 3 - ASPECTE & FILOSOFIC
 # =====================================================================
 with tab3:
     # Aspecte
-    st.subheader("🔮 ASPECTE PLANETARE ACTIVE - ORBĂ MAXIM 6° - SORTATE ASCENDENT")
-    for aspect in date_output.get("aspecte", []):
-        st.text(f"  • {aspect}")
+    st.subheader("🔮 ASPECTE PLANETARE ACTIVE (orbă ≤ 6°)")
+    
+    df_aspecte = pd.DataFrame(
+        [[a] for a in date_output.get("aspecte", [])],
+        columns=["Aspect"]
+    )
+    st.dataframe(df_aspecte, hide_index=True, use_container_width=False)
     
     st.divider()
     
     # Puncte arabe
-    st.subheader("⚜️ PANOU FILOSOFIC / PUNCTE ARABE MAJORE")
+    st.subheader("⚜️ PUNCTE ARABE MAJORE")
+    
     st.text(date_output.get("tip_secta", ""))
-    for pa in date_output.get("puncte_arabe", []):
-        st.text(f"  {pa}")
+    
+    df_pa = pd.DataFrame(
+        [pa.split(" : ") for pa in date_output.get("puncte_arabe", [])],
+        columns=["Punct arab", "Detalii"]
+    )
+    st.dataframe(df_pa, hide_index=True, use_container_width=False)
 
 # Închidere
 swe.close()
