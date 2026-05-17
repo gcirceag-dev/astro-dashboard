@@ -647,6 +647,19 @@ st.markdown(
         font-size: 14px !important;
         font-weight: normal !important;
     }
+    # --- DE AICI COPIEZI ȘI LIPESTI CORECT ACEST BLOC NOU ---
+    /* Eliminare totală dreptunghiuri închise la culoare și butoane auxiliare */
+    div[data-testid="stCodeBlock"], pre, code {
+        background-color: #FFFFFF !important;
+        background: #FFFFFF !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0px !important;
+    }
+    button[title="Copy to clipboard"] {
+        display: none !important;
+    }
+    # ---------------------------------------------------------------------
     /* Eliminare fundaluri gri implicit Streamlit pentru expandere și taburi */
     div[data-testid="stExpander"] {
         background-color: #FFFFFF !important;
