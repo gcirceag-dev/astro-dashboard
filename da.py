@@ -764,7 +764,7 @@ with tab1:
         # Extragere Elongație Ephemeris (Arcul Soli-Lunar exact cu referința - REPARAT INDEX DUBLU)
         res_soare_arc = swe.calc_ut(jd_et_planete, swe.SUN, swe.FLG_SWIEPH)
         res_luna_arc = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
-        elongatie_act = (res_luna_arc[0] - res_soare_arc[0]) % 360.0
+        elongatie_act = (res_luna_arc[0][0] - res_soare_arc[0][0]) % 360.0
         st.text(f"  Arcul Soli-Lunar: {format_grade(elongatie_act)}")
         
         st.text("  Momentele fazelor principale (Cronologic):")
