@@ -830,14 +830,21 @@ with tab1:
         st.text(f"  Eroare faze Luna: {e}")
 
     # === DURATE CALENDARISTICE ȘI ORE PLANETARE ===
-    dt_r = date_orizont_soare.get("Rasarit")
-    dt_a = date_orizont_soare.get("Apus")
-    if dt_r and dt_a:
-        # --- REPARAȚIE CHIRURGICALĂ: Forțăm conversia corectă în secunde brute ---
+    # --- REPARAȚIE CRUCIALĂ: Recalculăm momentele direct din Julian Day ca obiecte native ---
+    ore_s_brut = calculeaza_evenimente_orizont(jd_miez, swe.SUN, geopos_lista)
+    jd_r = ore_s_brut.get("Rasarit")
+    jd_a = ore_s_brut.get("Apus")
+    
+    if jd_r and jd_a:
+        dt_r = jd_to_datetime(jd_r)
+        dt_a = jd_to_datetime(jd_a)
+        
+        # Acum scăderea a două obiecte datetime garantate va funcționa impecabil
         durata_zi_ore = abs((dt_a - dt_r).total_seconds()) / 3600.0
         durata_noapte_ore = 24.0 - durata_zi_ore
         
         st.text("[DURATE CALENDARISTICE ȘI CRONOCRAȚI PLANETARI]")
+
         html_cronocrati = f"""
         <table>
             <tr><td>Durata zilei</td><td>{format_durata(durata_zi_ore)}</td></tr>
