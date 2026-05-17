@@ -972,6 +972,24 @@ with tab2:
 
     # Expander 4: Stele Fixe Majore
     with st.expander("Stele fixe majore"):
+        # --- REPARAȚIE: Adăugăm dicționarul de definiții chiar aici pe poziție ---
+        stele_fixe = {
+            "Algol": "Algol",
+            "Pleiades (Alcyone)": "Alcyone",
+            "Aldebaran": "Aldebaran",
+            "Rigel": "Rigel",
+            "Betelgeuse": "Betelgeuse",
+            "Sirius": "Sirius",
+            "Regulus": "Regulus",
+            "Spica": "Spica",
+            "Arcturus": "Arcturus",
+            "Antares": "Antares",
+            "Vega": "Vega",
+            "Altair": "Altair",
+            "Fomalhaut": "Fomalhaut"
+        }
+        # ------------------------------------------------------------------------
+        
         st_col1, st_col2 = st.columns(2)
         for idx, (nume_afisat, nume_se) in enumerate(stele_fixe.items()):
             try:
