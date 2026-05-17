@@ -898,7 +898,7 @@ with tab2:
             coordonate_totale[nume] = p['lon_pura']
         except Exception as e:
             txt_ps += f"  - {nume:<15} : Eroare la calcul: {e}\n"
-     st.text(txt_ps)
+    st.text(txt_ps)
 
     # Expander: Noduri și Puncte Fictive Complete
     with st.expander("Noduri și puncte fictive"):
@@ -918,7 +918,7 @@ with tab2:
                     coordonate_totale[f"Nod Sud ({tip_nod})"] = lon_sud
             except Exception as e:
                 pass
-         st.text(txt_pf)
+        st.text(txt_pf)
 
     # Expander: Asteroizi Principali Compleți
     with st.expander("Asteroizi principali"):
@@ -931,7 +931,7 @@ with tab2:
                 coordonate_totale[nume] = p['lon_pura']
             except Exception as e:
                 pass
-         st.text(txt_as)
+        st.text(txt_as)
 
     # Expander: Planete Uraniene (Hamburg)
     with st.expander("Planete uraniene & esoterice"):
@@ -944,7 +944,7 @@ with tab2:
                 coordonate_totale[nume] = p['lon_pura']
             except Exception as e:
                 pass
-         st.text(txt_ur)
+        st.text(txt_ur)
 
     # Expander: Stele Fixe Majore
     with st.expander("Stele fixe majore"):
@@ -957,7 +957,7 @@ with tab2:
                 coordonate_totale[nume_afisat] = s['lon_pura']
             except Exception as e:
                 pass
-         st.text(txt_sf)
+        st.text(txt_sf)
 
     # Expander: Evaluarea Forței Planetare și Scorul Cosmic Global
     with st.expander("Evaluarea dinamică a forței planetare"):
