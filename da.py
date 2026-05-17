@@ -638,7 +638,8 @@ st.markdown(
 tab1, tab2, tab3 = st.tabs(["Soare - Luna", "Astro", "Aspecte"])
 
 with tab1:
-    # 1. TABEL NATIV: EVENIMENTE ȘI DATE FIZICE (SOARE / LUNĂ)
+    
+    corpuri = {"SOARE": swe.SUN, "LUNA": swe.MOON}
     luna_soare_date = []
     
     # Executăm calculele pentru ambele corpuri
