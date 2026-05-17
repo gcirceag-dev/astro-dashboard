@@ -969,7 +969,7 @@ with tab2:
             except: pass
         st.code(text_st_bloc, language="text")
 
-        with st.expander("Evaluarea dinamică a forței planetare"):
+    with st.expander("Evaluarea dinamică a forței planetare"):
         # --- REPARAȚIE OBLIGATORIE: Inițializăm variabilele de scor în memorie ---
         scoruri_planete_json = {}
         total_eficienta_colectata = 0.0
