@@ -658,8 +658,8 @@ st.markdown(
         box-shadow: none !important;
         padding: 0px !important;
     }
-    /* Ascundere totală butoane de copy sau alte elemente de zgomot */
-    button[title="Copy to clipboard"], .stTabs [data-baseweb="tab-list"] {
+    /* Ascundere doar pentru butonul mic de copy */
+    button[title="Copy to clipboard"] {
         display: none !important;
     }
     </style>
@@ -978,9 +978,19 @@ with tab2:
 
     # Expander: Puncte Arabe Majore
     with st.expander("Puncte arabe majore"):
-        # (Liniile tale de inițializare a planetelor de sub expander rămân exact la fel)
+        # --- REPARAȚIE ABSOLUTĂ: Inițializăm manual variabilele lipsă din memorie ---
+        case_brute, ascmc_brut = swe.houses(jd_ut_case, float(LATITUDINE), float(LONGITUDINE), b'P')
+        l_asc_pure = ascmc_brut
+        l_soare = coordonate_totale.get("Soare", 0.0)
+        l_luna = coordonate_totale.get("Luna", 0.0)
+        l_mercur = coordonate_totale.get("Mercur", 0.0)
+        l_venus = coordonate_totale.get("Venus", 0.0)
+        l_marte = coordonate_totale.get("Marte", 0.0)
+        l_jupiter = coordonate_totale.get("Jupiter", 0.0)
+        
         casa_soare_ev = determina_casa_planetei(l_soare, jd_ut_case)
         este_diurn_ev = casa_soare_ev >= 7
+        # ----------------------------------------------------------------------------
         
         txt_pa = f"  - Tipul Sectei (Harta) : {'DIURNĂ (Zi)' if este_diurn_ev else 'NOCTURNĂ (Noapte)'}\n\n"
         txt_pa += "  +---------------------------+----------------------------+------+\n"
@@ -1012,9 +1022,10 @@ with tab2:
             txt_pa += f"  | Pars Victoriae (Succes)   | {victorie['pozitie_text']:<26} |  {casa_victorie:02d}  |\n"
             coordonate_totale["Pars Victorie"] = victorie['lon_pura']
         except Exception as e: 
-            txt_pa += f"  - Eroare: {e}\n"
+            txt_pa += f"  - Eroare Lots: {e}\n"
         txt_pa += "  +---------------------------+----------------------------+------+\n"
         st.code(txt_pa, language="text")
+
 
 
 # =====================================================================
