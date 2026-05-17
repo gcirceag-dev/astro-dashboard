@@ -1159,7 +1159,7 @@ except: pass
 
 res_soare_json = swe.calc_ut(jd_et_planete, swe.SUN, swe.FLG_SWIEPH)
 res_luna_json = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
-elongatie_act = (res_luna_json[0] - res_soare_json[0]) % 360.0
+elongatie_act = (res_luna_json[0][0] - res_soare_json[0][0]) % 360.0
 
 date_export_interfata = {
     "configurare": {
