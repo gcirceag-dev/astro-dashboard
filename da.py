@@ -1042,6 +1042,7 @@ with tab2:
             st.text(f"  - Pars Amoris (Eros)      : {eros['pozitie_text']:<25} | Casa: {casa_eros:02d}")
             coordonate_totale["Pars Eros"] = eros['lon_pura']
 
+            # --- REPARAȚIE NUME VARIABILĂ: Corectat să folosească 'necesitate' peste tot ---
             necesitate = calculeaza_punct_arab(l_asc_pure, fortuna['lon_pura'], l_mercur, este_diurn_ev, formula_diurna_fixa=True)
             casa_necesitate = determina_casa_planetei(necesitate['lon_pura'], jd_ut_case)
             st.text(f"  - Pars Necessitatis       : {necesitate['pozitie_text']:<25} | Casa: {casa_necesitate:02d}")
