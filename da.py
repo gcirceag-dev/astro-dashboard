@@ -610,7 +610,7 @@ def calculeaza_toate_aspectele(toate_coordonatele, orba_maxima=6.0):
     return [item[1] for item in aspecte_temporare]
 
 # =====================================================================
-# BLOCUL 9: EXECUTARE ȘI AFIȘARE DATE (VARIANTA STREAMLIT APLICATĂ)
+# BLOCUL 9: EXECUTARE ȘI AFIȘARE DATE (VARIANTA STREAMLIT REPARATĂ)
 # =====================================================================
 acum_local, jd_acum, jd_miez = get_times()
 geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
@@ -620,6 +620,10 @@ delta_t_zile = swe.deltat(jd_acum) / 86400.0
 jd_et_planete = jd_acum + delta_t_zile
 jd_ut_case = jd_acum
 
+# --- REPARATIE: MUTATĂ PE PRIMA POZIȚIE ABSOLUTĂ DIN SCRIPT ---
+st.set_page_config(page_title="Astro Dashboard", page_icon="🌌", layout="wide")
+# --------------------------------------------------------------
+
 # 1. LOGICA DE TIMP ȘI CALENDAR ÎN LIMBA ROMÂNĂ
 ZILE_RO = {
     0: "Luni", 1: "Marți", 2: "Miercuri", 3: "Joi", 
@@ -628,9 +632,6 @@ ZILE_RO = {
 zi_saptamana_nume = ZILE_RO[acum_local.weekday()]
 ziua_din_an = acum_local.timetuple().tm_yday
 saptamana_din_an = acum_local.isocalendar()[1]
-
-# 2. CONFIGURAREA FILOSOFIEI GRAFICE (FONT UNIFORM, NEGRU PE ALB PUR)
-st.set_page_config(page_title="Astro Dashboard", page_icon="🌌", layout="wide")
 
 st.markdown(
     """
