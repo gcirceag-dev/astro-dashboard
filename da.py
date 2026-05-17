@@ -614,22 +614,51 @@ def calculeaza_toate_aspectele(toate_coordonatele, orba_maxima=6.0):
     return [item[1] for item in aspecte_temporare]
 
 # =====================================================================
-# BLOCUL 9: INTERFAȚA GRAFICĂ (BUCATA 1: TABEL CURAT SOARE - LUNĂ)
+# BLOCUL 9: INTERFAȚA WEB RESPONSIVE (BUCATA 1: CONFIGURARE ȘI TABEL LUNĂ/SOARE)
 # =====================================================================
 st.set_page_config(page_title="Astro Dashboard", page_icon="🌌", layout="wide")
 
-# CSS global: fundal alb pur, text negru pur, font monospace uniform
+# CSS Master Global: Elimină nativ orice fundal colorat sau cutie gri din Streamlit
 st.markdown(
     """
     <style>
-    .stApp, div[data-testid="stAppViewContainer"], table, tr, td, th {
+    .stApp, div[data-testid="stAppViewContainer"] {
         background-color: #FFFFFF !important;
         background: #FFFFFF !important;
+    }
+    body, p, span, div, th, td {
         color: #000000 !important;
         font-family: monospace !important;
         font-size: 14px !important;
     }
-    button[title="Copy to clipboard"] { display: none !important; }
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: #FFFFFF !important;
+        border-bottom: 1px solid #000000 !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+        font-family: monospace !important;
+    }
+    /* Eliminare stil implicit tabele Streamlit */
+    table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+        max-width: 600px !important; /* Blochează lățirea pe tot ecranul */
+        margin-top: 10px !important;
+    }
+    th {
+        border-bottom: 2px solid #000000 !important;
+        text-align: left !important;
+        padding: 6px 8px !important;
+        font-weight: bold !important;
+    }
+    td {
+        border-bottom: 1px solid #E0E0E0 !important; /* Linii fine și discrete */
+        text-align: left !important;
+        padding: 6px 8px !important;
+        white-space: normal !important; /* Auto-wrap forțat pe mobil */
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -642,8 +671,21 @@ with tab1:
     date_orizont_soare = {}
     lon_soare_acum = 0.0
     
-    # Construim setul de date simplificat pentru tabelul nativ
-    luna_soare_date = []
+    # Construim Capul de Tabel HTML (Linii fine, aliniat la stânga)
+    html_tabel = """
+    <table>
+        <tr>
+            <th>Corp</th>
+            <th>Răsărit</th>
+            <th>Meridian</th>
+            <th>Apus</th>
+            <th>Altitudine</th>
+            <th>Azimut</th>
+            <th>Distanță (km)</th>
+            <th>Viteză (km/s)</th>
+        </tr>
+    """
+    
     for nume, corp_id in corpuri_luna_soare.items():
         try:
             ore_orizont = calculeaza_evenimente_orizont(jd_miez, corp_id, geopos_lista)
@@ -657,33 +699,26 @@ with tab1:
                 lon_soare_acum = date_tr["lon_ecliptica"]
                 date_orizont_soare = ore_orizont
                 
-            # Adăugăm rândul curat în matrice
-            luna_soare_date.append({
-                "Corp": nume,
-                "Răsărit": rasarit_t,
-                "Meridian": meridian_t,
-                "Apus": apus_t,
-                "Altitudine": format_grade(date_tr['altitudine']),
-                "Azimut": format_grade(date_tr['azimut']),
-                "Distanță (km)": f"{date_tr['distanta']:,.2f}",
-                "Viteză (km/s)": f"{date_tr['viteza']:.4f}"
-            })
+            # Adăugăm rândurile direct în formatul fin HTML
+            html_tabel += f"""
+            <tr>
+                <td><b>{nume}</b></td>
+                <td>{rasarit_t}</td>
+                <td>{meridian_t}</td>
+                <td>{apus_t}</td>
+                <td>{format_grade(date_tr['altitudine'])}</td>
+                <td>{format_grade(date_tr['azimut'])}</td>
+                <td>{date_tr['distanta']:,.2f}</td>
+                <td>{date_tr['viteza']:.4f}</td>
+            </tr>
+            """
         except:
             pass
-
-    # Randăm tabelul nativ Streamlit, fin, aliniat la stânga și cu auto-wrap activat
-    st.dataframe(
-        luna_soare_date,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Corp": st.column_config.TextColumn("Corp", width="small"),
-            "Răsărit": st.column_config.TextColumn("Răsărit", width="small"),
-            "Meridian": st.column_config.TextColumn("Meridian", width="small"),
-            "Apus": st.column_config.TextColumn("Apus", width="small")
-        }
-    )
-
+            
+    html_tabel += "</table>"
+    
+    # Afișăm tabelul HTML curat pe ecran
+    st.markdown(html_tabel, unsafe_allow_html=True)
 
 
 
