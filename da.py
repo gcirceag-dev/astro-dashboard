@@ -614,493 +614,65 @@ def calculeaza_toate_aspectele(toate_coordonatele, orba_maxima=6.0):
     return [item[1] for item in aspecte_temporare]
 
 # =====================================================================
-# BLOCUL 9: EXECUTARE ȘI AFIȘARE DATE (BUCATA 1 DIN 5 - ADAPTATĂ)
+# BLOCUL 9: EXECUTARE ȘI AFIȘARE DATE (BUCATA 1: SOARE ȘI LUNĂ)
 # =====================================================================
-acum_local, jd_acum, jd_miez = get_times()
-geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
+st.set_page_config(page_title="Astro Dashboard", page_icon="🌌", layout="wide")
 
-# Corecția Delta T obligatorie pentru calculul planetelor
-delta_t_zile = swe.deltat(jd_acum) / 86400.0
-jd_et_planete = jd_acum + delta_t_zile
-jd_ut_case = jd_acum
-
-# 1. LOGICA DE TIMP ȘI CALENDAR ÎN LIMBA ROMÂNĂ
-ZILE_RO = {
-    0: "Luni", 1: "Marți", 2: "Miercuri", 3: "Joi", 
-    4: "Vineri", 5: "Sâmbătă", 6: "Duminică"
-}
-zi_saptamana_nume = ZILE_RO[acum_local.weekday()]
-ziua_din_an = acum_local.timetuple().tm_yday
-saptamana_din_an = acum_local.isocalendar()[1]
-
-# 2. CONFIGURAREA FILOSOFIEI GRAFICE (FONT UNIFORM, NEGRU PE ALB PUR)
+# Forțare fundal alb pur și text negru pur peste tot în aplicație
 st.markdown(
     """
     <style>
-    /* Fundal alb pur și text negru pur peste tot */
-    .stApp, div[data-testid="stAppViewContainer"], div[data-testid="stExpander"] {
+    .stApp, div[data-testid="stAppViewContainer"], table, tr, td, th {
         background-color: #FFFFFF !important;
         background: #FFFFFF !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-    body, h1, h2, h3, p, span, div, pre, label {
         color: #000000 !important;
         font-family: monospace !important;
         font-size: 14px !important;
-        font-weight: normal !important;
-    }
-    /* Eliminarea totală a dreptunghiurilor negre/gri la st.code */
-    div[data-testid="stCodeBlock"], pre, code {
-        background-color: #FFFFFF !important;
-        background: #FFFFFF !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0px !important;
-    }
-    /* Ascundere doar pentru butonul mic de copy */
-    button[title="Copy to clipboard"] {
-        display: none !important;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# 3. LOGICA EXTRACTION GUVERNATORI PENTRU HEADER
-ore_orizont_init = calculeaza_evenimente_orizont(jd_miez, swe.SUN, geopos_lista)
-dt_r_init = jd_to_datetime(ore_orizont_init["Rasarit"]) if ore_orizont_init["Rasarit"] else acum_local
-dt_a_init = jd_to_datetime(ore_orizont_init["Apus"]) if ore_orizont_init["Apus"] else acum_local
-ore_zi_init, ore_noapte_init = genereaza_ore_planetare(dt_r_init, dt_a_init)
-
-guvernator_zi_init = STAPAN_ZI[dt_r_init.weekday()]
-guvernator_ora_init = "Nedeterminat"
-interval_ora_curenta = ""
-
-for numar, planeta, start, end in ore_zi_init:
-    if start <= acum_local < end:
-        guvernator_ora_init = planeta
-        interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
-        break
-if guvernator_ora_init == "Nedeterminat":
-    for numar, planeta, start, end in ore_noapte_init:
-        if start <= acum_local < end:
-            guvernator_ora_init = planeta
-            interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
-            break
-
-# 4. AFIȘAREA HEADER-ULUI ELEGANT PE 3 RÂNDURI STRICȚE
-st.text(f"{acum_local.strftime('%d-%m-%Y')} - {guvernator_zi_init.upper()}, {acum_local.strftime('%H:%M:%S')} - {guvernator_ora_init.upper()}, JD: {jd_acum:.5f}")
-st.text(f"Ziua {ziua_din_an} {zi_saptamana_nume}, Saptamana {saptamana_din_an}")
-st.text(f"București, România, {LATITUDINE} N {LONGITUDINE} E")
-st.text("") # Spațiu de demarcație
-
-# 5. INITIALIZAREA CELOR 3 TABURI STRUCTURATE
+# Inițializarea celor 3 tab-uri principale cerute
 tab1, tab2, tab3 = st.tabs(["Soare - Luna", "Astro", "Aspecte"])
 
-corpuri = {"SOARE": swe.SUN, "LUNA": swe.MOON}
-date_orizont_soare = {}
-lon_soare_acum = 0.0
-
-# =====================================================================
-# BUCATA 2 DIN 5: CONSTRUIREA ȘI AFIȘAREA TABULUI 1 (SOARE - LUNA)
-# =====================================================================
 with tab1:
-    text_sl_bloc = ""
+    # 1. TABEL NATIV: EVENIMENTE ȘI DATE FIZICE (SOARE / LUNĂ)
+    luna_soare_date = []
+    
+    # Executăm calculele pentru ambele corpuri
     for nume, corp_id in corpuri.items():
-        text_sl_bloc += f"[{nume}]\n"
-        text_sl_bloc += "  Evenimente zilnice de baza:\n"
-        ore_orizont = calculeaza_evenimente_orizont(jd_miez, corp_id, geopos_lista)
-        for nume_ev, jd_ev in ore_orizont.items():
-            if jd_ev:
-                dt_ev = jd_to_datetime(jd_ev)
-                text_sl_bloc += f"    - {nume_ev:<22} : {dt_ev.strftime('%H:%M:%S')}\n"
-                if corp_id == swe.SUN:
-                    date_orizont_soare[nume_ev] = dt_ev
-            else:
-                text_sl_bloc += f"    - {nume_ev:<22} : Date indisponibile\n"
-
-        text_sl_bloc += "  Date fizice in timp real (acum):\n"
         try:
+            ore_orizont = calculeaza_evenimente_orizont(jd_miez, corp_id, geopos_lista)
             date_tr = calculeaza_date_timp_real(jd_acum, corp_id)
-            text_sl_bloc += f"    - Altitudine             : {format_grade(date_tr['altitudine'])}\n"
-            text_sl_bloc += f"    - Azimut (de la Nord)    : {format_grade(date_tr['azimut'])}\n"
-            text_sl_bloc += f"    - Distanta curenta       : {date_tr['distanta']:,.2f} km\n"
-            text_sl_bloc += f"    - Viteza orbitala        : {date_tr['viteza']:.4f} km/s\n"
+            
+            rasarit_t = jd_to_datetime(ore_orizont["Rasarit"]).strftime('%H:%M:%S') if ore_orizont["Rasarit"] else "N/A"
+            tranzit_t = jd_to_datetime(ore_orizont["Tranzit (Meridian)"]).strftime('%H:%M:%S') if ore_orizont["Tranzit (Meridian)"] else "N/A"
+            apus_t = jd_to_datetime(ore_orizont["Apus"]).strftime('%H:%M:%S') if ore_orizont["Apus"] else "N/A"
+            
             if corp_id == swe.SUN:
                 lon_soare_acum = date_tr["lon_ecliptica"]
-        
-            if corp_id == swe.MOON:
-                res_luna_brut = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
-                lon_luna_brut = res_luna_brut[0][0]
-                m_luna = determina_manzila_araba(lon_luna_brut)
-                text_sl_bloc += f"    - Manzil al-Qamar (Luna) : Statia {m_luna['numar']:02d}/28 - {m_luna['nume_arab']} ({m_luna['traducere']}) | Pozitie: {m_luna['progres_text']}\n"
-        except Exception as e:
-            text_sl_bloc += f"    - Eroare date dinamice: {e}\n"
-        text_sl_bloc += "\n"
-    st.text(text_sl_bloc)
-
-    st.text("[DINAMICA ȘI FAZELE LUNII]")
-    try:
-        date_luna_dinamica = calculeaza_dinamica_lunii(jd_acum)
-        text_faze_bloc = f"  - Faza curenta             : {date_luna_dinamica['faza']}\n"
-        text_faze_bloc += f"  - Iluminare disc           : {date_luna_dinamica['iluminare']:.2f}%\n"
-        text_faze_bloc += f"  - Varsta Lunii             : {date_luna_dinamica['varsta']:.2f} zile\n"
-        
-        res_soare = swe.calc_ut(jd_et_planete, swe.SUN, swe.FLG_SWIEPH)
-        res_luna = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
-        elongatie_act = (res_luna[0][0] - res_soare[0][0]) % 360.0
-        text_faze_bloc += f"  - Arcul Soli-Lunar         : {format_grade(elongatie_act)}\n"
-        text_faze_bloc += "  Momentele fazelor principale (Cronologic):\n"
-        faze_ordine = [0.0, 90.0, 180.0, 270.0]
-        nume_faze = {0.0: "Luna Noua      ", 90.0: "Primul Patrar  ", 180.0: "Luna Plina     ", 270.0: "Ultimul Patrar "}
-        
-        if 0.0 <= elongatie_act < 90.0: idx_trecut = 0
-        elif 90.0 <= elongatie_act < 180.0: idx_trecut = 1
-        elif 180.0 <= elongatie_act < 270.0: idx_trecut = 2
-        else: idx_trecut = 3
+                date_orizont_soare = ore_orizont
+                
+            luna_soare_date.append({
+                "Corp": nume,
+                "Răsărit": rasarit_t,
+                "Tranzit": tranzit_t,
+                "Apus": apus_t,
+                "Altitudine": format_grade(date_tr['altitudine']),
+                "Azimut": format_grade(date_tr['azimut']),
+                "Distanță (km)": f"{date_tr['distanta']:,.2f}",
+                "Viteză (km/s)": f"{date_tr['viteza']:.4f}"
+            })
+        except:
+            pass
             
-        faza_t = faze_ordine[idx_trecut]
-        jd_t = gaseste_faza_dinamica(jd_acum, faza_t, cauta_in_trecut=True)
-        dt_t = jd_to_datetime(jd_t)
-        text_faze_bloc += f"    - [TRECUT] {nume_faze[faza_t]} : {dt_t.strftime('%d-%m-%Y %H:%M:%S')}\n"
-        
-        jd_cursor = jd_t + 1.0  
-        for k in range(1, 4):
-            idx_v = (idx_trecut + k) % 4
-            faza_v = faze_ordine[idx_v]
-            jd_v = gaseste_faza_dinamica(jd_cursor, faza_v, cauta_in_trecut=False)
-            dt_v = jd_to_datetime(jd_v)
-            text_faze_bloc += f"    - [VIITOR] {nume_faze[faza_v]} : {dt_v.strftime('%d-%m-%Y %H:%M:%S')}\n"
-            jd_cursor = jd_v + 1.0  
-        st.text(text_faze_bloc)
-    except Exception as e:
-        st.text(f"  - Eroare la calculul dinamic al fazelor Lunii: {e}")
-
-    dt_r = date_orizont_soare.get("Rasarit")
-    dt_a = date_orizont_soare.get("Apus")
-    if dt_r and dt_a:
-        durata_zi_ore = (dt_a - dt_r).total_seconds() / 3600.0
-        durata_noapte_ore = 24.0 - durata_zi_ore
-        st.text("[DURATE CALENDARISTICE ȘI CRONOCRAȚI PLANETARI]")
-        st.text(f"  - Durata zilei             : {format_durata(durata_zi_ore)}")
-        st.text(f"  - Durata noptii            : {format_durata(durata_noapte_ore)}")
-        st.text(f"  - GUVERNATORUL ZILEI     : {guvernator_zi_init.upper()}")
-        st.text(f"  - GUVERNATORUL OREI ACUM : {guvernator_ora_init.upper()} | Interval active: {interval_ora_curenta}")
-        st.text("")
-
-        ore_zi, ore_noapte = genereaza_ore_planetare(dt_r, dt_a)
-        
-        with st.expander("[ORE PLANETARE DE ZI]"):
-            txt_z = ""
-            for numar, planeta, start, end in ore_zi:
-                txt_z += f"  Ora {numar:02d} ({planeta:<7}) : {start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}\n"
-            st.code(txt_z, language="text")
-
-        with st.expander("[ORE PLANETARE DE NOAPTE]"):
-            txt_n = ""
-            for numar, planeta, start, end in ore_noapte:
-                txt_n += f"  Ora {numar:02d} ({planeta:<7}) : {start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}\n"
-            st.code(txt_n, language="text")
-
-    with st.expander("[ANOTIMPURI ȘI PUNCTE CARDINALE SOARE]"):
-        an_curent = acum_local.year
-        anotimp = calculeaza_anotimp_curent(lon_soare_acum)
-        txt_c = f"  - Anotimpul curent (Nord)  : {anotimp} (Pozitie Soare: {format_grade(lon_soare_acum)})\n"
-        txt_c += "  Momentele exacte ale anului curent:\n"
-        puncte_cardinale = {"Echinoptiu Primavara (0°)": 0.0, "Solstitiu Vara (90°)     ": 90.0, "Echinoptiu Toamna (180°) ": 180.0, "Solstitiu Iarna (270°)   ": 270.0}
-        for nume_pct, unghi in puncte_cardinale.items():
-            jd_pct = gaseste_moment_cardinal(an_curent, unghi)
-            dt_pct = jd_to_datetime(jd_pct)
-            txt_c += f"    - {nume_pct} : {dt_pct.strftime('%d-%m-%Y %H:%M:%S')}\n"
-        st.text(txt_c)
-
-# =====================================================================
-# BUCATA 3 DIN 5: CONSTRUIREA TABULUI 2 (ASTRO - PARTEA I)
-# =====================================================================
-with tab2:
-    # --- DECLARAREA ȘI RESTAURAREA INTEGRALĂ A DICȚIONARELOR NATIVE ---
-    planete_standard = {
-        "Soare": swe.SUN, "Luna": swe.MOON, "Mercur": swe.MERCURY, "Venus": swe.VENUS,
-        "Marte": swe.MARS, "Jupiter": swe.JUPITER, "Saturn": swe.SATURN,
-        "Uranus": swe.URANUS, "Neptun": swe.NEPTUNE, "Pluto": swe.PLUTO
-    }
-
-    puncte_fictive = {
-        "Nod Nord (Mean)": swe.MEAN_NODE,
-        "Nod Nord (True)": swe.TRUE_NODE,
-        "Lilith (Mean)  ": swe.MEAN_APOG,  
-        "Lilith (True)  ": swe.OSCU_APOG,  
-        "Apogeu Interp. ": 21,  
-        "Perigeu Interp.": 22   
-    }
-
-    asteroizi = {
-        "Ceres": swe.CERES,   
-        "Pallas": swe.PALLAS, 
-        "Juno": swe.JUNO,     
-        "Vesta": swe.VESTA,   
-        "Chiron": swe.CHIRON, 
-        "Pholus": 16          
-    }
-
-    uraniene = {
-        "Cupido": 40, "Hades": 41, "Zeus": 42, "Kronos": 43,
-        "Apollon": 44, "Admetos": 45, "Vulkanus": 46, "Poseidon": 47,
-        "Isis": 48            
-    }
-
-    stele_fixe = {
-        "Algol": "Algol", "Pleiades (Alcyone)": "Alcyone", "Aldebaran": "Aldebaran",
-        "Rigel": "Rigel", "Betelgeuse": "Betelgeuse", "Sirius": "Sirius",
-        "Regulus": "Regulus", "Spica": "Spica", "Arcturus": "Arcturus",
-        "Antares": "Antares", "Vega": "Vega", "Altair": "Altair", "Fomalhaut": "Fomalhaut"
-    }
-
-    # Executarea și afișarea caselor Placidus
-    print("[CASE ASTROLOGICE ȘI AXE - PLACIDUS]")
-    txt_ca = ""
-    try:
-        tabel_case = calculeaza_case_astrologice(jd_acum, b'P')
-        for eticheta, pozitie_text in tabel_case.items():
-            txt_ca += f"  - {eticheta:<15} : {pozitie_text}\n"
-    except Exception as e:
-        txt_ca += f"  - Eroare la calculul caselor astrologice: {e}\n"
-    st.text(txt_ca)
-    st.text("")
-
-    # Executarea și afișarea Planetelor Standard
-    print("[POZIȚII ASTROLOGICE TROPICALE]")
-    print("--- PLANETE STANDARD ---")
-    coordonate_totale = {}
-    txt_ps = ""
-    for nume, corp_id in planete_standard.items():
-        try:
-            p = calculeaza_pozitie_astrologica(jd_et_planete, corp_id)
-            numar_casa = determina_casa_planetei(p['lon_pura'], jd_ut_case)
-            txt_ps += f"  - {nume:<15} : {p['pozitie_text']:<25} | Casa: {numar_casa:02d} | ({p['miscare']})\n"
-            coordonate_totale[nume] = p['lon_pura']
-        except Exception as e:
-            txt_ps += f"  - {nume:<15} : Eroare la calcul: {e}\n"
-    st.text(txt_ps)
-
-    # Expander: Noduri și Puncte Fictive Complete
-    with st.expander("Noduri și puncte fictive"):
-        txt_pf = ""
-        for nume, corp_id in puncte_fictive.items():
-            try:
-                p = calculeaza_pozitie_astrologica(jd_et_planete, corp_id)
-                numar_casa = determina_casa_planetei(p['lon_pura'], jd_ut_case)
-                txt_pf += f"  - {nume:<15} : {p['pozitie_text']:<25} | Casa: {numar_casa:02d} | ({p['miscare']})\n"
-                coordonate_totale[nume] = p['lon_pura']
-                
-                if "Nod Nord" in nume:
-                    tip_nod = "Mean" if "Mean" in nume else "True"
-                    lon_sud = (p['lon_pura'] + 180.0) % 360.0
-                    numar_casa_sud = determina_casa_planetei(lon_sud, jd_ut_case)
-                    txt_pf += f"  - Nod Sud ({tip_nod:<4}) : {format_pozitie_astrologica(lon_sud):<25} | Casa: {numar_casa_sud:02d} | ({p['miscare']})\n"
-                    coordonate_totale[f"Nod Sud ({tip_nod})"] = lon_sud
-            except Exception as e:
-                pass
-        st.text(txt_pf)
-
-    # Expander: Asteroizi Principali Compleți
-    with st.expander("Asteroizi principali"):
-        txt_as = ""
-        for nume, corp_id in asteroizi.items():
-            try:
-                p = calculeaza_pozitie_astrologica(jd_et_planete, corp_id)
-                numar_casa = determina_casa_planetei(p['lon_pura'], jd_ut_case)
-                txt_as += f"  - {nume:<15} : {p['pozitie_text']:<25} | Casa: {numar_casa:02d} | ({p['miscare']})\n"
-                coordonate_totale[nume] = p['lon_pura']
-            except Exception as e:
-                pass
-        st.text(txt_as)
-
-    # Expander: Planete Uraniene (Hamburg)
-    with st.expander("Planete uraniene & esoterice"):
-        txt_ur = ""
-        for nume, corp_id in uraniene.items():
-            try:
-                p = calculeaza_pozitie_astrologica(jd_et_planete, corp_id)
-                numar_casa = determina_casa_planetei(p['lon_pura'], jd_ut_case)
-                txt_ur += f"  - {nume:<15} : {p['pozitie_text']:<25} | Casa: {numar_casa:02d} | ({p['miscare']})\n"
-                coordonate_totale[nume] = p['lon_pura']
-            except Exception as e:
-                pass
-        st.text(txt_ur)
-
-    # Expander: Stele Fixe Majore
-    with st.expander("Stele fixe majore"):
-        txt_sf = ""
-        for nume_afisat, nume_se in stele_fixe.items():
-            try:
-                s = calculeaza_stea_fixa(jd_et_planete, nume_se)
-                numar_casa = determina_casa_planetei(s['lon_pura'], jd_ut_case)
-                txt_sf += f"  - {nume_afisat:<19} : {s['pozitie_text']:<25} | Casa: {numar_casa:02d}\n"
-                coordonate_totale[nume_afisat] = s['lon_pura']
-            except Exception as e:
-                pass
-        st.text(txt_sf)
-
-    # Expander: Evaluarea Forței Planetare și Scorul Cosmic Global
-    with st.expander("Evaluarea dinamică a forței planetare"):
-        scoruri_planete_json = {}
-        total_eficienta_colectata = 0.0
-        numar_planete_evaluate = 0
-        l_soare_eval = coordonate_totale.get("Soare", 0.0)
-        
-        # Generăm un tabel text estetic cu cap de tabel și linii de demarcație
-        txt_f =  "  +------------+-------------------------------------------------------------+-------+------------+\n"
-        txt_f += "  | Corp       | Justificari Evaluare                                        | Scor  | Eficienta  |\n"
-        txt_f += "  +------------+-------------------------------------------------------------+-------+------------+\n"
-        
-        for nume_p in ["Soare", "Luna", "Mercur", "Venus", "Marte", "Jupiter", "Saturn", "Uranus", "Neptun", "Pluto"]:
-            if nume_p in coordonate_totale:
-                lon_p = coordonate_totale[nume_p]
-                casa_p = determina_casa_planetei(lon_p, jd_ut_case)
-                p_stat = calculeaza_pozitie_astrologica(jd_et_planete, planete_standard[nume_p])
-                res_eval = evalueaza_forta_planeta(nume_p, lon_p, casa_p, p_stat['miscare'], l_soare_eval)
-                
-                justificari_text = " | ".join(res_eval["justificari"])
-                # Aliniere matematică fixă în celule (forțăm lungimi fixe)
-                txt_f += f"  | {nume_p:<10} | {justificari_text:<59} | {res_eval['scor']:+5d} | {res_eval['eficienta']:>9.1f}% |\n"
-                
-                total_eficienta_colectata += res_eval['eficienta']
-                numar_planete_evaluate += 1
-                scoruri_planete_json[nume_p] = {"scor_numeric": res_eval['scor'], "procent_eficienta": f"{res_eval['eficienta']:.1f}%", "justificari": res_eval["justificari"]}
-        
-        scor_cosmic_global = total_eficienta_colectata / numar_planete_evaluate if numar_planete_evaluate > 0 else 0.0
-        txt_f += "  +------------+-------------------------------------------------------------+-------+------------+\n\n"
-        txt_f += f"  [SCORUL COSMIC GLOBAL AL MOMENTULUI]\n  - Indice de eficienta planetara totala: {scor_cosmic_global:.1f}%\n"
-        st.code(txt_f, language="text")
-
-
-    # Expander: Puncte Arabe Majore
-    with st.expander("Puncte arabe majore"):
-        # --- REPARAȚIE ABSOLUTĂ: Inițializăm manual variabilele lipsă din memorie ---
-        case_brute, ascmc_brut = swe.houses(jd_ut_case, float(LATITUDINE), float(LONGITUDINE), b'P')
-        l_asc_pure = ascmc_brut
-        l_soare = coordonate_totale.get("Soare", 0.0)
-        l_luna = coordonate_totale.get("Luna", 0.0)
-        l_mercur = coordonate_totale.get("Mercur", 0.0)
-        l_venus = coordonate_totale.get("Venus", 0.0)
-        l_marte = coordonate_totale.get("Marte", 0.0)
-        l_jupiter = coordonate_totale.get("Jupiter", 0.0)
-        
-        casa_soare_ev = determina_casa_planetei(l_soare, jd_ut_case)
-        este_diurn_ev = casa_soare_ev >= 7
-        # ----------------------------------------------------------------------------
-        
-        txt_pa = f"  - Tipul Sectei (Harta) : {'DIURNĂ (Zi)' if este_diurn_ev else 'NOCTURNĂ (Noapte)'}\n\n"
-        txt_pa += "  +---------------------------+----------------------------+------+\n"
-        txt_pa += "  | Punct Arab / Lot          | Pozitie Zodiacala Tropical | Casa |\n"
-        txt_pa += "  +---------------------------+----------------------------+------+\n"
-        try:
-            fortuna = calculeaza_punct_arab(l_asc_pure, l_luna, l_soare, este_diurn_ev, formula_diurna_fixa=True)
-            casa_fortuna = determina_casa_planetei(fortuna['lon_pura'], jd_ut_case)
-            txt_pa += f"  | Pars Fortunae (Noroc)     | {fortuna['pozitie_text']:<26} |  {casa_fortuna:02d}  |\n"
-            coordonate_totale["Pars Fortunae"] = fortuna['lon_pura']
-
-            spirit = calculeaza_punct_arab(l_asc_pure, l_soare, l_luna, este_diurn_ev, formula_diurna_fixa=True)
-            casa_spirit = determina_casa_planetei(spirit['lon_pura'], jd_ut_case)
-            txt_pa += f"  | Pars Spiritus (Suflet)    | {spirit['pozitie_text']:<26} |  {casa_spirit:02d}  |\n"
-            coordonate_totale["Pars Spiritus"] = spirit['lon_pura']
-
-            eros = calculeaza_punct_arab(l_asc_pure, l_venus, spirit['lon_pura'], este_diurn_ev, formula_diurna_fixa=True)
-            casa_eros = determina_casa_planetei(eros['lon_pura'], jd_ut_case)
-            txt_pa += f"  | Pars Amoris (Eros)        | {eros['pozitie_text']:<26} |  {casa_eros:02d}  |\n"
-            coordonate_totale["Pars Eros"] = eros['lon_pura']
-
-            necesitate = calculeaza_punct_arab(l_asc_pure, fortuna['lon_pura'], l_mercur, este_diurn_ev, formula_diurna_fixa=True)
-            casa_necesitate = determina_casa_planetei(necesitate['lon_pura'], jd_ut_case)
-            txt_pa += f"  | Pars Necessitatis         | {necesitate['pozitie_text']:<26} |  {casa_necesitate:02d}  |\n"
-            coordonate_totale["Pars Necesitate"] = necessitate['lon_pura']
-
-            victorie = calculeaza_punct_arab(l_asc_pure, l_jupiter, fortuna['lon_pura'], este_diurn_ev, formula_diurna_fixa=True)
-            casa_victorie = determina_casa_planetei(victorie['lon_pura'], jd_ut_case)
-            txt_pa += f"  | Pars Victoriae (Succes)   | {victorie['pozitie_text']:<26} |  {casa_victorie:02d}  |\n"
-            coordonate_totale["Pars Victorie"] = victorie['lon_pura']
-        except Exception as e: 
-            txt_pa += f"  - Eroare Lots: {e}\n"
-        txt_pa += "  +---------------------------+----------------------------+------+\n"
-        st.code(txt_pa, language="text")
+    # Afișăm tabelul cu linii fine nativ din Streamlit
+    st.table(luna_soare_date)
 
 
 
-# =====================================================================
-# TABUL 3: ASPECTE (CU SLIDER DINAMIC)
-# =====================================================================
-with tab3:
-    st.text("[ASPECTE PLANETARE ACTIVE]")
-    orba_selectata = st.slider("Ajusteaza Orba Maxima (Grade):", 0.5, 6.0, 6.0, step=0.5)
-    st.text(f"SORTATE ASCENDENT - ORBA ACTUALE MAXIM: {orba_selectata}°\n")
-    try:
-        liste_imprimate = calculeaza_toate_aspectele(coordonate_totale, orba_maxima=orba_selectata)
-        txt_asp = ""
-        if liste_imprimate:
-            for linie_aspect in liste_imprimate: 
-                txt_asp += f"{linie_aspect}\n"
-        else: 
-            txt_asp = "  - Nu s-au gasit aspecte unghiulare stranse sub aceasta limita.\n"
-        st.text(txt_asp)
-    except Exception as e: 
-        st.text(f"  - Eroare aspecte: {e}")
-
-# =====================================================================
-# BLOCUL 10: EXPORT DATE - JSON EXTINS
-# =====================================================================
-res_soare_json = swe.calc_ut(jd_et_planete, swe.SUN, swe.FLG_SWIEPH)
-res_luna_json = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
-elongatie_act = (res_luna_json[0][0] - res_soare_json[0][0]) % 360.0
-
-ore_zi_json = [{"ora": n, "planeta": p, "interval": f"{s.strftime('%H:%M:%S')} - {e.strftime('%H:%M:%S')}"} for n, p, s, e in ore_zi]
-ore_noapte_json = [{"ora": n, "planeta": p, "interval": f"{s.strftime('%H:%M:%S')} - {e.strftime('%H:%M:%S')}"} for n, p, s, e in ore_noapte]
-
-corpuri_astrologice_text = {}
-toate_grupurile_lucrate = [("Planeta", planete_standard), ("Punct Fictiv", puncte_fictive), ("Asteroid", asteroizi), ("Uraniana", uraniene), ("Stea Fixa", stele_fixe)]
-for tip, grup in toate_grupurile_lucrate:
-    for nume, corp_id in grup.items():
-        try:
-            if tip == "Stea Fixa":
-                p_data = calculeaza_stea_fixa(jd_et_planete, corp_id)
-                numar_casa = determina_casa_planetei(p_data['lon_pura'], jd_ut_case)
-                miscare_text = "Stabil"
-            else:
-                p_data = calculeaza_pozitie_astrologica(jd_et_planete, corp_id)
-                numar_casa = determina_casa_planetei(p_data['lon_pura'], jd_ut_case)
-                miscare_text = p_data['miscare']
-            corpuri_astrologice_text[nume] = {"tip_obiect": tip, "text_zodiac": p_data['pozitie_text'], "numar_casa": f"{numar_casa:02d}", "miscare": miscare_text, "grad_brut": p_data['lon_pura']}
-        except: pass
-
-try:
-    for n_nume in ["Nod Nord (Mean)", "Nod Nord (True)"]:
-        if n_nume in coordonate_totale:
-            tip_nod = "Mean" if "Mean" in n_nume else "True"
-            lon_s = (coordonate_totale[n_nume] + 180.0) % 360.0
-            corpuri_astrologice_text[f"Nod Sud ({tip_nod})"] = {"tip_obiect": "Punct Fictiv", "text_zodiac": format_pozitie_astrologica(lon_s), "numar_casa": f"{determina_casa_planetei(lon_s, jd_ut_case):02d}", "miscare": "Retrograd", "grad_brut": lon_s}
-    
-    puncte_arabe_nume = [("Pars Fortunae", "Pars Fortunae (Noroc)"), ("Pars Spiritus", "Pars Spiritus (Suflet)"), ("Pars Eros", "Pars Amoris (Eros)"), ("Pars Necesitate", "Pars Necessitatis"), ("Pars Victorie", "Pars Victoriae (Succes)")]
-    for ch_json, nume_tinta_latina in puncte_arabe_nume:
-        if ch_json in coordonate_totale:
-            l_pure = coordonate_totale[ch_json]
-            corpuri_astrologice_text[nume_tinta_latina] = {"tip_obiect": "Punct Arab", "text_zodiac": format_pozitie_astrologica(l_pure), "numar_casa": f"{determina_casa_planetei(l_pure, jd_ut_case):02d}", "miscare": "Direct", "grad_brut": l_pure}
-except: pass
-
-date_export_interfata = {
-    "configurare": {"data_calcul_local": acum_local.strftime('%d-%m-%Y'), "ora_calcul_local": acum_local.strftime('%H:%M:%S'), "coordonate": {"lat": LATITUDINE, "lon": LONGITUDINE, "alt": ALTITUDINE}},
-    "astronomice_baza": {"durata_zi": format_durata(durata_zi_ore), "durata_noapte": format_durata(durata_noapte_ore), "anotimp_nord": anotimp, "soare_pozitie_ecliptica": format_grade(lon_soare_acum)},
-    "cronocrati": {"guvernator_zi": guvernator_zi_init.upper(), "guvernator_ora": guvernator_ora_init.upper(), "interval_ora_activa": interval_ora_curenta, "ore_zi_detaliat": ore_zi_json, "ore_noapte_detaliat": ore_noapte_json},
-    "dinamica_luna": {"faza_curenta": date_luna_dinamica['faza'], "iluminare_procent": f"{date_luna_dinamica['iluminare']:.2f}%", "varsta_zile": f"{date_luna_dinamica['varsta']:.2f}", "arc_soli_lunar": format_grade(elongatie_act)},
-    "axe_si_case_placidus": tabel_case, "obiecte_astrologice_detaliat": corpuri_astrologice_text,
-    "aspecte_planetare_active": [linie.strip("- ") for linie in liste_imprimate], "scoruri_forta_planete": scoruri_planete_json, "scor_cosmic_global": f"{scor_cosmic_global:.1f}%"
-}
-
-try:
-    cale_fisier_json = os.path.join(cale_curenta, "date_dashboard.json")
-    with open(cale_fisier_json, "w", encoding="utf-8") as f: 
-        json.dump(date_export_interfata, f, indent=4, ensure_ascii=False)
-except: pass
 
 swe.close()
 
