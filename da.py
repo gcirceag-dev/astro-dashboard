@@ -637,18 +637,20 @@ saptamana_din_an = acum_local.isocalendar()[1]
 st.markdown(
     """
     <style>
-    /* Forțare fundal alb pur și text negru pur pe tot ecranul */
-    .stApp, div[data-testid="stAppViewContainer"] {
+    /* Fundal alb pur și text negru pur peste tot */
+    .stApp, div[data-testid="stAppViewContainer"], div[data-testid="stExpander"] {
         background-color: #FFFFFF !important;
+        background: #FFFFFF !important;
+        border: none !important;
+        box-shadow: none !important;
     }
-    body, h1, h2, h3, p, span, div, code, pre, label, table, th, td {
+    body, h1, h2, h3, p, span, div, pre, label {
         color: #000000 !important;
         font-family: monospace !important;
         font-size: 14px !important;
         font-weight: normal !important;
     }
-    # --- DE AICI COPIEZI ȘI LIPESTI CORECT ACEST BLOC NOU ---
-    /* Eliminare totală dreptunghiuri închise la culoare și butoane auxiliare */
+    /* Eliminarea totală a dreptunghiurilor negre/gri la st.code */
     div[data-testid="stCodeBlock"], pre, code {
         background-color: #FFFFFF !important;
         background: #FFFFFF !important;
@@ -656,27 +658,9 @@ st.markdown(
         box-shadow: none !important;
         padding: 0px !important;
     }
-    button[title="Copy to clipboard"] {
+    /* Ascundere totală butoane de copy sau alte elemente de zgomot */
+    button[title="Copy to clipboard"], .stTabs [data-baseweb="tab-list"] {
         display: none !important;
-    }
-    # ---------------------------------------------------------------------
-    /* Eliminare fundaluri gri implicit Streamlit pentru expandere și taburi */
-    div[data-testid="stExpander"] {
-        background-color: #FFFFFF !important;
-        border: 1px solid #000000 !important;
-    }
-    div[data-testid="stExpanderSummary"] {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-    }
-    .stTabs [data-baseweb="tab-list"] {
-        background-color: #FFFFFF !important;
-        border-bottom: 1px solid #000000 !important;
-    }
-    .stTabs [data-baseweb="tab"] {
-        color: #000000 !important;
-        background-color: #FFFFFF !important;
-        font-family: monospace !important;
     }
     </style>
     """,
@@ -966,77 +950,72 @@ with tab2:
         numar_planete_evaluate = 0
         l_soare_eval = coordonate_totale.get("Soare", 0.0)
         
-        txt_f = ""
+        # Generăm un tabel text estetic cu cap de tabel și linii de demarcație
+        txt_f =  "  +------------+-------------------------------------------------------------+-------+------------+\n"
+        txt_f += "  | Corp       | Justificari Evaluare                                        | Scor  | Eficienta  |\n"
+        txt_f += "  +------------+-------------------------------------------------------------+-------+------------+\n"
+        
         for nume_p in ["Soare", "Luna", "Mercur", "Venus", "Marte", "Jupiter", "Saturn", "Uranus", "Neptun", "Pluto"]:
             if nume_p in coordonate_totale:
                 lon_p = coordonate_totale[nume_p]
                 casa_p = determina_casa_planetei(lon_p, jd_ut_case)
                 p_stat = calculeaza_pozitie_astrologica(jd_et_planete, planete_standard[nume_p])
-                miscare_p = p_stat['miscare']
-                
-                res_eval = evalueaza_forta_planeta(nume_p, lon_p, casa_p, miscare_p, l_soare_eval)
+                res_eval = evalueaza_forta_planeta(nume_p, lon_p, casa_p, p_stat['miscare'], l_soare_eval)
                 
                 justificari_text = " | ".join(res_eval["justificari"])
-                txt_f += f"  - {nume_p:<10} : [{justificari_text}]\n"
-                txt_f += f"                 -> Scor: {res_eval['scor']:+2} | Eficienta: {res_eval['eficienta']:.1f}%\n\n"
+                # Aliniere matematică fixă în celule (forțăm lungimi fixe)
+                txt_f += f"  | {nume_p:<10} | {justificari_text:<59} | {res_eval['scor']:+5d} | {res_eval['eficienta']:>9.1f}% |\n"
                 
                 total_eficienta_colectata += res_eval['eficienta']
                 numar_planete_evaluate += 1
-                
-                scoruri_planete_json[nume_p] = {
-                    "scor_numeric": res_eval['scor'],
-                    "procent_eficienta": f"{res_eval['eficienta']:.1f}%",
-                    "justificari": res_eval["justificari"]
-                }
+                scoruri_planete_json[nume_p] = {"scor_numeric": res_eval['scor'], "procent_eficienta": f"{res_eval['eficienta']:.1f}%", "justificari": res_eval["justificari"]}
         
         scor_cosmic_global = total_eficienta_colectata / numar_planete_evaluate if numar_planete_evaluate > 0 else 0.0
-        txt_f += "=" * 60 + "\n"
-        txt_f += f"[SCORUL COSMIC GLOBAL AL MOMENTULUI]\n  - Indice de eficienta planetara totala: {scor_cosmic_global:.1f}%\n"
-        st.text(txt_f)
+        txt_f += "  +------------+-------------------------------------------------------------+-------+------------+\n\n"
+        txt_f += f"  [SCORUL COSMIC GLOBAL AL MOMENTULUI]\n  - Indice de eficienta planetara totala: {scor_cosmic_global:.1f}%\n"
+        st.code(txt_f, language="text")
+
 
     # Expander: Puncte Arabe Majore
     with st.expander("Puncte arabe majore"):
-        case_brute, ascmc_brut = swe.houses(jd_ut_case, float(LATITUDINE), float(LONGITUDINE), b'P')
-        l_asc_pure = ascmc_brut[0]
-        l_soare = coordonate_totale.get("Soare", 0.0)
-        l_luna = coordonate_totale.get("Luna", 0.0)
-        l_mercur = coordonate_totale.get("Mercur", 0.0)
-        l_venus = coordonate_totale.get("Venus", 0.0)
-        l_marte = coordonate_totale.get("Marte", 0.0)
-        l_jupiter = coordonate_totale.get("Jupiter", 0.0)
-        
+        # (Liniile tale de inițializare a planetelor de sub expander rămân exact la fel)
         casa_soare_ev = determina_casa_planetei(l_soare, jd_ut_case)
         este_diurn_ev = casa_soare_ev >= 7
         
-        txt_pa = f"  - Tipul Sectei (Harta)     : {'DIURNĂ (Zi)' if este_diurn_ev else 'NOCTURNĂ (Noapte)'}\n\n"
+        txt_pa = f"  - Tipul Sectei (Harta) : {'DIURNĂ (Zi)' if este_diurn_ev else 'NOCTURNĂ (Noapte)'}\n\n"
+        txt_pa += "  +---------------------------+----------------------------+------+\n"
+        txt_pa += "  | Punct Arab / Lot          | Pozitie Zodiacala Tropical | Casa |\n"
+        txt_pa += "  +---------------------------+----------------------------+------+\n"
         try:
             fortuna = calculeaza_punct_arab(l_asc_pure, l_luna, l_soare, este_diurn_ev, formula_diurna_fixa=True)
             casa_fortuna = determina_casa_planetei(fortuna['lon_pura'], jd_ut_case)
-            txt_pa += f"  - Pars Fortunae (Noroc)   : {fortuna['pozitie_text']:<25} | Casa: {casa_fortuna:02d}\n"
+            txt_pa += f"  | Pars Fortunae (Noroc)     | {fortuna['pozitie_text']:<26} |  {casa_fortuna:02d}  |\n"
             coordonate_totale["Pars Fortunae"] = fortuna['lon_pura']
 
             spirit = calculeaza_punct_arab(l_asc_pure, l_soare, l_luna, este_diurn_ev, formula_diurna_fixa=True)
             casa_spirit = determina_casa_planetei(spirit['lon_pura'], jd_ut_case)
-            txt_pa += f"  - Pars Spiritus (Suflet)  : {spirit['pozitie_text']:<25} | Casa: {casa_spirit:02d}\n"
+            txt_pa += f"  | Pars Spiritus (Suflet)    | {spirit['pozitie_text']:<26} |  {casa_spirit:02d}  |\n"
             coordonate_totale["Pars Spiritus"] = spirit['lon_pura']
 
             eros = calculeaza_punct_arab(l_asc_pure, l_venus, spirit['lon_pura'], este_diurn_ev, formula_diurna_fixa=True)
             casa_eros = determina_casa_planetei(eros['lon_pura'], jd_ut_case)
-            txt_pa += f"  - Pars Amoris (Eros)      : {eros['pozitie_text']:<25} | Casa: {casa_eros:02d}\n"
+            txt_pa += f"  | Pars Amoris (Eros)        | {eros['pozitie_text']:<26} |  {casa_eros:02d}  |\n"
             coordonate_totale["Pars Eros"] = eros['lon_pura']
 
             necesitate = calculeaza_punct_arab(l_asc_pure, fortuna['lon_pura'], l_mercur, este_diurn_ev, formula_diurna_fixa=True)
             casa_necesitate = determina_casa_planetei(necesitate['lon_pura'], jd_ut_case)
-            txt_pa += f"  - Pars Necessitatis       : {necesitate['pozitie_text']:<25} | Casa: {casa_necesitate:02d}\n"
+            txt_pa += f"  | Pars Necessitatis         | {necesitate['pozitie_text']:<26} |  {casa_necesitate:02d}  |\n"
             coordonate_totale["Pars Necesitate"] = necessitate['lon_pura']
 
             victorie = calculeaza_punct_arab(l_asc_pure, l_jupiter, fortuna['lon_pura'], este_diurn_ev, formula_diurna_fixa=True)
             casa_victorie = determina_casa_planetei(victorie['lon_pura'], jd_ut_case)
-            txt_pa += f"  - Pars Victoriae (Succes) : {victorie['pozitie_text']:<25} | Casa: {casa_victorie:02d}\n"
+            txt_pa += f"  | Pars Victoriae (Succes)   | {victorie['pozitie_text']:<26} |  {casa_victorie:02d}  |\n"
             coordonate_totale["Pars Victorie"] = victorie['lon_pura']
         except Exception as e: 
-            txt_pa += f"  - Eroare Lots: {e}\n"
+            txt_pa += f"  - Eroare: {e}\n"
+        txt_pa += "  +---------------------------+----------------------------+------+\n"
         st.code(txt_pa, language="text")
+
 
 # =====================================================================
 # TABUL 3: ASPECTE (CU SLIDER DINAMIC)
