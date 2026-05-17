@@ -1042,17 +1042,20 @@ with tab2:
             st.text(f"  - Pars Amoris (Eros)      : {eros['pozitie_text']:<25} | Casa: {casa_eros:02d}")
             coordonate_totale["Pars Eros"] = eros['lon_pura']
 
-            # 4. Pars Necessitatis (Verifică să fie exact așa)
+            # 4. Pars Necessitatis
             necesitate = calculeaza_punct_arab(l_asc_pure, fortuna['lon_pura'], l_mercur, este_diurn_ev, formula_diurna_fixa=True)
             casa_necesitate = determina_casa_planetei(necesitate['lon_pura'], jd_ut_case)
             st.text(f"  - Pars Necessitatis       : {necesitate['pozitie_text']:<25} | Casa: {casa_necesitate:02d}")
-            coordonate_totale["Pars Necesitate"] = necessitate['lon_pura']  # <- REPARAȚIE: Aici era scris cu doi 'c' în codul anterior (necessitate)
+            
+            # --- CORECTURĂ AICI: Schimbă 'necessitate' în 'necesitate' (cu un singur c) ---
+            coordonate_totale["Pars Necesitate"] = necesitate['lon_pura'] 
 
-            # 5. Pars Victoriae (Aici se bloca și nu lăsa să se afișeze)
+            # 5. Pars Victoriae
             victorie = calculeaza_punct_arab(l_asc_pure, l_jupiter, fortuna['lon_pura'], este_diurn_ev, formula_diurna_fixa=True)
             casa_victorie = determina_casa_planetei(victorie['lon_pura'], jd_ut_case)
             st.text(f"  - Pars Victoriae (Succes) : {victorie['pozitie_text']:<25} | Casa: {casa_victorie:02d}")
             coordonate_totale["Pars Victorie"] = victorie['lon_pura']
+
 
             coordonate_totale["Pars Victorie"] = victorie['lon_pura']
         except Exception as e: 
