@@ -761,10 +761,10 @@ with tab1:
         date_luna_dinamica = calculeaza_dinamica_lunii(jd_acum)
         st.text(f"  Faza curenta: {date_luna_dinamica['faza']} | Iluminare: {date_luna_dinamica['iluminare']:.2f}% | Varsta: {date_luna_dinamica['varsta']:.2f} zile")
         
-        # Extragere Elongație Ephemeris (Arcul Soli-Lunar exact cu referința)
+        # Extragere Elongație Ephemeris (Arcul Soli-Lunar exact cu referința - REPARAT INDEX DUBLU)
         res_soare_arc = swe.calc_ut(jd_et_planete, swe.SUN, swe.FLG_SWIEPH)
         res_luna_arc = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
-        elongatie_act = (res_luna_arc[0][0] - res_soare_arc[0][0]) % 360.0
+        elongatie_act = (res_luna_arc[0] - res_soare_arc[0]) % 360.0
         st.text(f"  Arcul Soli-Lunar: {format_grade(elongatie_act)}")
         
         st.text("  Momentele fazelor principale (Cronologic):")
@@ -776,21 +776,32 @@ with tab1:
         elif 180.0 <= elongatie_act < 270.0: idx_trecut = 2
         else: idx_trecut = 3
             
-        jd_t = gaseste_faza_principala(acum_local.year, acum_local.month, faze_ordine[idx_trecut]) # Fallback stabil la funcția ta originală
+        # Apelăm funcția TA originală și stabilă pentru trecut
+        jd_t = gaseste_faza_principala(acum_local.year, acum_local.month, faze_ordine[idx_trecut])
         dt_t = jd_to_datetime(jd_t)
         st.text(f"    - [TRECUT] {nume_faze[faze_ordine[idx_trecut]]:<14} : {dt_t.strftime('%d-%m-%Y %H:%M:%S')}")
         
-        jd_cursor = jd_t + 1.0  
+        # Pregătim parametrii calendaristici pentru fazele din luna următoare dacă este cazul
+        luna_urmatoare = acum_local.month + 1 if acum_local.month < 12 else 1
+        an_urmator = acum_local.year if acum_local.month < 12 else acum_local.year + 1
+        
         for k in range(1, 4):
             idx_v = (idx_trecut + k) % 4
             faza_v = faze_ordine[idx_v]
-            jd_v = gaseste_faza_dinamica(jd_cursor, faza_v, cauta_in_trecut=False)
+            
+            # REPARAȚIE LOGICĂ: Folosim EXCLUSIV funcția ta originală 'gaseste_faza_principala'
+            if idx_v < idx_trecut:
+                jd_v = gaseste_faza_principala(an_urmator, luna_urmatoare, faza_v)
+            else:
+                jd_v = gaseste_faza_principala(acum_local.year, acum_local.month, faza_v)
+                
             dt_v = jd_to_datetime(jd_v)
-            st.text(f"    - [VIITOR] {nume_faze[faza_v]:<14} : {dt_v.strftime('%d-%m-%Y %H:%M:%S')}")
-            jd_cursor = jd_v + 1.0  
+            st.text(f"    - [VIITOR] {nume_faze[faza_v]]:<14} : {dt_v.strftime('%d-%m-%Y %H:%M:%S')}")
+            
     except Exception as e:
         st.text(f"  Eroare la calculul fazelor Lunii: {e}")
     st.text("")
+
 
     # Subsecțiunea: Durate Calendaristice și Ore Planetare
     st.text("[DURATE CALENDARISTICE ȘI CRONOCRAȚI PLANETARI]")
