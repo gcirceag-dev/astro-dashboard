@@ -992,6 +992,19 @@ with tab2:
         st.code(text_forta_bloc, language="text")
 
     with st.expander("Puncte arabe majore"):
+        # --- REPARAȚIE OBLIGATORIE: Definim explicit pilonii sectei din memorie ---
+        l_asc_pure = ascmc_brut[0] if isinstance(ascmc_brut, (list, tuple)) else ascmc_brut
+        l_soare = coordonate_totale.get("Soare", 0.0)
+        l_luna = coordonate_totale.get("Luna", 0.0)
+        l_mercur = coordonate_totale.get("Mercur", 0.0)
+        l_venus = coordonate_totale.get("Venus", 0.0)
+        l_marte = coordonate_totale.get("Marte", 0.0)
+        l_jupiter = coordonate_totale.get("Jupiter", 0.0)
+        
+        casa_soare_ev = determina_casa_planetei(l_soare, jd_ut_case)
+        este_diurn_ev = casa_soare_ev >= 7
+        # -------------------------------------------------------------------------
+        
         text_arabe_bloc = f"  - Tipul Sectei (Harta)     : {'DIURNĂ (Zi)' if este_diurn_ev else 'NOCTURNĂ (Noapte)'}\n\n"
         try:
             # (Calculele tale native pentru puncte rămân intacte în memorie)
