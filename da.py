@@ -882,7 +882,7 @@ with tab2:
             txt_ca += f"  - {eticheta:<15} : {pozitie_text}\n"
     except Exception as e:
         txt_ca += f"  - Eroare la calculul caselor astrologice: {e}\n"
-     st.text(txt_ca)
+    st.text(txt_ca)
     st.text("")
 
     # Executarea și afișarea Planetelor Standard
