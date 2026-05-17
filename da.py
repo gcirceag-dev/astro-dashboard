@@ -606,9 +606,14 @@ try:
     faze_ordine = [0.0, 90.0, 180.0, 270.0]
     nume_faze = {0.0: "Luna Noua", 90.0: "Primul Patrar", 180.0: "Luna Plina", 270.0: "Ultimul Patrar"}
     
-    if 0.0 <= elongatie_act < 90.0: idx_trecut = 0    elif 90.0 <= elongatie_act < 180.0: idx_trecut = 1
-    elif 180.0 <= elongatie_act < 270.0: idx_trecut = 2
-    else: idx_trecut = 3
+    if 0.0 <= elongatie_act < 90.0:
+        idx_trecut = 0
+    elif 90.0 <= elongatie_act < 180.0:
+        idx_trecut = 1
+    elif 180.0 <= elongatie_act < 270.0:
+        idx_trecut = 2
+    else:
+        idx_trecut = 3
         
     faza_t = faze_ordine[idx_trecut]
     jd_t = gaseste_faza_dinamica(jd_acum, faza_t, cauta_in_trecut=True)
