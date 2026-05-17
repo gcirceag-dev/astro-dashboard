@@ -856,12 +856,43 @@ with tab1:
 # =====================================================================
 
 # =====================================================================
-# TABUL 2: ASTRO (CASE, PLANETE ȘI EXPANDELE MARGINALE)
-# =====================================================================
-# =====================================================================
 # TABUL 2: ASTRO (STRUCTURĂ TABELARĂ FIXĂ CONFORM SPECIFICAȚIILOR)
 # =====================================================================
 with tab2:
+    # --- RESTAURARE DICȚIONARE ORIGINALE PENTRU ASIGURAREA MEMORIEI ---
+    planete_standard = {
+        "Soare": swe.SUN, "Luna": swe.MOON, "Mercur": swe.MERCURY, "Venus": swe.VENUS,
+        "Marte": swe.MARS, "Jupiter": swe.JUPITER, "Saturn": swe.SATURN,
+        "Uranus": swe.URANUS, "Neptun": swe.NEPTUNE, "Pluto": swe.PLUTO
+    }
+
+    puncte_fictive = {
+        "Nod Nord (Mean)": swe.MEAN_NODE, "Nod Nord (True)": swe.TRUE_NODE,
+        "Lilith (Mean)  ": swe.MEAN_APOG, "Lilith (True)  ": swe.OSCU_APOG,  
+        "Apogeu Interp. ": 21, "Perigeu Interp.": 22   
+    }
+
+    asteroizi = {
+        "Ceres": swe.CERES, "Pallas": swe.PALLAS, "Juno": swe.JUNO,     
+        "Vesta": swe.VESTA, "Chiron": swe.CHIRON, "Pholus": 16          
+    }
+
+    uraniene = {
+        "Cupido": 40, "Hades": 41, "Zeus": 42, "Kronos": 43,
+        "Apollon": 44, "Admetos": 45, "Vulkanus": 46, "Poseidon": 47, "Isis": 48            
+    }
+
+    stele_fixe = {
+        "Algol": "Algol", "Pleiades (Alcyone)": "Alcyone", "Aldebaran": "Aldebaran",
+        "Rigel": "Rigel", "Betelgeuse": "Betelgeuse", "Sirius": "Sirius",
+        "Regulus": "Regulus", "Spica": "Spica", "Arcturus": "Arcturus",
+        "Antares": "Antares", "Vega": "Vega", "Altair": "Altair", "Fomalhaut": "Fomalhaut"
+    }
+    # ------------------------------------------------------------------
+    
+    
+    
+    
     st.text("[CASE ASTROLOGICE ȘI AXE - PLACIDUS]")
     try:
         tabel_case = calculeaza_case_astrologice(jd_acum, b'P')
