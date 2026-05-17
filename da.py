@@ -1,9 +1,9 @@
 import os
 import math
-import json
 from datetime import datetime, timedelta
 import pytz
 import swisseph as swe
+import streamlit as st
 
 # --- CORECOȚIE ABSOLUTĂ: Adaugă linia asta aici, în capul fișierului! ---
 st.set_page_config(page_title="Astro Dashboard", page_icon="🌌", layout="wide")
