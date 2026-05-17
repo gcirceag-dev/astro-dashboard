@@ -614,7 +614,7 @@ def calculeaza_toate_aspectele(toate_coordonatele, orba_maxima=6.0):
     return [item[1] for item in aspecte_temporare]
 
 # =====================================================================
-# BLOCUL 9: INTERFAȚA WEB MINIMALISTĂ (PARTEA 1 DIN 3)
+# BLOCUL 9: INTERFAȚA WEB RESPONSIVE (BUCATA 1 DIN 4)
 # =====================================================================
 acum_local, jd_acum, jd_miez = get_times()
 geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
@@ -624,16 +624,11 @@ delta_t_zile = swe.deltat(jd_acum) / 86400.0
 jd_et_planete = jd_acum + delta_t_zile
 jd_ut_case = jd_acum
 
-# 1. LOGICA DE TIMP ȘI CALENDAR ÎN LIMBA ROMÂNĂ
-ZILE_RO = {
-    0: "Luni", 1: "Marți", 2: "Miercuri", 3: "Joi", 
-    4: "Vineri", 5: "Sâmbătă", 6: "Duminică"
-}
-zi_saptamana_nume = ZILE_RO[acum_local.weekday()]
-ziua_din_an = acum_local.timetuple().tm_yday
-saptamana_din_an = acum_local.isocalendar()[1]
+# Inițializări globale de siguranță pentru a preveni NameError
+lon_soare_acum = 0.0
+date_orizont_soare = {}
 
-# 2. CONFIGURAREA FILOSOFIEI GRAFICE (FONT UNIFORM, NEGRU PE ALB PUR)
+# 1. CONFIGURAREA FILOSOFIEI GRAFICE (FONT UNIFORM, NEGRU PE ALB PUR)
 st.set_page_config(page_title="Astro Dashboard", page_icon="🌌", layout="wide")
 
 st.markdown(
@@ -661,6 +656,11 @@ st.markdown(
         background-color: #FFFFFF !important;
         font-family: monospace !important;
     }
+    /* --- REPARAȚIE SUPREMĂ: RADERE COMPLETĂ CUVÂNT ARROW ȘI LOGOURI --- */
+    svg, div[class*="StyledMonoTextAreaIcon"], button[title="Copy to clipboard"], div[data-testid="stExpanderToggleIcon"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
     /* Stil tabele elegante cu linii fine */
     table {
         border-collapse: collapse !important;
@@ -685,27 +685,27 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# 3. LOGICA EXTRACTION GUVERNATORI PENTRU HEADER
+# 2. LOGICA DE TIMP ȘI CALENDAR ÎN LIMBA ROMÂNĂ
+ZILE_RO = {0: "Luni", 1: "Marți", 2: "Miercuri", 3: "Joi", 4: "Vineri", 5: "Sâmbătă", 6: "Duminică"}
+zi_saptamana_nume = ZILE_RO[acum_local.weekday()]
+ziua_din_an = acum_local.timetuple().tm_yday
+saptamana_din_an = acum_local.isocalendar()
+
+# 3. EXTRAGEREA INTEGRALĂ A GUVERNATORILOR PENTRU UN ALINIAMENT PERFECT
 ore_orizont_init = calculeaza_evenimente_orizont(jd_miez, swe.SUN, geopos_lista)
 dt_r_init = jd_to_datetime(ore_orizont_init["Rasarit"]) if ore_orizont_init["Rasarit"] else acum_local
 dt_a_init = jd_to_datetime(ore_orizont_init["Apus"]) if ore_orizont_init["Apus"] else acum_local
 ore_zi_init, ore_noapte_init = genereaza_ore_planetare(dt_r_init, dt_a_init)
-
 guvernator_zi_init = STAPAN_ZI[dt_r_init.weekday()]
 guvernator_ora_init = "Nedeterminat"
 interval_ora_curenta = ""
-
 for numar, planeta, start, end in ore_zi_init:
     if start <= acum_local < end:
-        guvernator_ora_init = planeta
-        interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
-        break
+        guvernator_ora_init = planeta; interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"; break
 if guvernator_ora_init == "Nedeterminat":
     for numar, planeta, start, end in ore_noapte_init:
         if start <= acum_local < end:
-            guvernator_ora_init = planeta
-            interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
-            break
+            guvernator_ora_init = planeta; interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"; break
 
 # 4. AFIȘAREA HEADER-ULUI STRICȚ PENTRU MOBIL
 st.text(f"{acum_local.strftime('%d-%m-%Y')} - {guvernator_zi_init.upper()}, {acum_local.strftime('%H:%M:%S')} - {guvernator_ora_init.upper()}, JD: {jd_acum:.5f}")
@@ -713,15 +713,20 @@ st.text(f"Ziua {ziua_din_an} {zi_saptamana_nume}, Saptamana {saptamana_din_an}")
 st.text(f"București, România, {LATITUDINE} N {LONGITUDINE} E")
 st.text("") 
 
-# 5. INITIALIZAREA CELOR 3 TABURI STRUCTURATE
 tab1, tab2, tab3 = st.tabs(["Soare - Luna", "Astro", "Aspecte"])
 
+# =====================================================================
+# BLOCUL 9: INTERFAȚA WEB RESPONSIVE (BUCATA 2 DIN 4)
+# =====================================================================
 with tab1:
     # --- SECȚIUNEA SOARE PE VERTICALĂ ---
     st.text("Soare")
     try:
         ore_s = calculeaza_evenimente_orizont(jd_miez, swe.SUN, geopos_lista)
         date_tr_s = calculeaza_date_timp_real(jd_acum, swe.SUN)
+        
+        lon_soare_acum = date_tr_s["lon_ecliptica"]
+        date_orizont_soare = ore_s
         
         rasarit_s = jd_to_datetime(ore_s["Rasarit"]).strftime('%H:%M:%S') if ore_s["Rasarit"] else "N/A"
         meridian_s = jd_to_datetime(ore_s["Tranzit (Meridian)"]).strftime('%H:%M:%S') if ore_s["Tranzit (Meridian)"] else "N/A"
@@ -744,6 +749,8 @@ with tab1:
     except Exception as e:
         st.text(f"  Eroare date Soare: {e}")
 
+    st.text("") 
+
     # --- SECȚIUNEA LUNĂ PE VERTICALĂ ---
     st.text("Luna")
     try:
@@ -754,9 +761,8 @@ with tab1:
         meridian_l = jd_to_datetime(ore_l["Tranzit (Meridian)"]).strftime('%H:%M:%S') if ore_l["Tranzit (Meridian)"] else "N/A"
         apus_l = jd_to_datetime(ore_l["Apus"]).strftime('%H:%M:%S') if ore_l["Apus"] else "N/A"
 
-        # Preluăm Manzila Lunii și o segmentăm pe 3 rânduri strânse
         res_luna_brut = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
-        m_luna = determina_manzila_araba(res_luna_brut)
+        m_luna = determina_manzila_araba(res_luna_brut[0][0])
 
         tabel_luna_html = f"""
         <table>
@@ -783,9 +789,9 @@ with tab1:
     st.text("[DINAMICA ȘI FAZELE LUNII]")
     try:
         date_luna_dinamica = calculeaza_dinamica_lunii(jd_acum)
-        res_soare = swe.calc_ut(jd_et_planete, swe.SUN, swe.FLG_SWIEPH)
-        res_luna = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
-        elongatie_act = (res_luna[0] - res_soare[0]) % 360.0
+        res_soare_f = swe.calc_ut(jd_et_planete, swe.SUN, swe.FLG_SWIEPH)
+        res_luna_f = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
+        elongatie_act = (res_luna_f[0][0] - res_soare_f[0][0]) % 360.0
         
         faze_ordine = [0.0, 90.0, 180.0, 270.0]
         nume_faze = {0.0: "Luna Noua", 90.0: "Primul Patrar", 180.0: "Luna Plina", 270.0: "Ultimul Patrar"}
@@ -824,8 +830,10 @@ with tab1:
         st.text(f"  Eroare faze Luna: {e}")
 
     # === DURATE CALENDARISTICE ȘI ORE PLANETARE ===
-    if dt_r_init and dt_a_init:
-        durata_zi_ore = (dt_a_init - dt_r_init).total_seconds() / 3600.0
+    dt_r = date_orizont_soare.get("Rasarit")
+    dt_a = date_orizont_soare.get("Apus")
+    if dt_r and dt_a:
+        durata_zi_ore = (dt_a - dt_r).total_seconds() / 3600.0
         durata_noapte_ore = 24.0 - durata_zi_ore
         
         st.text("[DURATE CALENDARISTICE ȘI CRONOCRAȚI PLANETARI]")
@@ -839,21 +847,23 @@ with tab1:
         """
         st.markdown(html_cronocrati, unsafe_allow_html=True)
         
+        ore_zi, ore_noapte = genereaza_ore_planetare(dt_r, dt_a)
+        
         with st.expander("[ORE PLANETARE DE ZI]"):
             html_opz = "<table>"
-            for numar, planeta, start, end in ore_zi_init:
+            for numar, planeta, start, end in ore_zi:
                 html_opz += f"<tr><td>Ora {numar:02d} ({planeta})</td><td>{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}</td></tr>"
             html_opz += "</table>"
             st.markdown(html_opz, unsafe_allow_html=True)
             
         with st.expander("[ORE PLANETARE DE NOAPTE]"):
             html_opn = "<table>"
-            for numar, planeta, start, end in ore_noapte_init:
+            for numar, planeta, start, end in ore_noapte:
                 html_opn += f"<tr><td>Ora {numar:02d} ({planeta})</td><td>{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}</td></tr>"
             html_opn += "</table>"
             st.markdown(html_opn, unsafe_allow_html=True)
 
-    # === ANOTIMPURI ASTRONOMICE ===
+    # === ANOTIMPURI ASTRONOMICE PENTRU PASUL ULTERIOR ===
     with st.expander("[ANOTIMPURI ȘI PUNCTE CARDINALE SOARE]"):
         an_curent = acum_local.year
         anotimp = calculeaza_anotimp_curent(lon_soare_acum)
@@ -872,7 +882,7 @@ with tab1:
         st.markdown(html_cardinale, unsafe_allow_html=True)
 
 # =====================================================================
-# TABUL 2: ASTRO (CASE ȘI PLANETE STANDARD PE VERTICALĂ)
+# BLOCUL 9: INTERFAȚA WEB RESPONSIVE (BUCATA 3 DIN 4)
 # =====================================================================
 with tab2:
     st.text("[CASE ASTROLOGICE ȘI AXE - PLACIDUS]")
@@ -1017,7 +1027,7 @@ with tab2:
     # === EXPANDER: CELE 5 PUNCTE ARABE/ELENISTICE MAJORE ===
     with st.expander("Puncte arabe majore"):
         case_brute, ascmc_brut = swe.houses(jd_ut_case, float(LATITUDINE), float(LONGITUDINE), b'P')
-        l_asc_pure = ascmc_brut[0]
+        l_asc_pure = ascmc_brut
         l_soare = coordonate_totale.get("Soare", 0.0)
         l_luna = coordonate_totale.get("Luna", 0.0)
         l_mercur = coordonate_totale.get("Mercur", 0.0)
@@ -1090,8 +1100,8 @@ res_soare_json = swe.calc_ut(jd_et_planete, swe.SUN, swe.FLG_SWIEPH)
 res_luna_json = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
 elongatie_act = (res_luna_json - res_soare_json) % 360.0
 
-ore_zi_json = [{"ora": n, "planeta": p, "interval": f"{s.strftime('%H:%M:%S')} - {e.strftime('%H:%M:%S')}"} for n, p, s, e in ore_zi_init]
-ore_noapte_json = [{"ora": n, "planeta": p, "interval": f"{s.strftime('%H:%M:%S')} - {e.strftime('%H:%M:%S')}"} for n, p, s, e in ore_noapte_init]
+ore_zi_json = [{"ora": n, "planeta": p, "interval": f"{s.strftime('%H:%M:%S')} - {e.strftime('%H:%M:%S')}"} for n, p, s, e in ore_zi]
+ore_noapte_json = [{"ora": n, "planeta": p, "interval": f"{s.strftime('%H:%M:%S')} - {e.strftime('%H:%M:%S')}"} for n, p, s, e in ore_noapte]
 
 corpuri_astrologice_text = {}
 toate_grupurile_lucrate = [("Planeta", planete_standard), ("Punct Fictiv", puncte_fictive), ("Asteroid", asteroizi), ("Uraniana", uraniene), ("Stea Fixa", stele_fixe)]
@@ -1138,6 +1148,7 @@ try:
 except: pass
 
 swe.close()
+
 
 
 
