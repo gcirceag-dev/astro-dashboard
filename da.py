@@ -1112,7 +1112,14 @@ try:
     for ch_json, nume_tinta_latina in puncte_arabe_nume:
         if ch_json in coordonate_totale:
             l_pure = coordonate_totale[ch_json]
-            corpuri_astrologice_text[nume_tinta_latina] = {"tip_obiect": "Punct Arab", "text_zodiac": format_pozitie_astrologica(l_pure), "numar_casa": f"{determina_casa_planetei(l_pure, jd_ut_case):02d}", "miscare": "Direct", "grad_brut": l_pure}
+            # --- REPARAȚIE SUPREMĂ ÎN JSON: Schimbă 'necessitate["lon_pura"]' cu 'l_pure' ---
+            corpuri_astrologice_text[nume_tinta_latina] = {
+                "tip_obiect": "Punct Arab", 
+                "text_zodiac": format_pozitie_astrologica(l_pure), 
+                "numar_casa": f"{determina_casa_planetei(l_pure, jd_ut_case):02d}", 
+                "miscare": "Direct", 
+                "grad_brut": l_pure  # <- CORECOȚIE: Schimbat din necessitate['lon_pura'] în l_pure!
+            }
 except: pass
 
 date_export_interfata = {
