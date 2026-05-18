@@ -1021,15 +1021,12 @@ with tab1:
             iluminare_str = date_output["luna_dinamica"].get("iluminare", "0%")
             iluminare_procent = float(iluminare_str.replace("%", ""))
         
-        # Determină faza
         faza = date_output["luna_dinamica"].get("faza curenta", "")
         
-        # Calculează unghiul arcului iluminat (0-360°)
-        # La 0% -> 0°, la 100% -> 360°
-        unghi_iluminat = (iluminare_procent / 100.0) * 360
-        
-        # Pentru seceră, arcul începe din dreapta (0°) și se întinde simetric
-        # La 5% iluminare, unghiul este mic, centrat pe 0° (dreapta)
+        # Pentru un arc de cerc (semilună), calculăm unghiul de start și sfârșit
+        # Arcul începe din dreapta (0°) și se extinde simetric
+        # La 50% iluminare, arcul acoperă jumătatea dreaptă (un arc de la -90° la +90°)
+        # La 100%, arcul devine cerc complet
         
         fig_luna, ax_luna = plt.subplots(figsize=(3, 3), facecolor='white')
         ax_luna.set_xlim(-1.2, 1.2)
@@ -1037,35 +1034,34 @@ with tab1:
         ax_luna.set_aspect('equal')
         ax_luna.axis('off')
         
-        # Cerc de bază (gri închis - partea nevăzută)
-        cerc_umbra = plt.Circle((0, 0), 1, color='#333333', zorder=1)
-        ax_luna.add_patch(cerc_umbra)
+        # Cerc de bază negru
+        cerc_negru = plt.Circle((0, 0), 1, color='black', zorder=1)
+        ax_luna.add_patch(cerc_negru)
         
-        # Desenează arcul iluminat (alb) folosind Wedge cu unghiuri simetrice față de 0°
-        if unghi_iluminat > 0:
-            # Unghiurile: de la -unghi/2 la +unghi/2, dar Wedge vrea grade de la 0 la 360
-            # 0° = dreapta, 90° = sus, 180° = stânga, 270° = jos
-            start_angle = -unghi_iluminat / 2
-            end_angle = unghi_iluminat / 2
-            # Transformă în sistemul Wedge (0-360, sens invers acelor)
-            start = (90 - start_angle) % 360
-            end = (90 - end_angle) % 360
+        # Desenăm arcul iluminat (alb)
+        if iluminare_procent > 0:
+            # Unghiul arcului: 0° -> 0°, 50% -> 180°, 100% -> 360°
+            unghi_total = (iluminare_procent / 50.0) * 180
+            if unghi_total > 360:
+                unghi_total = 360
             
-            if start < end:
-                arc = Wedge((0, 0), 1, start, end, color='white', zorder=2)
+            # Arcul începe din dreapta (0°) și se întinde simetric
+            start_angle = 90 - unghi_total/2
+            end_angle = 90 + unghi_total/2
+            
+            # Folosim un Wedge cu lățime (width) pentru a face un ARC, nu o felie
+            # width=1 înseamnă că arcul pornește de la margine
+            if unghi_total < 360:
+                # Arc subțire la margine
+                arc_iluminat = Wedge((0, 0), 1, start_angle, end_angle, width=1, color='white', zorder=2)
+                ax_luna.add_patch(arc_iluminat)
             else:
-                # Dacă trece de 360, desenează în două părți
-                arc1 = Wedge((0, 0), 1, start, 360, color='white', zorder=2)
-                arc2 = Wedge((0, 0), 1, 0, end, color='white', zorder=2)
-                ax_luna.add_patch(arc1)
-                ax_luna.add_patch(arc2)
-                arc = None
-            
-            if arc:
-                ax_luna.add_patch(arc)
+                # Cerc complet
+                cerc_alb = plt.Circle((0, 0), 1, color='white', zorder=2)
+                ax_luna.add_patch(cerc_alb)
         
         # Bordură
-        bordura = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
+        bordura = plt.Circle((0, 0), 1, color='white', fill=False, linewidth=1.5, zorder=3)
         ax_luna.add_patch(bordura)
         
         st.pyplot(fig_luna)
@@ -1074,11 +1070,9 @@ with tab1:
     with col2:
         st.markdown("**Durata Zilei vs Nopții**")
         
-        # Obține duratele
         durata_zi = date_output.get('durata_zi', '0 h 00 m 00 s')
         durata_noapte = date_output.get('durata_noapte', '0 h 00 m 00 s')
         
-        # Extrage orele
         import re
         match_zi = re.search(r'(\d+) h', durata_zi)
         match_noapte = re.search(r'(\d+) h', durata_noapte)
@@ -1087,7 +1081,13 @@ with tab1:
         ore_noapte = float(match_noapte.group(1)) if match_noapte else 12
         
         total = ore_zi + ore_noapte
-        # Procentul zilei din 360°
+        # Rotim linia de separare astfel încât să unească ora 8 cu ora 4
+        # Unghiul de start: 30° (ora 8 = 60°? Să calculăm corect)
+        # Pe ceas: 12 = 0°, 3 = 90°, 6 = 180°, 9 = 270°
+        # Ora 8 = 240°, Ora 4 = 120° (simetrice față de axa verticală)
+        # Vrem ca linia să treacă prin 240° și 120°
+        # Deci centrul arcului de zi este la 180° (dreapta?)
+        
         grade_zi = (ore_zi / total) * 360
         
         fig_zn, ax_zn = plt.subplots(figsize=(3, 3), facecolor='white')
@@ -1096,14 +1096,23 @@ with tab1:
         ax_zn.set_aspect('equal')
         ax_zn.axis('off')
         
-        # Desenăm cercul împărțit VERTICAL (stânga = noapte, dreapta = zi)
-        # Începem de la 0° (dreapta), mergem în sens invers acelor
+        # Desenăm cercul împărțit de o linie oblică (ora 8 - ora 4)
+        # Rotim întregul sistem cu 30° pentru a obține unghiul dorit
+        # Ziua = partea din DREAPTA (între 60° și 240°? Nu)
+        
+        # Mai simplu: desenăm două jumătăți rotite
+        # Start de la 60° (ora 4) până la 240° (ora 8) = 180° pentru zi
+        # Dacă gradul zilei este mai mic de 180, ajustăm
+        
+        unghi_start_zi = 60  # Ora 4
+        unghi_end_zi = unghi_start_zi + grade_zi
+        
         if grade_zi > 0:
-            zi = Wedge((0, 0), 1, 0, grade_zi, color='#FFD700', edgecolor='black', linewidth=0.5, zorder=1)
+            zi = Wedge((0, 0), 1, unghi_start_zi, unghi_end_zi, color='#FFD700', edgecolor='black', linewidth=0.5, zorder=1)
             ax_zn.add_patch(zi)
         
         if 360 - grade_zi > 0:
-            noapte = Wedge((0, 0), 1, grade_zi, 360, color='#1a1a2e', edgecolor='black', linewidth=0.5, zorder=1)
+            noapte = Wedge((0, 0), 1, unghi_end_zi, unghi_start_zi + 360, color='#1a1a2e', edgecolor='black', linewidth=0.5, zorder=1)
             ax_zn.add_patch(noapte)
         
         # Bordură
