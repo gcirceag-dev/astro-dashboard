@@ -159,7 +159,7 @@ def format_grade(grade_zecimale):
     s = int(round((((val - d) * 60) - m) * 60))
     if s >= 60: m += 1; s = 0
     if m >= 60: d += 1; m = 0
-    return f"{semn}{d}°{m:02d}'{s:02d}\""
+    return f"{semn}{d}°{m:02d}'{s:02d}"
 
 def format_durata(ore_zecimale):
     h = int(ore_zecimale)
