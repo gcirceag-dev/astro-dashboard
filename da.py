@@ -493,11 +493,10 @@ def calculeaza_toate_aspectele(toate_coordonatele, orba_maxima=6.0):
     ]
     
     puncte_fictive_zgomot = [
-        "Nod Nord (Mean)", "Nod Sud (Mean)", "Nod Nord (True)", "Nod Sud (True)",
-        "Lilith (Mean)  ", "Lilith (True)  ", "Lilith (Mean)", "Lilith (True)",
-        "Apogeu Interp. ", "Perigeu Interp.", "Apogeu Interp.", "Perigeu Interp."
-    ]
-    
+        "NNM", "NSM", "NNT", "NST",
+        "LM", "LT",
+        "AI", "PI"
+    ]    
     for i in range(total_corpuri):
         for j in range(i + 1, total_corpuri):
             c1 = nume_corpuri[i]
@@ -730,12 +729,12 @@ for nume, corp_id in planete_standard.items():
         date_output["planete"].append(f"{nume:<15} : Eroare: {e}")
 
 puncte_fictive = {
-    "Nod Nord (Mean)": swe.MEAN_NODE,
-    "Nod Nord (True)": swe.TRUE_NODE,
-    "Lilith (Mean)": swe.MEAN_APOG,
-    "Lilith (True)": swe.OSCU_APOG,
-    "Apogeu Interp.": 21,
-    "Perigeu Interp.": 22
+    "NNM": swe.MEAN_NODE,      # Nod Nord (Mean)
+    "NNT": swe.TRUE_NODE,      # Nod Nord (True)
+    "LM": swe.MEAN_APOG,       # Lilith (Mean)
+    "LT": swe.OSCU_APOG,       # Lilith (True)
+    "AI": 21,                  # Apogeu Interp.
+    "PI": 22                   # Perigeu Interp.
 }
 
 date_output["puncte_fictive"] = []
@@ -746,12 +745,19 @@ for nume, corp_id in puncte_fictive.items():
         date_output["puncte_fictive"].append(f"{nume:<15} : {p['pozitie_text']:<25} | Casa: {numar_casa:02d} | ({p['miscare']})")
         coordonate_totale[nume] = p['lon_pura']
         
-        if "Nod Nord" in nume:
-            tip_nod = "Mean" if "Mean" in nume else "True"
+        # Pentru Nodurile Sud (calculate pe loc)
+        if nume == "NNM":
             lon_sud = (p['lon_pura'] + 180.0) % 360.0
             numar_casa_sud = determina_casa_planetei(lon_sud, jd_ut_case)
-            date_output["puncte_fictive"].append(f"Nod Sud ({tip_nod:<4}) : {format_pozitie_astrologica(lon_sud):<25} | Casa: {numar_casa_sud:02d}")
-            coordonate_totale[f"Nod Sud ({tip_nod})"] = lon_sud
+            pozitie_sud = format_pozitie_astrologica(lon_sud)
+            date_output["puncte_fictive"].append(f"NSM : {pozitie_sud:<25} | Casa: {numar_casa_sud:02d} | ({p['miscare']})")
+            coordonate_totale["NSM"] = lon_sud
+        elif nume == "NNT":
+            lon_sud = (p['lon_pura'] + 180.0) % 360.0
+            numar_casa_sud = determina_casa_planetei(lon_sud, jd_ut_case)
+            pozitie_sud = format_pozitie_astrologica(lon_sud)
+            date_output["puncte_fictive"].append(f"NST : {pozitie_sud:<25} | Casa: {numar_casa_sud:02d} | ({p['miscare']})")
+            coordonate_totale["NST"] = lon_sud
     except Exception as e:
         date_output["puncte_fictive"].append(f"{nume:<15} : Eroare: {e}")
 
