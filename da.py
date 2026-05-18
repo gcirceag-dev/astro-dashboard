@@ -422,13 +422,14 @@ def determina_manzila_araba(lon_zecimala):
     }
 
 def deseneaza_sinusoida(acum_local, lon, lat):
-    """Desenează sinusoida cu altitudinea Soarelui și Lunii (un singur maxim fiecare)."""
+    """Desenează sinusoida pe un interval de 26 de ore de la răsăritul de azi."""
     
     geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     
-    # Funcție pentru a obține răsăritul unei zile
-    def get_rasarit(data):
-        data_utc = data.astimezone(pytz.utc)
+    # Calculează răsăritul de azi
+    def get_rasarit_azi():
+        azi_12 = acum_local.replace(hour=12, minute=0, second=0, microsecond=0)
+        data_utc = azi_12.astimezone(pytz.utc)
         jd = swe.julday(data_utc.year, data_utc.month, data_utc.day,
                         data_utc.hour + data_utc.minute / 60.0)
         rezultat = calculeaza_evenimente_orizont(jd - 0.5, swe.SUN, geopos_lista)
@@ -436,22 +437,14 @@ def deseneaza_sinusoida(acum_local, lon, lat):
             return jd_to_datetime(rezultat["Rasarit"])
         return None
     
-    # Calculează răsăritul de azi și mâine
-    azi = acum_local.replace(hour=12, minute=0, second=0, microsecond=0)
-    maine = azi + timedelta(days=1)
+    dt_r_azi = get_rasarit_azi()
     
-    dt_r_azi = get_rasarit(azi)
-    dt_r_maine = get_rasarit(maine)
-    
-    # Fallback dacă nu găsește răsăritul
     if not dt_r_azi:
-        dt_r_azi = azi.replace(hour=6, minute=0)
-    if not dt_r_maine:
-        dt_r_maine = maine.replace(hour=6, minute=0)
+        dt_r_azi = acum_local.replace(hour=6, minute=0, second=0)
     
-    # Interval: de la răsăritul de azi la răsăritul de mâine
-    start_time = dt_r_azi - timedelta(hours=1)
-    end_time = dt_r_maine + timedelta(hours=1)
+    # Interval fix: 26 de ore de la răsărit
+    start_time = dt_r_azi
+    end_time = dt_r_azi + timedelta(hours=26)
     
     # Generează timestamp-uri la fiecare 30 de minute
     timestamps = []
