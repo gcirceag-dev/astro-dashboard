@@ -28,17 +28,17 @@ st.markdown("""
     .stMarkdown, .stText, .stDataFrame, .stMetric {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         color: #000000;
-        font-size: 18px !important;
+        font-size: 20px !important;
     }
     .stDataFrame {
-        font-size: 17px !important;
+        font-size: 20px !important;
     }
     .stExpander {
         border: none;
         box-shadow: none;
     }
     table {
-        font-size: 17px !important;
+        font-size: 20px !important;
     }
     td, th {
         white-space: normal !important;
