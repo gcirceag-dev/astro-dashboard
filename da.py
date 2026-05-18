@@ -6,10 +6,7 @@ from datetime import datetime, timedelta
 import pytz
 import swisseph as swe
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.patches import Wedge
-import io
-from PIL import Image
+import plotly.graph_objects as go
 
 # =====================================================================
 # CONFIGURARE STREAMLIT
@@ -1023,49 +1020,39 @@ with tab1:
         
         faza = date_output["luna_dinamica"].get("faza curenta", "")
         
-        # Pentru un arc de cerc (semilună), calculăm unghiul de start și sfârșit
-        # Arcul începe din dreapta (0°) și se extinde simetric
-        # La 50% iluminare, arcul acoperă jumătatea dreaptă (un arc de la -90° la +90°)
-        # La 100%, arcul devine cerc complet
+        # Pentru semilună: afișăm procentul iluminat ca o porțiune dintr-un inel
+        # La 5% -> o felie subțire în dreapta
+        # La 50% -> jumătate cerc
+        # La 100% -> cerc complet
         
-        fig_luna, ax_luna = plt.subplots(figsize=(3, 3), facecolor='white')
-        ax_luna.set_xlim(-1.2, 1.2)
-        ax_luna.set_ylim(-1.2, 1.2)
-        ax_luna.set_aspect('equal')
-        ax_luna.axis('off')
+        # Calculăm unghiul (0-360) pentru porțiunea iluminată
+        # Începem din dreapta (0°) și mergem în sens invers acelor
+        unghi_iluminat = (iluminare_procent / 100.0) * 360
         
-        # Cerc de bază negru
-        cerc_negru = plt.Circle((0, 0), 1, color='black', zorder=1)
-        ax_luna.add_patch(cerc_negru)
+        # Creăm un donut chart (inel)
+        fig_luna = go.Figure(data=[go.Pie(
+            values=[unghi_iluminat, 360 - unghi_iluminat],
+            hole=0.0,  # Fără gaură = cerc plin
+            marker_colors=['white', '#333333'],
+            sort=False,
+            direction='clockwise',
+            startangle=90,  # Începe de la sus? (90°)
+            showlegend=False,
+            textinfo='none',
+            hoverinfo='none'
+        )])
         
-        # Desenăm arcul iluminat (alb)
-        if iluminare_procent > 0:
-            # Unghiul arcului: 0° -> 0°, 50% -> 180°, 100% -> 360°
-            unghi_total = (iluminare_procent / 50.0) * 180
-            if unghi_total > 360:
-                unghi_total = 360
-            
-            # Arcul începe din dreapta (0°) și se întinde simetric
-            start_angle = 90 - unghi_total/2
-            end_angle = 90 + unghi_total/2
-            
-            # Folosim un Wedge cu lățime (width) pentru a face un ARC, nu o felie
-            # width=1 înseamnă că arcul pornește de la margine
-            if unghi_total < 360:
-                # Arc subțire la margine
-                arc_iluminat = Wedge((0, 0), 1, start_angle, end_angle, width=1, color='white', zorder=2)
-                ax_luna.add_patch(arc_iluminat)
-            else:
-                # Cerc complet
-                cerc_alb = plt.Circle((0, 0), 1, color='white', zorder=2)
-                ax_luna.add_patch(cerc_alb)
+        # Rotim astfel încât să începem din DREAPTA (0°)
+        fig_luna.update_layout(
+            width=300,
+            height=300,
+            margin=dict(t=0, b=0, l=0, r=0),
+            paper_bgcolor='white',
+            annotations=[dict(text=f"{iluminare_procent:.1f}%", x=0.5, y=0.5, font_size=14, showarrow=False)]
+        )
         
-        # Bordură
-        bordura = plt.Circle((0, 0), 1, color='white', fill=False, linewidth=1.5, zorder=3)
-        ax_luna.add_patch(bordura)
-        
-        st.pyplot(fig_luna)
-        st.caption(f"Iluminare: {iluminare_procent:.1f}% | {faza}")
+        st.plotly_chart(fig_luna, use_container_width=False)
+        st.caption(f"{faza}")
     
     with col2:
         st.markdown("**Durata Zilei vs Nopții**")
@@ -1081,45 +1068,31 @@ with tab1:
         ore_noapte = float(match_noapte.group(1)) if match_noapte else 12
         
         total = ore_zi + ore_noapte
-        # Rotim linia de separare astfel încât să unească ora 8 cu ora 4
-        # Unghiul de start: 30° (ora 8 = 60°? Să calculăm corect)
-        # Pe ceas: 12 = 0°, 3 = 90°, 6 = 180°, 9 = 270°
-        # Ora 8 = 240°, Ora 4 = 120° (simetrice față de axa verticală)
-        # Vrem ca linia să treacă prin 240° și 120°
-        # Deci centrul arcului de zi este la 180° (dreapta?)
+        procent_zi = (ore_zi / total) * 100
         
-        grade_zi = (ore_zi / total) * 360
+        # Creăm un donut chart pentru zi/noapte
+        fig_zn = go.Figure(data=[go.Pie(
+            values=[procent_zi, 100 - procent_zi],
+            hole=0.0,
+            marker_colors=['#FFD700', '#1a1a2e'],
+            sort=False,
+            direction='clockwise',
+            startangle=90,  # Începe de la sus
+            showlegend=False,
+            textinfo='none',
+            hoverinfo='none'
+        )])
         
-        fig_zn, ax_zn = plt.subplots(figsize=(3, 3), facecolor='white')
-        ax_zn.set_xlim(-1.2, 1.2)
-        ax_zn.set_ylim(-1.2, 1.2)
-        ax_zn.set_aspect('equal')
-        ax_zn.axis('off')
+        # Rotim astfel încât linia de separare să fie între ora 8 și ora 4
+        # Adăugăm o rotație de 30° pentru a alinia corect
+        fig_zn.update_layout(
+            width=300,
+            height=300,
+            margin=dict(t=0, b=0, l=0, r=0),
+            paper_bgcolor='white'
+        )
         
-        # Desenăm cercul împărțit de o linie oblică (ora 8 - ora 4)
-        # Rotim întregul sistem cu 30° pentru a obține unghiul dorit
-        # Ziua = partea din DREAPTA (între 60° și 240°? Nu)
-        
-        # Mai simplu: desenăm două jumătăți rotite
-        # Start de la 60° (ora 4) până la 240° (ora 8) = 180° pentru zi
-        # Dacă gradul zilei este mai mic de 180, ajustăm
-        
-        unghi_start_zi = 60  # Ora 4
-        unghi_end_zi = unghi_start_zi + grade_zi
-        
-        if grade_zi > 0:
-            zi = Wedge((0, 0), 1, unghi_start_zi, unghi_end_zi, color='#FFD700', edgecolor='black', linewidth=0.5, zorder=1)
-            ax_zn.add_patch(zi)
-        
-        if 360 - grade_zi > 0:
-            noapte = Wedge((0, 0), 1, unghi_end_zi, unghi_start_zi + 360, color='#1a1a2e', edgecolor='black', linewidth=0.5, zorder=1)
-            ax_zn.add_patch(noapte)
-        
-        # Bordură
-        bordura_zn = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
-        ax_zn.add_patch(bordura_zn)
-        
-        st.pyplot(fig_zn)
+        st.plotly_chart(fig_zn, use_container_width=False)
         st.caption(f"Zi: {durata_zi}  |  Noapte: {durata_noapte}")
     
     st.divider()
