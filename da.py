@@ -1038,18 +1038,30 @@ with tab1:
 # TAB 2 - ASTRO
 # =====================================================================
 with tab2:
-    # Case astrologice - expander închis implicit
+    # Case astrologice - expander închis implicit, tabel în 3 coloane
     st.subheader("Case")
     with st.expander("Afișează casele", expanded=False):
         if "case_astrologice" in date_output and "eroare" not in date_output["case_astrologice"]:
-            df_case = pd.DataFrame(
-                list(date_output["case_astrologice"].items()),
-                columns=["Casă", "Poziție"]
-            )
+            # Transformă dicționarul în listă de rânduri cu 3 coloane
+            case_date = []
+            for casa, pozitie in date_output["case_astrologice"].items():
+                # Poziția vine în format "19° 15'09\" Berbec"
+                # Separă grade/minute/secunde de zodie
+                import re
+                match = re.match(r'(\d+°\s+\d+\'\d+")\s+([A-Za-z]+)', pozitie)
+                if match:
+                    grade = match.group(1)
+                    zodie = match.group(2)
+                else:
+                    grade = pozitie
+                    zodie = ""
+                case_date.append([casa, grade, zodie])
+            
+            df_case = pd.DataFrame(case_date, columns=["Casa", "Poziție", "Zodie"])
             st.dataframe(df_case, hide_index=True, use_container_width=False)
     
     st.divider()
-    
+        
     # Poziții planete standard
     st.subheader("Pozitii")
     st.markdown("**Planete standard**")
