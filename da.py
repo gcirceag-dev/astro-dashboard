@@ -1107,13 +1107,32 @@ with tab2:
     st.dataframe(df_planete, hide_index=True, use_container_width=False)
     
     # Noduri și puncte fictive
+    # Noduri și puncte fictive - inclusiv Nodurile Sud
     with st.expander("Noduri & Lilith"):
         fictive_date = []
         for p in date_output.get("puncte_fictive", []):
-            fictive_date.append(parse_pozitie(p))
+            # Verifică dacă linia conține "Nod Sud" (deja are format diferit)
+            if "Nod Sud" in p:
+                # Linie exemplu: "Nod Sud (Mean) : 04° 52'55" Vir | Casa: 04"
+                if " : " in p:
+                    nume, rest = p.split(" : ", 1)
+                    import re
+                    match = re.match(r'(\d+°\s+\d+\'\d+")\s+([A-Za-z]+)\s+\|\s+Casa:\s+(\d+)', rest)
+                    if match:
+                        pozitie = match.group(1)
+                        zodie = match.group(2)
+                        casa = match.group(3)
+                        fictive_date.append([nume.strip(), pozitie, zodie, casa, "R"])
+                    else:
+                        fictive_date.append([p[:25], "", "", "", ""])
+                else:
+                    fictive_date.append([p[:25], "", "", "", ""])
+            else:
+                # Parsează normal pentru celelalte puncte
+                fictive_date.append(parse_pozitie(p))
         df_fictive = pd.DataFrame(fictive_date, columns=["Nume", "Poziție", "Zodie", "Casa", "D/R"])
         st.dataframe(df_fictive, hide_index=True, use_container_width=False)
-    
+            
     # Asteroizi
     with st.expander("Asteroizi"):
         asteroizi_date = []
