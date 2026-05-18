@@ -1332,7 +1332,7 @@ with col2:
             columns=["Eveniment", "Data și ora"]
         )
         st.dataframe(df_cardinale, hide_index=True, use_container_width=False)
-
+    st.divider()
 # =====================================================================
 # TAB 2 - ASTRO
 # =====================================================================
