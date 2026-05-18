@@ -11,7 +11,7 @@ import pandas as pd
 # CONFIGURARE STREAMLIT
 # =====================================================================
 st.set_page_config(
-    page_title="AstroCalcul Pro",
+    page_title="Dashboard astro",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
@@ -186,7 +186,7 @@ def format_orba_aspect(orba_zecimala):
 # =====================================================================
 def calculeaza_evenimente_orizont(jd_miez, corp_id, geopos_lista):
     rezultate = {}
-    evenimente = {"Rasarit": CALC_RISE, "Tranzit (Meridian)": CALC_TRANSIT, "Apus": CALC_SET}
+    evenimente = {"Rasarit": CALC_RISE, "Meridian": CALC_TRANSIT, "Apus": CALC_SET}
     for nume_ev, masca_rsmi in evenimente.items():
         status, date_tup = swe.rise_trans(jd_miez, corp_id, masca_rsmi, geopos_lista)
         rezultate[nume_ev] = date_tup[0] if status == 0 else None
@@ -620,7 +620,7 @@ try:
     jd_t = gaseste_faza_dinamica(jd_acum, faza_t, cauta_in_trecut=True)
     dt_t = jd_to_datetime(jd_t)
     
-    date_output["faze_luna"] = [f"[TRECUT] {nume_faze[faza_t]} : {dt_t.strftime('%d-%m-%Y %H:%M:%S')}"]
+    date_output["faze_luna"] = [f" {nume_faze[faza_t]} : {dt_t.strftime('%d-%m-%Y %H:%M:%S')}"]
     
     jd_cursor = jd_t + 1.0  
     for k in range(1, 4):
@@ -628,7 +628,7 @@ try:
         faza_v = faze_ordine[idx_v]
         jd_v = gaseste_faza_dinamica(jd_cursor, faza_v, cauta_in_trecut=False)
         dt_v = jd_to_datetime(jd_v)
-        date_output["faze_luna"].append(f"[VIITOR] {nume_faze[faza_v]} : {dt_v.strftime('%d-%m-%Y %H:%M:%S')}")
+        date_output["faze_luna"].append(f" {nume_faze[faza_v]} : {dt_v.strftime('%d-%m-%Y %H:%M:%S')}")
         jd_cursor = jd_v + 1.0
 except Exception as e:
     date_output["luna_dinamica"] = {"eroare": str(e)}
@@ -876,7 +876,7 @@ except Exception as e:
 # =====================================================================
 
 st.title("🌙 AstroCalcul Pro")
-st.caption(f"Data calculului: {acum_local.strftime('%d-%m-%Y %H:%M:%S')} | Coordonate: {LATITUDINE}° N, {LONGITUDINE}° E")
+st.caption(f"Data: {acum_local.strftime('%d-%m-%Y %H:%M:%S')} | Coordonate: {LATITUDINE}° N, {LONGITUDINE}° E")
 
 # Creare tab-uri
 tab1, tab2, tab3 = st.tabs(["🌞 Soare & Lună", "⭐ Astro", "🔮 Aspecte & Filosofic"])
