@@ -87,6 +87,28 @@ st.markdown("""
     hr {
         margin: 10px 0;
     }
+        /* Forțează tabelele specifice Streamlit */
+    [data-testid="stDataFrame"] table,
+    [data-testid="stDataFrame"] tbody,
+    [data-testid="stDataFrame"] tr,
+    [data-testid="stDataFrame"] td,
+    [data-testid="stDataFrame"] th {
+        font-size: 20px !important;
+    }
+    
+    /* Forțează tabelele din popover */
+    div[data-testid="stPopover"] table,
+    div[data-testid="stPopover"] td,
+    div[data-testid="stPopover"] th {
+        font-size: 20px !important;
+    }
+    
+    /* Forțează tabelele din expander */
+    div[data-testid="stExpander"] table,
+    div[data-testid="stExpander"] td,
+    div[data-testid="stExpander"] th {
+        font-size: 20px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
