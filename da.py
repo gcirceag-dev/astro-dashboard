@@ -356,8 +356,8 @@ def gaseste_faza_dinamica(jd_baza, faza_tinta, cauta_in_trecut=False):
             
     return (t0 + t1) / 2.0
 
-def genereaza_ore_planetare(dt_rasarit, dt_apus, dt_rasarit_maine):
-    zi_saptamana = dt_rasarit.weekday()
+def genereaza_ore_planetare(dt_rasarit, dt_apus, dt_rasarit_maine, zi_saptamana):
+    # Prima oră a zilei = planeta zilei
     stapan_pornire = STAPAN_ZI[zi_saptamana]
     index_curent = ORDINE_CHALDEAN.index(stapan_pornire)
     
@@ -370,6 +370,7 @@ def genereaza_ore_planetare(dt_rasarit, dt_apus, dt_rasarit_maine):
     ore_zi = []
     ore_noapte = []
     
+    # Orele de zi
     timp_cursor = dt_rasarit
     for i in range(12):
         planeta = ORDINE_CHALDEAN[index_curent]
@@ -377,7 +378,9 @@ def genereaza_ore_planetare(dt_rasarit, dt_apus, dt_rasarit_maine):
         timp_cursor += lungime_ora_zi
         ore_zi.append((i + 1, planeta, start_ora, timp_cursor))
         index_curent = (index_curent + 1) % 7
-        
+    
+    # Orele de noapte (continuă de unde a rămas index_curent)
+    timp_cursor = dt_apus
     for i in range(12):
         planeta = ORDINE_CHALDEAN[index_curent]
         start_ora = timp_cursor
@@ -722,6 +725,7 @@ except Exception as e:
     date_output["luna_dinamica"] = {"eroare": str(e)}
 
 # Durate și ore planetare - varianta CORECTĂ (cu răsăritul de mâine)
+# Durate și ore planetare - varianta CORECTĂ (cu răsăritul de mâine)
 dt_r_azi = date_orizont_soare.get("Rasarit")
 dt_a_azi = date_orizont_soare.get("Apus")
 
@@ -756,13 +760,16 @@ if dt_r_azi and dt_a_azi:
         durata_noapte_sec = (dt_r_maine - dt_a_azi).total_seconds()
         durata_noapte_ore = durata_noapte_sec / 3600.0
         
-        lungime_ora_zi = timedelta(seconds=durata_zi_sec / 12)
-        lungime_ora_noapte = timedelta(seconds=durata_noapte_sec / 12)
-        
+        # ========== CODUL CORECTAT AICI ==========
+        # Prima oră a zilei = planeta zilei
         zi_saptamana = dt_r_azi.weekday()
         stapan_pornire = STAPAN_ZI[zi_saptamana]
         index_curent = ORDINE_CHALDEAN.index(stapan_pornire)
         
+        lungime_ora_zi = timedelta(seconds=durata_zi_sec / 12)
+        lungime_ora_noapte = timedelta(seconds=durata_noapte_sec / 12)
+        
+        # Orele de zi
         timp_cursor = dt_r_azi
         for i in range(12):
             planeta = ORDINE_CHALDEAN[index_curent]
@@ -770,8 +777,8 @@ if dt_r_azi and dt_a_azi:
             timp_cursor += lungime_ora_zi
             ore_zi.append((i + 1, planeta, start_ora, timp_cursor))
             index_curent = (index_curent + 1) % 7
-        st.write(f"Index înainte de noapte: {index_curent}")
-        st.write(f"Planeta care ar trebui să înceapă noaptea: {ORDINE_CHALDEAN[index_curent]}")
+        
+        # Orele de noapte (continuă natural)
         timp_cursor = dt_a_azi
         for i in range(12):
             planeta = ORDINE_CHALDEAN[index_curent]
@@ -800,7 +807,7 @@ if dt_r_azi and dt_a_azi:
                     guvernator_ora = planeta
                     interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
                     break
-                    
+
 date_output["durata_zi"] = format_durata(durata_zi_ore)
 date_output["durata_noapte"] = format_durata(durata_noapte_ore)
 date_output["durata_totala"] = format_durata(durata_totala_ore)
