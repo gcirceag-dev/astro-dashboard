@@ -779,15 +779,18 @@ if dt_r_azi and dt_a_azi:
         
         guvernator_zi = STAPAN_ZI[dt_r_azi.weekday()]
         
+        # Elimină microsecundele din acum_local pentru comparație corectă
+        acum_clean = acum_local.replace(microsecond=0)
+        
         for numar, planeta, start, end in ore_zi:
-            if start <= acum_local < end:
+            if start <= acum_clean < end:
                 guvernator_ora = planeta
                 interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
                 break
                 
         if guvernator_ora == "Nedeterminat":
             for numar, planeta, start, end in ore_noapte:
-                if start <= acum_local < end:
+                if start <= acum_clean < end:
                     guvernator_ora = planeta
                     interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
                     break
