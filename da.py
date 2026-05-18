@@ -886,7 +886,7 @@ tab1, tab2, tab3 = st.tabs(["Soare & Luna", "Astro", "Aspecte"])
 # =====================================================================
 with tab1:
     # Soarele - două tabele
-    st.subheader("☀️ SOARELE")
+    st.subheader("☀️ Soare")
     
     col1, col2 = st.columns(2)
     
@@ -907,7 +907,7 @@ with tab1:
     st.divider()
     
     # Luna
-    st.subheader("🌙 LUNA")
+    st.subheader("🌙 Luna")
     
     col1, col2 = st.columns(2)
     
@@ -962,14 +962,14 @@ with tab1:
     st.dataframe(df_durate, hide_index=True, use_container_width=False)
     
     # Ore planetare cu expander
-    with st.expander("📋 ORE PLANETARE DE ZI"):
+    with st.expander("Ore de zi"):
         df_ore_zi = pd.DataFrame(
             [ora.split(" : ") for ora in date_output.get("ore_zi", [])],
             columns=["Ora planetară", "Interval"]
         )
         st.dataframe(df_ore_zi, hide_index=True, use_container_width=False)
     
-    with st.expander("🌙 ORE PLANETARE DE NOAPTE"):
+    with st.expander("Ore de noapte"):
         df_ore_noapte = pd.DataFrame(
             [ora.split(" : ") for ora in date_output.get("ore_noapte", [])],
             columns=["Ora planetară", "Interval"]
@@ -977,7 +977,7 @@ with tab1:
         st.dataframe(df_ore_noapte, hide_index=True, use_container_width=False)
     
     # Anotimpuri cu expander
-    with st.expander("🍂 ANOTIMPURI ȘI PUNCTE CARDINALE"):
+    with st.expander("Anotimpuri"):
         st.markdown(f"**Anotimpul curent:** {date_output.get('anotimp', 'N/A')}")
         df_cardinale = pd.DataFrame(
             [pct.split(" : ") for pct in date_output.get("puncte_cardinale", [])],
