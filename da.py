@@ -421,6 +421,105 @@ def determina_manzila_araba(lon_zecimala):
         "progres_text": format_grade(grade_rest)
     }
 
+def deseneaza_sinusoida(acum_local, dt_r_azi, dt_a_azi, lon, lat):
+    """Desenează sinusoida cu altitudinea Soarelui și Lunii."""
+    
+    # Intervalul: de la răsăritul de azi la răsăritul de mâine
+    dt_r_maine = dt_r_azi + timedelta(days=1)
+    
+    # Calculează corect răsăritul de mâine (aproximativ)
+    # Vom folosi un interval puțin mai mare pentru a include maximul
+    start_time = dt_r_azi - timedelta(hours=1)
+    end_time = dt_r_maine + timedelta(hours=1)
+    
+    # Generează timestamp-uri la fiecare 30 de minute
+    timestamps = []
+    current = start_time
+    while current <= end_time:
+        timestamps.append(current)
+        current += timedelta(minutes=30)
+    
+    # Calculează altitudinile
+    alt_soare = []
+    alt_luna = []
+    
+    geopos = [LONGITUDINE, LATITUDINE, ALTITUDINE]
+    
+    for ts in timestamps:
+        # Convertim la UTC pentru Swiss Ephemeris
+        ts_utc = ts.astimezone(pytz.utc)
+        jd = swe.julday(ts_utc.year, ts_utc.month, ts_utc.day,
+                        ts_utc.hour + ts_utc.minute/60.0)
+        
+        # Soarele
+        try:
+            res_s = swe.calc_ut(jd, swe.SUN, swe.FLG_SWIEPH)
+            xin = [res_s[0][0], res_s[0][1], res_s[0][2]]
+            az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
+            alt_soare.append(alt)
+        except:
+            alt_soare.append(-90)
+        
+        # Luna
+        try:
+            res_l = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH)
+            xin = [res_l[0][0], res_l[0][1], res_l[0][2]]
+            az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
+            alt_luna.append(alt)
+        except:
+            alt_luna.append(-90)
+    
+    # Creează graficul
+    fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
+    
+    # Ascunde axele
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    
+    # Desenează linia orizontului (y=0)
+    ax.axhline(y=0, color='black', linewidth=1.5, linestyle='-', alpha=0.7)
+    
+    # Desenează sinusoida Soarelui
+    x_numeric = list(range(len(timestamps)))
+    ax.plot(x_numeric, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
+    
+    # Desenează sinusoida Lunii
+    ax.plot(x_numeric, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
+    
+    # Găsește poziția curentă
+    current_idx = None
+    for i, ts in enumerate(timestamps):
+        if ts >= acum_local:
+            current_idx = i
+            break
+    
+    if current_idx and current_idx < len(alt_soare):
+        # Marchează poziția curentă a Soarelui
+        ax.scatter(current_idx, alt_soare[current_idx], color='#FFD700', 
+                   s=100, edgecolor='black', zorder=5, marker='o')
+        
+        # Marchează poziția curentă a Lunii
+        ax.scatter(current_idx, alt_luna[current_idx], color='#888888', 
+                   s=80, edgecolor='black', zorder=5, marker='o')
+    
+    # Adaugă text pentru orizont
+    ax.text(x_numeric[-1], 0.5, 'Orizont', ha='right', va='bottom', fontsize=8, color='black')
+    
+    # Setează limitele y pentru a arăta frumos
+    ax.set_ylim(-35, 95)
+    
+    # Ascunde marginile
+    ax.set_xlim(x_numeric[0], x_numeric[-1])
+    
+    # Legendă
+    ax.legend(loc='upper right', frameon=False, fontsize=10)
+    
+    return fig
+
 def evalueaza_forta_planeta(nume_p, lon_p, casa_p, miscare_p, lon_soare):
     scor = 0
     justificari = []
@@ -1170,6 +1269,15 @@ with col2:
 
     st.pyplot(fig_zn)
     st.caption(f"Zi: {durata_zi}  |  Noapte: {durata_noapte}")
+    
+    
+    # Sinusoida Soare - Lună
+    st.subheader("Altitudinea Soarelui și Lunii")
+    
+    if dt_r and dt_a:
+        fig_sin = deseneaza_sinusoida(acum_local, dt_r, dt_a, LONGITUDINE, LATITUDINE)
+        st.pyplot(fig_sin)
+        st.caption("Linia orizontului (0°) | ● Poziția curentă")
     
     st.divider()
     
