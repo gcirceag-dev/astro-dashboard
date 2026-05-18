@@ -1258,23 +1258,29 @@ with tab3:
     
     def parse_aspect(linie):
         """
-        Linie exemplu: "Soare CON Luna (+2° 15' 00\")"
+        Linie exemplu: 
+        - "Soare CON Luna (+2° 15' 00\")"
+        - "Nod Nord (True) CAR Pluto (+1° 30' 00\")"
+        - "Lilith (True) OPO Admetos (-0° 15' 24\")"
         """
         if not linie:
             return ["", "", "", ""]
         
         import re
-        # Pattern: Planeta1 SPATIU ASPECT SPATIU Planeta2 (SPATIU+ORB)
-        match = re.match(r'^([A-Za-zăâîșț]+)\s+([A-Z]+)\s+([A-Za-zăâîșț]+)\s+\(\+?([^)]+)\)', linie)
+        
+        # Pattern care capturează orice text până la un ASPECT (CON, SEX, CAR, TRI, OPO)
+        # urmat de spațiu, apoi orice text până la paranteza cu orba
+        # Acceptă nume cu spații și paranteze
+        match = re.match(r'^(.+?)\s+(CON|SEX|CAR|TRI|OPO)\s+(.+?)\s+\(([^)]+)\)', linie)
         if match:
-            planeta1 = match.group(1)
+            planeta1 = match.group(1).strip()
             tip_aspect = match.group(2)
-            planeta2 = match.group(3)
+            planeta2 = match.group(3).strip()
             orba = match.group(4).strip()
             return [planeta1, tip_aspect, planeta2, orba]
         
         # Fallback pentru cazuri neașteptate
-        return [linie[:20], "", "", ""]
+        return [linie[:30], "", "", ""]
     
     aspecte_date = []
     for a in date_output.get("aspecte", []):
