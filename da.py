@@ -915,48 +915,23 @@ tab1, tab2, tab3 = st.tabs(["Soare & Luna", "Astro", "Aspecte"])
 # TAB 1 - SOARE & LUNĂ
 # =====================================================================
 with tab1:
-    # Soarele - două tabele
+    # Soarele - tabel unificat cu expander pentru date fizice
     st.subheader("Soare")
     
-    col1, col2 = st.columns(2)
+    # Tabel cu evenimentele (Răsărit, Meridian, Apus)
+    df_soare_ev = pd.DataFrame(
+        list(date_output.get("SOARE_orizont", {}).items()),
+        columns=["Eveniment", "Ora"]
+    )
+    st.dataframe(df_soare_ev, hide_index=True, use_container_width=False)
     
-    with col1:
-        df_soare_ev = pd.DataFrame(
-            list(date_output.get("SOARE_orizont", {}).items()),
-            columns=["Eveniment", "Ora"]
-        )
-        st.dataframe(df_soare_ev, hide_index=True, use_container_width=False)
-    
-    with col2:
+    # Date fizice în expander
+    with st.expander("📊 Date fizice în timp real"):
         df_soare_fiz = pd.DataFrame(
             list(date_output.get("SOARE_fizice", {}).items()),
             columns=["Parametru", "Valoare"]
         )
         st.dataframe(df_soare_fiz, hide_index=True, use_container_width=False)
-    
-    st.divider()
-    
-    # Luna
-    st.subheader("Luna")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        df_luna_ev = pd.DataFrame(
-            list(date_output.get("LUNA_orizont", {}).items()),
-            columns=["Eveniment", "Ora"]
-        )
-        st.dataframe(df_luna_ev, hide_index=True, use_container_width=False)
-    
-    with col2:
-        date_luna_fiz = {k: v for k, v in date_output.get("LUNA_fizice", {}).items() if k != "eroare"}
-        if date_output.get("LUNA_manzila"):
-            date_luna_fiz["Manzil al-Qamar"] = date_output["LUNA_manzila"]
-        df_luna_fiz = pd.DataFrame(
-            list(date_luna_fiz.items()),
-            columns=["Parametru", "Valoare"]
-        )
-        st.dataframe(df_luna_fiz, hide_index=True, use_container_width=False)
     
     st.divider()
     
