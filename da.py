@@ -915,7 +915,7 @@ tab1, tab2, tab3 = st.tabs(["Soare & Luna", "Astro", "Aspecte"])
 # TAB 1 - SOARE & LUNĂ
 # =====================================================================
 with tab1:
-    # Soarele - tabel unificat cu popover pentru date fizice
+    # Soarele - tabel cu popover pentru date fizice
     st.subheader("Soare")
     
     df_soare_ev = pd.DataFrame(
@@ -924,8 +924,7 @@ with tab1:
     )
     st.dataframe(df_soare_ev, hide_index=True, use_container_width=False)
     
-    # Date fizice în popover (buton mic)
-    with st.popover("📊 Date fizice"):
+    with st.popover("Dinamica"):
         df_soare_fiz = pd.DataFrame(
             list(date_output.get("SOARE_fizice", {}).items()),
             columns=["Parametru", "Valoare"]
@@ -934,23 +933,48 @@ with tab1:
     
     st.divider()
     
-    # Dinamica Lunii
-    st.subheader("Fazele Lunii")
+    # Luna - tabel cu popover pentru date fizice și Manzil
+    st.subheader("Luna")
     
-    if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
-        ld = date_output["luna_dinamica"]
-        df_luna_din = pd.DataFrame(
-            list(ld.items()),
+    df_luna_ev = pd.DataFrame(
+        list(date_output.get("LUNA_orizont", {}).items()),
+        columns=["Eveniment", "Ora"]
+    )
+    st.dataframe(df_luna_ev, hide_index=True, use_container_width=False)
+    
+    with st.popover("📊 Date fizice și Manzil"):
+        date_luna_fiz = {k: v for k, v in date_output.get("LUNA_fizice", {}).items() if k != "eroare"}
+        df_luna_fiz = pd.DataFrame(
+            list(date_luna_fiz.items()),
             columns=["Parametru", "Valoare"]
         )
-        st.dataframe(df_luna_din, hide_index=True, use_container_width=False)
+        st.dataframe(df_luna_fiz, hide_index=True, use_container_width=False)
         
-        st.markdown("**Fazele principale**")
-        df_faze = pd.DataFrame(
-            [faza.split(" : ") for faza in date_output.get("faze_luna", [])],
-            columns=["Faza", "Data și ora"]
-        )
-        st.dataframe(df_faze, hide_index=True, use_container_width=False)
+        # Manzila pe 3 rânduri
+        if date_output.get("LUNA_manzila"):
+            manzila_str = date_output["LUNA_manzila"]
+            # Parsează string-ul
+            import re
+            match_statie = re.search(r'Conac (\d+)/28 - ([^\(]+) \(([^\)]+)\)', manzila_str)
+            match_pozitie = re.search(r'Poziție: ([^\|]+)', manzila_str)
+            
+            if match_statie:
+                numar_statie = match_statie.group(1)
+                nume_manzil = match_statie.group(2).strip()
+                traducere = match_statie.group(3)
+            else:
+                numar_statie = "?"
+                nume_manzil = "?"
+                traducere = "?"
+            
+            pozitie = match_pozitie.group(1) if match_pozitie else "?"
+            
+            df_manzila = pd.DataFrame([
+                ["Manzil", f"Stația {numar_statie} - {nume_manzil}"],
+                ["Traducere", traducere],
+                ["Poziție în manzil", pozitie]
+            ], columns=["", "Detalii"])
+            st.dataframe(df_manzila, hide_index=True, use_container_width=False)
     
     st.divider()
     
