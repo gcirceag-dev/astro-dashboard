@@ -915,18 +915,17 @@ tab1, tab2, tab3 = st.tabs(["Soare & Luna", "Astro", "Aspecte"])
 # TAB 1 - SOARE & LUNĂ
 # =====================================================================
 with tab1:
-    # Soarele - tabel unificat cu expander pentru date fizice
+    # Soarele - tabel unificat cu popover pentru date fizice
     st.subheader("Soare")
     
-    # Tabel cu evenimentele (Răsărit, Meridian, Apus)
     df_soare_ev = pd.DataFrame(
         list(date_output.get("SOARE_orizont", {}).items()),
         columns=["Eveniment", "Ora"]
     )
     st.dataframe(df_soare_ev, hide_index=True, use_container_width=False)
     
-    # Date fizice în expander
-    with st.expander("📊 Date fizice în timp real"):
+    # Date fizice în popover (buton mic)
+    with st.popover("📊 Date fizice"):
         df_soare_fiz = pd.DataFrame(
             list(date_output.get("SOARE_fizice", {}).items()),
             columns=["Parametru", "Valoare"]
