@@ -25,25 +25,65 @@ st.markdown("""
         max-width: 1000px;
         margin: 0 auto;
     }
-    .stMarkdown, .stText, .stDataFrame, .stMetric {
+    
+    /* Text general */
+    .stMarkdown, .stText, .stMetric, .stCaption, label, p, div {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         color: #000000;
         font-size: 20px !important;
     }
-    .stDataFrame {
+    
+    /* Tabele Streamlit (st.dataframe) */
+    .stDataFrame, .stDataFrame div, .stDataFrame table {
         font-size: 20px !important;
     }
+    
+    /* Orice tabel HTML */
+    table, th, td {
+        font-size: 20px !important;
+    }
+    
+    /* Antetul tabelului */
+    thead, th {
+        font-size: 20px !important;
+        font-weight: bold !important;
+    }
+    
+    /* Expander */
+    .stExpander, .stExpander details, .stExpander summary {
+        font-size: 20px !important;
+    }
+    
+    /* Sidebar */
+    .css-1d391kg, .stSidebar, .stSidebar p, .stSidebar div {
+        font-size: 20px !important;
+    }
+    
+    /* Butoane */
+    .stButton button {
+        font-size: 20px !important;
+    }
+    
+    /* Tabs */
+    button[data-baseweb="tab"] {
+        font-size: 20px !important;
+    }
+    
+    /* Headere (st.subheader, st.title) */
+    h1, h2, h3, h4, h5, h6 {
+        font-size: 24px !important;
+    }
+    
     .stExpander {
         border: none;
         box-shadow: none;
     }
-    table {
-        font-size: 20px !important;
-    }
+    
     td, th {
         white-space: normal !important;
         word-wrap: break-word !important;
     }
+    
     hr {
         margin: 10px 0;
     }
