@@ -441,7 +441,7 @@ def evalueaza_forta_planeta(nume_p, lon_p, casa_p, miscare_p, lon_soare):
             scor -= 4
             justificari.append(f"Cadere {semn_p} (-4)")
         else:
-            justificari.append("Esențial: Standard (0)")
+            justificari.append("Pelerin (0)")
 
     if miscare_p == "D":
         scor += 2
