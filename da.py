@@ -1077,7 +1077,7 @@ with tab3:
     st.divider()
     
     # Puncte arabe
-    st.subheader(ȚPuncte arabe majore")
+    st.subheader("Puncte arabe majore")
     
     st.text(date_output.get("tip_secta", ""))
     
