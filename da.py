@@ -990,7 +990,7 @@ with tab1:
 # =====================================================================
 with tab2:
     # Case astrologice
-    st.subheader("🏠 CASE ASTROLOGICE ȘI AXE - PLACIDUS")
+    st.subheader("Case")
     if "case_astrologice" in date_output and "eroare" not in date_output["case_astrologice"]:
         df_case = pd.DataFrame(
             list(date_output["case_astrologice"].items()),
@@ -1001,7 +1001,7 @@ with tab2:
     st.divider()
     
     # Poziții planete standard
-    st.subheader("⭐ POZIȚII ASTROLOGICE TROPICALE")
+    st.subheader("⭐ Pozitii")
     st.markdown("**Planete standard**")
     
     df_planete = pd.DataFrame(
@@ -1010,14 +1010,14 @@ with tab2:
     )
     st.dataframe(df_planete, hide_index=True, use_container_width=False)
     
-    with st.expander("📋 Noduri și puncte fictive"):
+    with st.expander("📋 Noduri & Lilith"):
         df_fictive = pd.DataFrame(
             [p.split(" : ") for p in date_output.get("puncte_fictive", [])],
             columns=["Punct", "Detalii"]
         )
         st.dataframe(df_fictive, hide_index=True, use_container_width=False)
     
-    with st.expander("🌠 Asteroizi principali"):
+    with st.expander("🌠 Asteroizi"):
         df_asteroizi = pd.DataFrame(
             [a.split(" : ") for a in date_output.get("asteroizi", [])],
             columns=["Asteroid", "Detalii"]
@@ -1041,7 +1041,7 @@ with tab2:
     st.divider()
     
     # Scoruri planetare
-    st.subheader("📊 EVALUAREA FORȚEI PLANETARE")
+    st.subheader("Scor planetar")
     
     scoruri_date = []
     for scor in date_output.get("scoruri", []):
@@ -1056,7 +1056,7 @@ with tab2:
     st.divider()
     
     # Scor cosmic
-    st.subheader("🌌 SCORUL COSMIC GLOBAL")
+    st.subheader("🌌 Scor global")
     scor = date_output.get("scor_cosmic", 0)
     st.progress(int(scor))
     st.metric("Indice de eficiență planetară totală", f"{scor:.1f}%")
@@ -1066,7 +1066,7 @@ with tab2:
 # =====================================================================
 with tab3:
     # Aspecte
-    st.subheader("🔮 ASPECTE PLANETARE ACTIVE (orbă ≤ 6°)")
+    st.subheader("🔮 Aspecte active (orb ≤ 6°)")
     
     df_aspecte = pd.DataFrame(
         [[a] for a in date_output.get("aspecte", [])],
@@ -1077,7 +1077,7 @@ with tab3:
     st.divider()
     
     # Puncte arabe
-    st.subheader("⚜️ PUNCTE ARABE MAJORE")
+    st.subheader("⚜️ Puncte arabe majore")
     
     st.text(date_output.get("tip_secta", ""))
     
