@@ -1093,8 +1093,12 @@ with tab1:
                 ["Traducere", traducere],
                 ["Poziție în manzil", pozitie]
             ], columns=["", "Detalii"])
-            st.dataframe(df_manzila, hide_index=True, use_container_width=False)
-    
+            
+            # Container cu derulare orizontală pentru nume lungi de manzile
+            with st.container():
+                st.markdown('<div style="overflow-x: auto;">', unsafe_allow_html=True)
+                st.dataframe(df_manzila, hide_index=True, use_container_width=False)
+                st.markdown('</div>', unsafe_allow_html=True)    
     st.divider()
     
     # Fazele Lunii
