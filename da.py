@@ -779,6 +779,13 @@ if dt_r_azi and dt_a_azi:
         
         guvernator_zi = STAPAN_ZI[dt_r_azi.weekday()]
         
+        # ========== DEBUG - verifică intervalele ==========
+        st.write(f"Ora curentă curățată: {acum_local.replace(microsecond=0)}")
+        st.write("Ore de noapte:")
+        for numar, planeta, start, end in ore_noapte:
+            st.write(f"Ora {numar}: {start.replace(microsecond=0)} - {end.replace(microsecond=0)}")
+        # ========== SFÂRȘIT DEBUG ==========
+        
         # Elimină microsecundele din acum_local pentru comparație corectă
         acum_clean = acum_local.replace(microsecond=0)
         
