@@ -20,18 +20,25 @@ st.set_page_config(
 st.markdown("""
 <style>
     .stApp {
-        max-width: 900px;
+        max-width: 1000px;
         margin: 0 auto;
     }
     .stMarkdown, .stText, .stDataFrame, .stMetric {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         color: #000000;
+        font-size: 16px !important;
+    }
+    .stDataFrame {
+        font-size: 15px !important;
     }
     .stExpander {
         border: none;
         box-shadow: none;
     }
-    .stTable td, .stTable th {
+    table {
+        font-size: 15px !important;
+    }
+    td, th {
         white-space: normal !important;
         word-wrap: break-word !important;
     }
