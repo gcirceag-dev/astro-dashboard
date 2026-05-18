@@ -31,14 +31,14 @@ st.markdown("""
         font-size: 16px !important;
     }
     .stDataFrame {
-        font-size: 15px !important;
+        font-size: 17px !important;
     }
     .stExpander {
         border: none;
         box-shadow: none;
     }
     table {
-        font-size: 15px !important;
+        font-size: 17px !important;
     }
     td, th {
         white-space: normal !important;
