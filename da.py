@@ -1020,35 +1020,38 @@ with tab1:
         
         faza = date_output["luna_dinamica"].get("faza curenta", "")
         
-        # Pentru semilună: afișăm procentul iluminat ca o porțiune dintr-un inel
-        # La 5% -> o felie subțire în dreapta
-        # La 50% -> jumătate cerc
-        # La 100% -> cerc complet
-        
-        # Calculăm unghiul (0-360) pentru porțiunea iluminată
-        # Începem din dreapta (0°) și mergem în sens invers acelor
+        # Unghiul iluminat (0-360)
         unghi_iluminat = (iluminare_procent / 100.0) * 360
         
-        # Creăm un donut chart (inel)
-        fig_luna = go.Figure(data=[go.Pie(
-            values=[unghi_iluminat, 360 - unghi_iluminat],
-            hole=0.0,  # Fără gaură = cerc plin
-            marker_colors=['white', '#333333'],
-            sort=False,
-            direction='clockwise',
-            startangle=90,  # Începe de la sus? (90°)
-            showlegend=False,
-            textinfo='none',
-            hoverinfo='none'
-        )])
+        # Creează figura plotly
+        fig_luna = go.Figure()
         
-        # Rotim astfel încât să începem din DREAPTA (0°)
+        # Adaugă partea iluminată (albă)
+        if unghi_iluminat > 0:
+            fig_luna.add_trace(go.Pie(
+                values=[unghi_iluminat, 360 - unghi_iluminat],
+                labels=['', ''],
+                marker=dict(colors=['white', '#333333']),
+                hole=0.0,
+                sort=False,
+                direction='clockwise',
+                startangle=90,
+                showlegend=False,
+                textinfo='none',
+                hoverinfo='none'
+            ))
+        
         fig_luna.update_layout(
             width=300,
             height=300,
             margin=dict(t=0, b=0, l=0, r=0),
-            paper_bgcolor='white',
-            annotations=[dict(text=f"{iluminare_procent:.1f}%", x=0.5, y=0.5, font_size=14, showarrow=False)]
+            paper_bgcolor='rgba(0,0,0,0)',
+            annotations=[dict(
+                text=f"{iluminare_procent:.1f}%",
+                x=0.5, y=0.5,
+                font_size=14,
+                showarrow=False
+            )]
         )
         
         st.plotly_chart(fig_luna, use_container_width=False)
@@ -1070,26 +1073,27 @@ with tab1:
         total = ore_zi + ore_noapte
         procent_zi = (ore_zi / total) * 100
         
-        # Creăm un donut chart pentru zi/noapte
-        fig_zn = go.Figure(data=[go.Pie(
+        # Creează figura pentru zi/noapte
+        fig_zn = go.Figure()
+        
+        fig_zn.add_trace(go.Pie(
             values=[procent_zi, 100 - procent_zi],
+            labels=['', ''],
+            marker=dict(colors=['#FFD700', '#1a1a2e']),
             hole=0.0,
-            marker_colors=['#FFD700', '#1a1a2e'],
             sort=False,
             direction='clockwise',
-            startangle=90,  # Începe de la sus
+            startangle=60,  # 60° = ora 4, pentru a obține linia între ora 4 și ora 8
             showlegend=False,
             textinfo='none',
             hoverinfo='none'
-        )])
+        ))
         
-        # Rotim astfel încât linia de separare să fie între ora 8 și ora 4
-        # Adăugăm o rotație de 30° pentru a alinia corect
         fig_zn.update_layout(
             width=300,
             height=300,
             margin=dict(t=0, b=0, l=0, r=0),
-            paper_bgcolor='white'
+            paper_bgcolor='rgba(0,0,0,0)'
         )
         
         st.plotly_chart(fig_zn, use_container_width=False)
