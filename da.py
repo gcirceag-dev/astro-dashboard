@@ -1297,15 +1297,40 @@ with tab3:
     
     st.divider()
     
-    # Puncte arabe
+    # Puncte arabe - sparte în 4 coloane
     st.subheader("Puncte arabe majore")
     
     st.text(date_output.get("tip_secta", ""))
     
-    df_pa = pd.DataFrame(
-        [pa.split(" : ") for pa in date_output.get("puncte_arabe", [])],
-        columns=["Punct arab", "Detalii"]
-    )
+    def parse_punct_arab(linie):
+        """
+        Linie exemplu: "Pars Fortunae (Noroc)   : 19° 15'09\" Berbec | Casa: 11"
+        """
+        if not linie or "Eroare" in linie:
+            return ["", "", "", ""]
+        
+        if " : " in linie:
+            nume, rest = linie.split(" : ", 1)
+        else:
+            nume = linie[:30]
+            rest = linie
+        
+        import re
+        # Extrage poziția, zodiacul și casa
+        match = re.match(r'(\d+°\s+\d+\'\d+")\s+([A-Za-z]+)\s+\|\s+Casa:\s+(\d+)', rest)
+        if match:
+            pozitie = match.group(1)
+            zodie = match.group(2)
+            casa = match.group(3)
+            return [nume.strip(), pozitie, zodie, casa]
+        else:
+            return [nume.strip(), rest[:30], "", ""]
+    
+    puncte_date = []
+    for pa in date_output.get("puncte_arabe", []):
+        puncte_date.append(parse_punct_arab(pa))
+    
+    df_pa = pd.DataFrame(puncte_date, columns=["Punct arab", "Poziție", "Zodie", "Casa"])
     st.dataframe(df_pa, hide_index=True, use_container_width=False)
 
 # Închidere
