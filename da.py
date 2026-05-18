@@ -1021,43 +1021,48 @@ with tab1:
             iluminare_str = date_output["luna_dinamica"].get("iluminare", "0%")
             iluminare_procent = float(iluminare_str.replace("%", ""))
         
-        # Determină dacă e în creștere sau descreștere
+        # Determină direcția: creștere sau descreștere
         faza = date_output["luna_dinamica"].get("faza curenta", "")
-        # Pentru o secera subțire, procentul trebuie să fie proporțional
-        # La 5% -> unghi de ~36° (5% din 360°)
-        unghi_iluminat = (iluminare_procent / 100.0) * 360.0
+        este_crescatoare = "crestere" in faza or "Primul Patrar" in faza or "Noua" in faza
+        este_descrescatoare = "descrestere" in faza or "Ultimul Patrar" in faza or "Plin" in faza
+        
+        # Calculăm poziția umbrei (de la dreapta la stânga)
+        # La 0% iluminare -> umbră la x = +1.0 (dreapta complet)
+        # La 50% iluminare -> umbră la x = 0.0 (centrat)
+        # La 100% iluminare -> umbră la x = -1.0 (stânga complet)
+        if este_descrescatoare and iluminare_procent > 50:
+            # După Lună Plină, iluminarea scade, umbra vine din dreapta
+            # Normalizăm de la 100% -> 0%
+            procent_umbra = (100 - iluminare_procent) / 100.0
+        else:
+            # Creștere sau descreștere până la 50%
+            procent_umbra = (50 - abs(50 - iluminare_procent)) / 50.0
+            if iluminare_procent < 50:
+                procent_umbra = (50 - iluminare_procent) / 50.0
+            else:
+                procent_umbra = (iluminare_procent - 50) / 50.0
+        
+        # Poziția X a cercului de umbră: de la +1.2 (dreapta) la -1.2 (stânga)
+        offset_x = 1.2 * (1 - 2 * procent_umbra)
         
         # Creează cercul lunar
         fig_luna, ax_luna = plt.subplots(figsize=(3, 3), facecolor='white')
-        ax_luna.set_xlim(-1.2, 1.2)
-        ax_luna.set_ylim(-1.2, 1.2)
+        ax_luna.set_xlim(-1.5, 1.5)
+        ax_luna.set_ylim(-1.5, 1.5)
         ax_luna.set_aspect('equal')
         ax_luna.axis('off')
         
-        # Cerc de bază (gri închis pentru partea nevăzută)
-        cerc_negru = plt.Circle((0, 0), 1, color='#333333', zorder=1)
-        ax_luna.add_patch(cerc_negru)
+        # Cerc de bază alb (Luna plină)
+        cerc_alb = plt.Circle((0, 0), 1, color='white', edgecolor='black', linewidth=1.5, zorder=1)
+        ax_luna.add_patch(cerc_alb)
         
-        # Masca albă - partea iluminată (începe din DREAPTA = unghi 0°)
-        if iluminare_procent > 0 and iluminare_procent < 100:
-            # Pentru seceră: unghiul începe de la 0° (dreapta) și merge în sus/jos simetric
-            unghi_jumatate = unghi_iluminat / 2.0
-            # Unghi start: 90 - unghi_jumatate, Unghi sfârșit: 90 + unghi_jumatate
-            start = 90 - unghi_jumatate
-            end = 90 + unghi_jumatate
-            masca = Wedge((0, 0), 1, start, end, color='white', zorder=2)
-            ax_luna.add_patch(masca)
-        elif iluminare_procent >= 99.9:
-            # Lună Plină - tot alb
-            cerc_alb = plt.Circle((0, 0), 1, color='white', zorder=2)
-            ax_luna.add_patch(cerc_alb)
-        
-        # Bordură cerc
-        bordura = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
-        ax_luna.add_patch(bordura)
+        # Cerc de umbră (gri/negru) care se deplasează
+        if iluminare_procent < 99.9:
+            cerc_umbra = plt.Circle((offset_x, 0), 1, color='#333333', zorder=2)
+            ax_luna.add_patch(cerc_umbra)
         
         st.pyplot(fig_luna)
-        st.caption(f"Iluminare: {iluminare_procent:.1f}%")
+        st.caption(f"Iluminare: {iluminare_procent:.1f}% | {faza}")
     
     with col2:
         st.markdown("**Durata Zilei vs Nopții**")
@@ -1077,24 +1082,22 @@ with tab1:
         total = ore_zi + ore_noapte
         # Convertim ore în grade: (ore / total) * 360
         grade_zi = (ore_zi / total) * 360
-        grade_noapte = (ore_noapte / total) * 360
         
-        # Creează cercul zi/noapte - centrat sus-jos
+        # Creează cercul zi/noapte - centrat sus-jos (începe de la -90°)
         fig_zn, ax_zn = plt.subplots(figsize=(3, 3), facecolor='white')
         ax_zn.set_xlim(-1.2, 1.2)
         ax_zn.set_ylim(-1.2, 1.2)
         ax_zn.set_aspect('equal')
         ax_zn.axis('off')
         
-        # Începem de la SUS (-90°)
-        # Ziua (sus)
+        # Ziua (sus) - începe de la -90° (sus)
         if grade_zi > 0:
-            zi = Wedge((0, 0), 1, -90, -90 + grade_zi, color='#FFD700', zorder=1)
+            zi = Wedge((0, 0), 1, -90, -90 + grade_zi, color='#FFD700', edgecolor='black', linewidth=0.5, zorder=1)
             ax_zn.add_patch(zi)
         
         # Noaptea (jos)
-        if grade_noapte > 0:
-            noapte = Wedge((0, 0), 1, -90 + grade_zi, 270, color='#1a1a2e', zorder=1)
+        if 360 - grade_zi > 0:
+            noapte = Wedge((0, 0), 1, -90 + grade_zi, 270, color='#1a1a2e', edgecolor='black', linewidth=0.5, zorder=1)
             ax_zn.add_patch(noapte)
         
         # Bordură cerc
