@@ -882,8 +882,31 @@ except Exception as e:
 # AFIȘAREA STREAMLIT - ORGANIZATĂ PE TAB-URI CU TABELE
 # =====================================================================
 
+# Header nou pe mai multe rânduri
+# Dicționar pentru zile săptămână în engleză (abreviat)
+ZILE_SAPTAMANA_EN = {
+    0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"
+}
+
+def numar_zi_din_an(data):
+    """Returnează numărul zilei din an (1-366)."""
+    return data.timetuple().tm_yday
+
+def numar_saptamana_din_an(data):
+    """Returnează numărul săptămânii din an (1-53)."""
+    return data.isocalendar()[1]
+
+zi_nume = ZILE_SAPTAMANA_EN[acum_local.weekday()]
+zi_din_an = numar_zi_din_an(acum_local)
+saptamana_din_an = numar_saptamana_din_an(acum_local)
+guv_ora = date_output.get('guvernator_ora', 'N/A')
+
 st.title("Dashboard astro")
-st.caption(f"Data: {acum_local.strftime('%d-%m-%Y %H:%M:%S')} | Coordonate: {LATITUDINE}° N, {LONGITUDINE}° E")
+st.markdown(f"""
+**{zi_nume} {acum_local.strftime('%d-%b-%Y %H:%M:%S')} {guv_ora}**  
+*Ziua {zi_din_an} · Săptămâna {saptamana_din_an}*
+""")
+st.caption(f"Coordonate: {LATITUDINE}° N, {LONGITUDINE}° E")
 
 # Creare tab-uri
 tab1, tab2, tab3 = st.tabs(["Soare & Luna", "Astro", "Aspecte"])
