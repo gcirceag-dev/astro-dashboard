@@ -1086,7 +1086,7 @@ with tab1:
                 nume_manzil = "?"
                 traducere = "?"
             
-            pozitie = match_pozitie.group(1).strip('"') if match_pozitie else "?"
+            pozitie = match_pozitie.group(1).replace('""', '"') if match_pozitie else "?"
             
             df_manzila = pd.DataFrame([
                 ["Manzil", f"Stația {numar_statie} - {nume_manzil}"],
