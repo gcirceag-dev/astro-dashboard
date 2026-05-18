@@ -356,13 +356,13 @@ def gaseste_faza_dinamica(jd_baza, faza_tinta, cauta_in_trecut=False):
             
     return (t0 + t1) / 2.0
 
-def genereaza_ore_planetare(dt_rasarit, dt_apus):
+def genereaza_ore_planetare(dt_rasarit, dt_apus, dt_rasarit_maine):
     zi_saptamana = dt_rasarit.weekday()
     stapan_pornire = STAPAN_ZI[zi_saptamana]
     index_curent = ORDINE_CHALDEAN.index(stapan_pornire)
     
     durata_zi = dt_apus - dt_rasarit
-    durata_noapte = timedelta(hours=24) - durata_zi
+    durata_noapte = dt_rasarit_maine - dt_apus
     
     lungime_ora_zi = durata_zi / 12
     lungime_ora_noapte = durata_noapte / 12
@@ -770,7 +770,8 @@ if dt_r_azi and dt_a_azi:
             timp_cursor += lungime_ora_zi
             ore_zi.append((i + 1, planeta, start_ora, timp_cursor))
             index_curent = (index_curent + 1) % 7
-        
+        st.write(f"Index înainte de noapte: {index_curent}")
+        st.write(f"Planeta care ar trebui să înceapă noaptea: {ORDINE_CHALDEAN[index_curent]}")
         timp_cursor = dt_a_azi
         for i in range(12):
             planeta = ORDINE_CHALDEAN[index_curent]
