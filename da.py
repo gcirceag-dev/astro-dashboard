@@ -1063,41 +1063,94 @@ with tab2:
     st.divider()
         
     # Poziții planete standard
+        # Poziții astrologice - sparte în 5 coloane
     st.subheader("Pozitii")
-    st.markdown("**Planete standard**")
     
-    df_planete = pd.DataFrame(
-        [p.split(" : ") for p in date_output.get("planete", [])],
-        columns=["Planetă", "Detalii"]
-    )
+    # Funcție ajutătoare pentru a extrage cele 5 coloane
+    def parse_pozitie(linie):
+        """
+        Linie exemplu: "Soare          : 19° 15'09\" Berbec | Casa: 07 | (D)"
+        """
+        if not linie or "Eroare" in linie:
+            return ["", "", "", "", ""]
+        
+        # Separă numele de rest
+        if " : " in linie:
+            nume, rest = linie.split(" : ", 1)
+        else:
+            nume = linie.split()[0] if linie else ""
+            rest = linie
+        
+        # Extrage poziția, zodiacul, casa și mișcarea
+        import re
+        # Pattern: grade° mm'ss" Zodie | Casa: nn | (D/R)
+        match = re.match(r'(\d+°\s+\d+\'\d+")\s+([A-Za-z]+)\s+\|\s+Casa:\s+(\d+)\s+\|\s+\(([DR])\)', rest)
+        if match:
+            pozitie = match.group(1)
+            zodie = match.group(2)
+            casa = match.group(3)
+            miscare = match.group(4)
+        else:
+            pozitie = rest[:25] if len(rest) > 25 else rest
+            zodie = ""
+            casa = ""
+            miscare = ""
+        
+        return [nume.strip(), pozitie, zodie, casa, miscare]
+    
+    # Planete standard
+    st.markdown("**Planete standard**")
+    planete_date = []
+    for p in date_output.get("planete", []):
+        planete_date.append(parse_pozitie(p))
+    df_planete = pd.DataFrame(planete_date, columns=["Nume", "Poziție", "Zodie", "Casa", "D/R"])
     st.dataframe(df_planete, hide_index=True, use_container_width=False)
     
+    # Noduri și puncte fictive
     with st.expander("Noduri & Lilith"):
-        df_fictive = pd.DataFrame(
-            [p.split(" : ") for p in date_output.get("puncte_fictive", [])],
-            columns=["Punct", "Detalii"]
-        )
+        fictive_date = []
+        for p in date_output.get("puncte_fictive", []):
+            fictive_date.append(parse_pozitie(p))
+        df_fictive = pd.DataFrame(fictive_date, columns=["Nume", "Poziție", "Zodie", "Casa", "D/R"])
         st.dataframe(df_fictive, hide_index=True, use_container_width=False)
     
+    # Asteroizi
     with st.expander("Asteroizi"):
-        df_asteroizi = pd.DataFrame(
-            [a.split(" : ") for a in date_output.get("asteroizi", [])],
-            columns=["Asteroid", "Detalii"]
-        )
+        asteroizi_date = []
+        for a in date_output.get("asteroizi", []):
+            asteroizi_date.append(parse_pozitie(a))
+        df_asteroizi = pd.DataFrame(asteroizi_date, columns=["Nume", "Poziție", "Zodie", "Casa", "D/R"])
         st.dataframe(df_asteroizi, hide_index=True, use_container_width=False)
     
+    # Planete uraniene
     with st.expander("Planete uraniene"):
-        df_uraniene = pd.DataFrame(
-            [u.split(" : ") for u in date_output.get("uraniene", [])],
-            columns=["Planetă", "Detalii"]
-        )
+        uraniene_date = []
+        for u in date_output.get("uraniene", []):
+            uraniene_date.append(parse_pozitie(u))
+        df_uraniene = pd.DataFrame(uraniene_date, columns=["Nume", "Poziție", "Zodie", "Casa", "D/R"])
         st.dataframe(df_uraniene, hide_index=True, use_container_width=False)
     
+    # Stele fixe (nu au D/R, doar poziție și casă)
     with st.expander("Stele fixe"):
-        df_stele = pd.DataFrame(
-            [s.split(" : ") for s in date_output.get("stele", [])],
-            columns=["Stea", "Detalii"]
-        )
+        stele_date = []
+        for s in date_output.get("stele", []):
+            if " : " in s:
+                nume, rest = s.split(" : ", 1)
+                # Extrage poziția, zodiacul, casa
+                import re
+                match = re.match(r'(\d+°\s+\d+\'\d+")\s+([A-Za-z]+)\s+\|\s+Casa:\s+(\d+)', rest)
+                if match:
+                    pozitie = match.group(1)
+                    zodie = match.group(2)
+                    casa = match.group(3)
+                else:
+                    pozitie = rest[:25]
+                    zodie = ""
+                    casa = ""
+                stele_date.append([nume.strip(), pozitie, zodie, casa, "—"])
+            else:
+                stele_date.append([s[:20], "", "", "", ""])
+        df_stele = pd.DataFrame(stele_date, columns=["Nume", "Poziție", "Zodie", "Casa", "D/R"])
         st.dataframe(df_stele, hide_index=True, use_container_width=False)
     
     st.divider()
