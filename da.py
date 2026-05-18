@@ -421,33 +421,47 @@ def determina_manzila_araba(lon_zecimala):
         "progres_text": format_grade(grade_rest)
     }
 
-def deseneaza_sinusoida(acum_local, dt_r_azi, dt_a_azi, lon, lat):
-    """Desenează sinusoida cu altitudinea Soarelui și Lunii."""
+def deseneaza_sinusoida(acum_local, lon, lat):
+    """Desenează sinusoida cu altitudinea Soarelui și Lunii pe un interval de 48 de ore."""
     
-    # Calculează răsăritul de mâine
-    maine = dt_r_azi + timedelta(days=1)
-    maine_utc = maine.astimezone(pytz.utc)
-    jd_main = swe.julday(maine_utc.year, maine_utc.month, maine_utc.day,
-                         maine_utc.hour + maine_utc.minute / 60.0)
-    
+    # Calculează răsăritul pentru ziua de ieri, azi și mâine
     geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
-    rezultat_main = calculeaza_evenimente_orizont(jd_main - 0.5, swe.SUN, geopos_lista)
-    dt_r_maine = None
-    if rezultat_main.get("Rasarit"):
-        dt_r_maine = jd_to_datetime(rezultat_main["Rasarit"])
     
-    if not dt_r_maine:
-        dt_r_maine = dt_r_azi + timedelta(days=1)
+    # Funcție auxiliară pentru a obține răsăritul unei anumite zile
+    def get_rasarit(data):
+        data_utc = data.astimezone(pytz.utc)
+        jd = swe.julday(data_utc.year, data_utc.month, data_utc.day,
+                        data_utc.hour + data_utc.minute / 60.0)
+        rezultat = calculeaza_evenimente_orizont(jd - 0.5, swe.SUN, geopos_lista)
+        if rezultat.get("Rasarit"):
+            return jd_to_datetime(rezultat["Rasarit"])
+        return None
     
-    start_time = dt_r_azi - timedelta(hours=2)
-    end_time = dt_r_maine + timedelta(hours=2)
+    # Calculează răsăriturile
+    ieri = acum_local - timedelta(days=1)
+    azi = acum_local
+    maine = acum_local + timedelta(days=1)
     
+    dt_r_ieri = get_rasarit(ieri)
+    dt_r_azi = get_rasarit(azi)
+    dt_r_maine = get_rasarit(maine)
+    
+    # Folosește răsăritul disponibil cel mai apropiat
+    start_time = dt_r_ieri if dt_r_ieri else (dt_r_azi - timedelta(hours=24))
+    end_time = dt_r_maine if dt_r_maine else (dt_r_azi + timedelta(hours=24))
+    
+    # Asigură-te că intervalul este de cel puțin 48 de ore
+    if end_time - start_time < timedelta(hours=47):
+        end_time = start_time + timedelta(hours=48)
+    
+    # Generează timestamp-uri la fiecare 30 de minute
     timestamps = []
     current = start_time
     while current <= end_time:
         timestamps.append(current)
         current += timedelta(minutes=30)
     
+    # Calculează altitudinile
     alt_soare = []
     alt_luna = []
     geopos = [LONGITUDINE, LATITUDINE, ALTITUDINE]
@@ -473,6 +487,7 @@ def deseneaza_sinusoida(acum_local, dt_r_azi, dt_a_azi, lon, lat):
         except:
             alt_luna.append(-90)
     
+    # Desenează graficul
     fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
     
     ax.set_xticks([])
@@ -488,6 +503,7 @@ def deseneaza_sinusoida(acum_local, dt_r_azi, dt_a_azi, lon, lat):
     ax.plot(x_numeric, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
     ax.plot(x_numeric, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
     
+    # Găsește poziția curentă
     current_idx = None
     for i, ts in enumerate(timestamps):
         if ts >= acum_local:
@@ -1235,28 +1251,9 @@ with tab1:
     # Sinusoida Soare - Lună
     st.subheader("Altitudinea Soarelui și Lunii")
     
-    if date_output.get("SOARE_orizont"):
-        rasarit_str = date_output["SOARE_orizont"].get("Rasarit")
-        apus_str = date_output["SOARE_orizont"].get("Apus")
-        
-        if rasarit_str and apus_str:
-            rasarit_azi = datetime.strptime(rasarit_str, "%H:%M:%S").replace(
-                year=acum_local.year, month=acum_local.month, day=acum_local.day
-            )
-            apus_azi = datetime.strptime(apus_str, "%H:%M:%S").replace(
-                year=acum_local.year, month=acum_local.month, day=acum_local.day
-            )
-            rasarit_azi = zona_locala.localize(rasarit_azi)
-            apus_azi = zona_locala.localize(apus_azi)
-            
-            fig_sin = deseneaza_sinusoida(acum_local, rasarit_azi, apus_azi, LONGITUDINE, LATITUDINE)
-            st.pyplot(fig_sin)
-            st.caption("Linia orizontului (0°) | ● Poziția curentă")
-        else:
-            st.info("Datele pentru sinusoidă nu sunt disponibile momentan.")
-    else:
-        st.info("Datele pentru sinusoidă nu sunt disponibile momentan.")
-
+    fig_sin = deseneaza_sinusoida(acum_local, LONGITUDINE, LATITUDINE)
+    st.pyplot(fig_sin)
+    st.caption("Linia orizontului (0°) | ● Poziția curentă")
     # ============================================================
     # DURATE CALENDARISTICE
     # ============================================================
