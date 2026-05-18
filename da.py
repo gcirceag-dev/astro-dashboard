@@ -422,12 +422,11 @@ def determina_manzila_araba(lon_zecimala):
     }
 
 def deseneaza_sinusoida(acum_local, lon, lat):
-    """Desenează sinusoida cu altitudinea Soarelui și Lunii pe un interval de 48 de ore."""
+    """Desenează sinusoida cu altitudinea Soarelui și Lunii (un singur maxim fiecare)."""
     
-    # Calculează răsăritul pentru ziua de ieri, azi și mâine
     geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     
-    # Funcție auxiliară pentru a obține răsăritul unei anumite zile
+    # Funcție pentru a obține răsăritul unei zile
     def get_rasarit(data):
         data_utc = data.astimezone(pytz.utc)
         jd = swe.julday(data_utc.year, data_utc.month, data_utc.day,
@@ -437,22 +436,22 @@ def deseneaza_sinusoida(acum_local, lon, lat):
             return jd_to_datetime(rezultat["Rasarit"])
         return None
     
-    # Calculează răsăriturile
-    ieri = acum_local - timedelta(days=1)
-    azi = acum_local
-    maine = acum_local + timedelta(days=1)
+    # Calculează răsăritul de azi și mâine
+    azi = acum_local.replace(hour=12, minute=0, second=0, microsecond=0)
+    maine = azi + timedelta(days=1)
     
-    dt_r_ieri = get_rasarit(ieri)
     dt_r_azi = get_rasarit(azi)
     dt_r_maine = get_rasarit(maine)
     
-    # Folosește răsăritul disponibil cel mai apropiat
-    start_time = dt_r_ieri if dt_r_ieri else (dt_r_azi - timedelta(hours=24))
-    end_time = dt_r_maine if dt_r_maine else (dt_r_azi + timedelta(hours=24))
+    # Fallback dacă nu găsește răsăritul
+    if not dt_r_azi:
+        dt_r_azi = azi.replace(hour=6, minute=0)
+    if not dt_r_maine:
+        dt_r_maine = maine.replace(hour=6, minute=0)
     
-    # Asigură-te că intervalul este de cel puțin 48 de ore
-    if end_time - start_time < timedelta(hours=47):
-        end_time = start_time + timedelta(hours=48)
+    # Interval: de la răsăritul de azi la răsăritul de mâine
+    start_time = dt_r_azi - timedelta(hours=1)
+    end_time = dt_r_maine + timedelta(hours=1)
     
     # Generează timestamp-uri la fiecare 30 de minute
     timestamps = []
@@ -503,7 +502,7 @@ def deseneaza_sinusoida(acum_local, lon, lat):
     ax.plot(x_numeric, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
     ax.plot(x_numeric, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
     
-    # Găsește poziția curentă
+    # Poziția curentă
     current_idx = None
     for i, ts in enumerate(timestamps):
         if ts >= acum_local:
