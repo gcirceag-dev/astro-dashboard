@@ -1056,7 +1056,7 @@ with tab2:
     st.divider()
     
     # Scor cosmic
-    st.subheader("Scor global", f"{scor:.1f}%")
+    st.subheader("Scor global")
     scor = date_output.get("scor_cosmic", 0)
     st.progress(int(scor))
     st.metric("Indice de eficiență planetară totală", f"{scor:.1f}%")
