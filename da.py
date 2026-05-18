@@ -1274,12 +1274,29 @@ with col2:
     # Sinusoida Soare - Lună
     st.subheader("Altitudinea Soarelui și Lunii")
     
-    if dt_r and dt_a:
-        fig_sin = deseneaza_sinusoida(acum_local, dt_r, dt_a, LONGITUDINE, LATITUDINE)
-        st.pyplot(fig_sin)
-        st.caption("Linia orizontului (0°) | ● Poziția curentă")
-    
-    st.divider()
+    # Obține datele de răsărit și apus din date_output
+    if date_output.get("SOARE_orizont"):
+        rasarit_str = date_output["SOARE_orizont"].get("Rasarit")
+        apus_str = date_output["SOARE_orizont"].get("Apus")
+        
+        if rasarit_str and apus_str:
+            # Convertim string-urile în datetime
+            rasarit_azi = datetime.strptime(rasarit_str, "%H:%M:%S").replace(
+                year=acum_local.year, month=acum_local.month, day=acum_local.day
+            )
+            apus_azi = datetime.strptime(apus_str, "%H:%M:%S").replace(
+                year=acum_local.year, month=acum_local.month, day=acum_local.day
+            )
+            rasarit_azi = zona_locala.localize(rasarit_azi)
+            apus_azi = zona_locala.localize(apus_azi)
+            
+            fig_sin = deseneaza_sinusoida(acum_local, rasarit_azi, apus_azi, LONGITUDINE, LATITUDINE)
+            st.pyplot(fig_sin)
+            st.caption("Linia orizontului (0°) | ● Poziția curentă")
+        else:
+            st.info("Datele pentru sinusoidă nu sunt disponibile momentan.")
+    else:
+        st.info("Datele pentru sinusoidă nu sunt disponibile momentan.")
     
     # Durate și guvernatori
     st.subheader("Durate calendaristice")
