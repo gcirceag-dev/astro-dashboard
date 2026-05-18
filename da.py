@@ -1004,64 +1004,28 @@ with tab1:
         )
         st.dataframe(df_faze, hide_index=True, use_container_width=False)
 
-    # Cercuri vizuale - Faza Lunii și Zi/Noapte
+    # Vizualizări text în loc de cercuri
     st.subheader("Vizualizări")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("**Faza Lunii în timp real**")
-        
-        # Obține procentul de iluminare
+        st.markdown("**Faza Lunii**")
         iluminare_procent = 0
         if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
             iluminare_str = date_output["luna_dinamica"].get("iluminare", "0%")
             iluminare_procent = float(iluminare_str.replace("%", ""))
-        
         faza = date_output["luna_dinamica"].get("faza curenta", "")
         
-        # Unghiul iluminat (0-360)
-        unghi_iluminat = (iluminare_procent / 100.0) * 360
-        
-        # Creează figura plotly
-        fig_luna = go.Figure()
-        
-        # Adaugă partea iluminată (albă)
-        if unghi_iluminat > 0:
-            fig_luna.add_trace(go.Pie(
-                values=[unghi_iluminat, 360 - unghi_iluminat],
-                labels=['', ''],
-                marker=dict(colors=['white', '#333333']),
-                hole=0.0,
-                sort=False,
-                direction='clockwise',
-                startangle=90,
-                showlegend=False,
-                textinfo='none',
-                hoverinfo='none'
-            ))
-        
-        fig_luna.update_layout(
-            width=300,
-            height=300,
-            margin=dict(t=0, b=0, l=0, r=0),
-            paper_bgcolor='rgba(0,0,0,0)',
-            annotations=[dict(
-                text=f"{iluminare_procent:.1f}%",
-                x=0.5, y=0.5,
-                font_size=14,
-                showarrow=False
-            )]
-        )
-        
-        st.plotly_chart(fig_luna, use_container_width=False)
+        # Bară de progres pentru iluminare
+        st.progress(int(iluminare_procent))
+        st.caption(f"Iluminare: {iluminare_procent:.1f}%")
         st.caption(f"{faza}")
     
     with col2:
         st.markdown("**Durata Zilei vs Nopții**")
-        
-        durata_zi = date_output.get('durata_zi', '0 h 00 m 00 s')
-        durata_noapte = date_output.get('durata_noapte', '0 h 00 m 00 s')
+        durata_zi = date_output.get('durata_zi', '0 h')
+        durata_noapte = date_output.get('durata_noapte', '0 h')
         
         import re
         match_zi = re.search(r'(\d+) h', durata_zi)
@@ -1069,34 +1033,10 @@ with tab1:
         
         ore_zi = float(match_zi.group(1)) if match_zi else 12
         ore_noapte = float(match_noapte.group(1)) if match_noapte else 12
-        
         total = ore_zi + ore_noapte
         procent_zi = (ore_zi / total) * 100
         
-        # Creează figura pentru zi/noapte
-        fig_zn = go.Figure()
-        
-        fig_zn.add_trace(go.Pie(
-            values=[procent_zi, 100 - procent_zi],
-            labels=['', ''],
-            marker=dict(colors=['#FFD700', '#1a1a2e']),
-            hole=0.0,
-            sort=False,
-            direction='clockwise',
-            startangle=60,  # 60° = ora 4, pentru a obține linia între ora 4 și ora 8
-            showlegend=False,
-            textinfo='none',
-            hoverinfo='none'
-        ))
-        
-        fig_zn.update_layout(
-            width=300,
-            height=300,
-            margin=dict(t=0, b=0, l=0, r=0),
-            paper_bgcolor='rgba(0,0,0,0)'
-        )
-        
-        st.plotly_chart(fig_zn, use_container_width=False)
+        st.progress(int(procent_zi))
         st.caption(f"Zi: {durata_zi}  |  Noapte: {durata_noapte}")
     
     st.divider()
