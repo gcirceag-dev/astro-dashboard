@@ -724,103 +724,89 @@ try:
 except Exception as e:
     date_output["luna_dinamica"] = {"eroare": str(e)}
 
-# Durate și ore planetare - varianta CORECTĂ
-dt_r_azi = date_orizont_soare.get("Rasarit")
-dt_a_azi = date_orizont_soare.get("Apus")
+# Durate și ore planetare
+acum_clean = acum_local.replace(microsecond=0, second=0)
+dt_r_initial = date_orizont_soare.get("Rasarit")
+dt_a_initial = date_orizont_soare.get("Apus")
 
-ore_zi, ore_noapte = [], []
-guvernator_zi = ""
+# Dacă este noapte (înainte de răsărit), folosește datele de ieri
+if acum_clean < dt_r_initial:
+    ieri = dt_r_initial - timedelta(days=1)
+    ieri_utc = ieri.astimezone(pytz.utc)
+    jd_ieri = swe.julday(ieri_utc.year, ieri_utc.month, ieri_utc.day,
+                         ieri_utc.hour + ieri_utc.minute / 60.0)
+    rezultat_ieri = calculeaza_evenimente_orizont(jd_ieri - 0.5, swe.SUN, [LONGITUDINE, LATITUDINE, ALTITUDINE])
+    dt_r_azi = jd_to_datetime(rezultat_ieri["Rasarit"]) if rezultat_ieri.get("Rasarit") else dt_r_initial - timedelta(days=1)
+    dt_a_azi = jd_to_datetime(rezultat_ieri["Apus"]) if rezultat_ieri.get("Apus") else dt_a_initial - timedelta(days=1)
+else:
+    dt_r_azi = dt_r_initial
+    dt_a_azi = dt_a_initial
+
+# Calculează răsăritul de mâine
+maine = dt_r_azi + timedelta(days=1)
+maine_utc = maine.astimezone(pytz.utc)
+jd_main = swe.julday(maine_utc.year, maine_utc.month, maine_utc.day,
+                     maine_utc.hour + maine_utc.minute / 60.0)
+rezultat_main = calculeaza_evenimente_orizont(jd_main - 0.5, swe.SUN, [LONGITUDINE, LATITUDINE, ALTITUDINE])
+dt_r_maine = jd_to_datetime(rezultat_main["Rasarit"]) if rezultat_main.get("Rasarit") else dt_r_azi + timedelta(days=1)
+
+# Durate
+durata_zi_sec = (dt_a_azi - dt_r_azi).total_seconds()
+durata_noapte_sec = (dt_r_maine - dt_a_azi).total_seconds()
+durata_zi_ore = durata_zi_sec / 3600
+durata_noapte_ore = durata_noapte_sec / 3600
+durata_totala_ore = (durata_zi_sec + durata_noapte_sec) / 3600
+
+# Generare ore
+lungime_ora_zi = durata_zi_sec / 12
+lungime_ora_noapte = durata_noapte_sec / 12
+
+# Prima oră de zi = planeta zilei
+zi_saptamana = dt_r_azi.weekday()
+index_curent = ORDINE_CHALDEAN.index(STAPAN_ZI[zi_saptamana])
+
+# Orele de zi
+ore_zi = []
+timp_cursor = dt_r_azi
+for i in range(12):
+    planeta = ORDINE_CHALDEAN[index_curent]
+    start_ora = timp_cursor
+    timp_cursor += timedelta(seconds=lungime_ora_zi)
+    ore_zi.append((i + 1, planeta, start_ora, timp_cursor))
+    index_curent = (index_curent + 1) % 7
+
+# Orele de noapte
+ore_noapte = []
+timp_cursor = dt_a_azi
+for i in range(12):
+    planeta = ORDINE_CHALDEAN[index_curent]
+    start_ora = timp_cursor
+    timp_cursor += timedelta(seconds=lungime_ora_noapte)
+    ore_noapte.append((i + 1, planeta, start_ora, timp_cursor))
+    index_curent = (index_curent + 1) % 7
+
+# Guvernatori
+guvernator_zi = STAPAN_ZI[dt_r_azi.weekday()].upper()
 guvernator_ora = "Nedeterminat"
 interval_ora_curenta = ""
-durata_zi_ore = 0
-durata_noapte_ore = 0
-durata_totala_ore = 0
 
-if dt_r_azi and dt_a_azi:
-    # Calculează răsăritul de mâine
-    maine = dt_r_azi + timedelta(days=1)
-    maine_utc = maine.astimezone(pytz.utc)
-    jd_main = swe.julday(maine_utc.year, maine_utc.month, maine_utc.day,
-                         maine_utc.hour + maine_utc.minute / 60.0)
-    
-    geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
-    rezultat_main = calculeaza_evenimente_orizont(jd_main - 0.5, swe.SUN, geopos_lista)
-    dt_r_maine = None
-    if rezultat_main.get("Rasarit"):
-        dt_r_maine = jd_to_datetime(rezultat_main["Rasarit"])
-    
-    if dt_r_maine:
-        durata_totala_sec = (dt_r_maine - dt_r_azi).total_seconds()
-        durata_totala_ore = durata_totala_sec / 3600.0
-        
-        durata_zi_sec = (dt_a_azi - dt_r_azi).total_seconds()
-        durata_zi_ore = durata_zi_sec / 3600.0
-        
-        durata_noapte_sec = (dt_r_maine - dt_a_azi).total_seconds()
-        durata_noapte_ore = durata_noapte_sec / 3600.0
-        
-        # ========== GENERARE ORE ==========
-        # Stabilește planeta primei ore de zi (planeta zilei)
-        zi_saptamana = dt_r_azi.weekday()
-        stapan_pornire = STAPAN_ZI[zi_saptamana]
-        index_curent = ORDINE_CHALDEAN.index(stapan_pornire)
-        
-        # Calculează durata unei ore de zi și de noapte în secunde
-        sec_ora_zi = durata_zi_sec / 12
-        sec_ora_noapte = durata_noapte_sec / 12
-        
-        # Generează orele de zi
-        timp_cursor = dt_r_azi
-        for i in range(12):
-            planeta = ORDINE_CHALDEAN[index_curent]
-            start_ora = timp_cursor
-            timp_cursor += timedelta(seconds=sec_ora_zi)
-            ore_zi.append((i + 1, planeta, start_ora, timp_cursor))
-            index_curent = (index_curent + 1) % 7
-        
-        # Generează orele de noapte (continuă firesc)
-        timp_cursor = dt_a_azi
-        for i in range(12):
-            planeta = ORDINE_CHALDEAN[index_curent]
-            start_ora = timp_cursor
-            timp_cursor += timedelta(seconds=sec_ora_noapte)
-            ore_noapte.append((i + 1, planeta, start_ora, timp_cursor))
-            index_curent = (index_curent + 1) % 7
-        
-        guvernator_zi = STAPAN_ZI[dt_r_azi.weekday()]
-        
-        # Determină guvernatorul orei curente
-        acum_clean = acum_local.replace(microsecond=0)
-        ora_curenta = acum_clean.time()
-        
-        for numar, planeta, start, end in ore_zi:
-            if start.time() <= ora_curenta < end.time():
-                guvernator_ora = planeta
-                interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
-                break
-        
-        if guvernator_ora == "Nedeterminat":
-            for numar, planeta, start, end in ore_noapte:
-                if start.time() <= ora_curenta < end.time():
-                    guvernator_ora = planeta
-                    interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
-                    break
+for numar, planeta, start, end in ore_zi + ore_noapte:
+    if start <= acum_clean < end:
+        guvernator_ora = planeta.upper()
+        interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
+        break
 
+# Salvare date
 date_output["durata_zi"] = format_durata(durata_zi_ore)
 date_output["durata_noapte"] = format_durata(durata_noapte_ore)
 date_output["durata_totala"] = format_durata(durata_totala_ore)
-date_output["guvernator_zi"] = guvernator_zi.upper()
-date_output["guvernator_ora"] = guvernator_ora.upper()
+date_output["guvernator_zi"] = guvernator_zi
+date_output["guvernator_ora"] = guvernator_ora
 date_output["interval_ora"] = interval_ora_curenta
 
-ore_zi_list = []
-for numar, planeta, start, end in ore_zi:
-    ore_zi_list.append(f"Ora {numar:02d} ({planeta:<7}) : {start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}")
+ore_zi_list = [f"Ora {n:02d} ({p:<7}) : {s.strftime('%H:%M:%S')} - {e.strftime('%H:%M:%S')}" for n, p, s, e in ore_zi]
+ore_noapte_list = [f"Ora {n:02d} ({p:<7}) : {s.strftime('%H:%M:%S')} - {e.strftime('%H:%M:%S')}" for n, p, s, e in ore_noapte]
 date_output["ore_zi"] = ore_zi_list
-
-ore_noapte_list = []
-for numar, planeta, start, end in ore_noapte:
-    ore_noapte_list.append(f"Ora {numar:02d} ({planeta:<7}) : {start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}")
 date_output["ore_noapte"] = ore_noapte_list
 
 # Anotimpuri
