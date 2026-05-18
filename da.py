@@ -69,31 +69,31 @@ STAPAN_ZI = {
 }
 
 DEMNITATI_MODERNE = {
-    "Soare":   {"dom": ["Leu"],             "exalt": ["Berbec"],    "exil": ["Varsator"],          "cadere": ["Balanta"]},
-    "Luna":    {"dom": ["Rac"],             "exalt": ["Taur"],      "exil": ["Capricorn"],         "cadere": ["Scorpion"]},
-    "Mercur":  {"dom": ["Gemeni", "Fecioara"], "exalt": ["Fecioara"], "exil": ["Sagetator", "Pesti"], "cadere": ["Pesti"]},
-    "Venus":   {"dom": ["Taur", "Balanta"], "exalt": ["Pesti"],     "exil": ["Scorpion", "Berbec"], "cadere": ["Fecioara"]},
-    "Marte":   {"dom": ["Berbec", "Scorpion"], "exalt": ["Capricorn"], "exil": ["Balanta", "Taur"],    "cadere": ["Rac"]},
-    "Jupiter": {"dom": ["Sagetator", "Pesti"], "exalt": ["Rac"],       "exil": ["Gemeni", "Fecioara"], "cadere": ["Capricorn"]},
-    "Saturn":  {"dom": ["Capricorn", "Varsator"], "exalt": ["Balanta"], "exil": ["Rac", "Leu"],         "cadere": ["Berbec"]},
-    "Uranus":  {"dom": ["Varsator"],         "exalt": ["Scorpion"],  "exil": ["Leu"],               "cadere": ["Taur"]},
-    "Neptun":  {"dom": ["Pesti"],            "exalt": ["Rac"],       "exil": ["Fecioara"],          "cadere": ["Capricorn"]},
-    "Pluto":   {"dom": ["Scorpion"],         "exalt": ["Berbec"],    "exil": ["Taur"],              "cadere": ["Balanta"]}
+    "Soare":   {"dom": ["Leo"],             "exalt": ["Ari"],    "exil": ["Aqu"],          "cadere": ["Lib"]},
+    "Luna":    {"dom": ["Can"],             "exalt": ["Tau"],      "exil": ["Cap"],         "cadere": ["Sco"]},
+    "Mercur":  {"dom": ["Gem", "Vir"], "exalt": ["Vir"], "exil": ["Sag", "Pis"], "cadere": ["Pis"]},
+    "Venus":   {"dom": ["Tau", "Lib"], "exalt": ["Pis"],     "exil": ["Sco", "Ari"], "cadere": ["Vir"]},
+    "Marte":   {"dom": ["Ari", "Sco"], "exalt": ["Cap"], "exil": ["Lib", "Tau"],    "cadere": ["Can"]},
+    "Jupiter": {"dom": ["Sag", "Pis"], "exalt": ["Can"],       "exil": ["Gem", "Vir"], "cadere": ["Cap"]},
+    "Saturn":  {"dom": ["Cap", "Aqu"], "exalt": ["Lib"], "exil": ["Can", "Leo"],         "cadere": ["Ari"]},
+    "Uranus":  {"dom": ["Aqu"],         "exalt": ["Sco"],  "exil": ["Leo"],               "cadere": ["Tau"]},
+    "Neptun":  {"dom": ["Pis"],            "exalt": ["Can"],       "exil": ["Vir"],          "cadere": ["Cap"]},
+    "Pluto":   {"dom": ["Sco"],         "exalt": ["Ari"],    "exil": ["Tau"],              "cadere": ["Lib"]}
 }
 
 SEMNE_ZODIAC = [
-    "Berbec", "Taur", "Gemeni", "Rac", "Leu", "Fecioara",
-    "Balanta", "Scorpion", "Sagetator", "Capricorn", "Varsator", "Pesti"
+    "Ari", "Tau", "Gem", "Can", "Leo", "Vir",
+    "Lib", "Sco", "Sag", "Cap", "Aqu", "Pis"
 ]
 
 MANZILE_DATE = {
     1: ("Al-Sharatain", "Cele doua semne"), 2: ("Al-Butain", "Micul pantece"), 3: ("Al-Thurayya", "Pleiadele / Abundenta"),
     4: ("Al-Dabaran", "Urmaritorul / Aldebaran"), 5: ("Al-Haq'ah", "Cercul de par / Corona"), 6: ("Al-Han'ah", "Semnul de foc / Arc"),
-    7: ("Al-Dhira", "Bratul leului / Gemeni"), 8: ("Al-Nathrah", "Zborul / Cuibul"), 9: ("Al-Tarf", "Privirea / Ochii Leului"),
-    10: ("Al-Jabhah", "Fruntea Leului / Regulus"), 11: ("Al-Zubrah", "Coama Leului"), 12: ("Al-Sarfah", "Schimbatorul de vreme"),
+    7: ("Al-Dhira", "Bratul leului / Gem"), 8: ("Al-Nathrah", "Zborul / Cuibul"), 9: ("Al-Tarf", "Privirea / Ochii Leolui"),
+    10: ("Al-Jabhah", "Fruntea Leolui / Regulus"), 11: ("Al-Zubrah", "Coama Leolui"), 12: ("Al-Sarfah", "Schimbatorul de vreme"),
     13: ("Al-Awwa", "Cainele latrator"), 14: ("Al-Simak", "Cel Neinarmat / Spica"), 15: ("Al-Ghafr", "Acoperamantul"),
-    16: ("Al-Zubana", "Clestii Scorpionului"), 17: ("Al-Iklil", "Coroana"), 18: ("Al-Qalb", "Inima / Antares"),
-    19: ("Al-Shaulah", "Acul Scorpionului"), 20: ("Al-Na'aim", "Strutii"), 21: ("Al-Baldah", "Orasul / Spatiul gol"),
+    16: ("Al-Zubana", "Clestii Scoului"), 17: ("Al-Iklil", "Coroana"), 18: ("Al-Qalb", "Inima / Antares"),
+    19: ("Al-Shaulah", "Acul Scoului"), 20: ("Al-Na'aim", "Strutii"), 21: ("Al-Baldah", "Orasul / Spatiul gol"),
     22: ("Al-Sa'd al-Dhabih", "Norocul Macelarului"), 23: ("Al-Sa'd al-Bula", "Norocul Inghititorului"),
     24: ("Al-Sa'd al-Su'ud", "Norocul Norocurilor"), 25: ("Al-Sa'd al-Ahbiyah", "Norocul Corturilor"),
     26: ("Al-Fargh al-Muqaddam", "Gura de sus a putului"), 27: ("Al-Fargh al-Mu'ahhar", "Gura de jos a putului"),
@@ -1001,7 +1001,7 @@ with tab2:
     st.divider()
     
     # Poziții planete standard
-    st.subheader("⭐ Pozitii")
+    st.subheader("ƒPozitii")
     st.markdown("**Planete standard**")
     
     df_planete = pd.DataFrame(
@@ -1056,7 +1056,7 @@ with tab2:
     st.divider()
     
     # Scor cosmic
-    st.subheader("🌌 Scor global")
+    st.subheader("Scor global", f"{scor:.1f}%")
     scor = date_output.get("scor_cosmic", 0)
     st.progress(int(scor))
     st.metric("Indice de eficiență planetară totală", f"{scor:.1f}%")
@@ -1066,7 +1066,7 @@ with tab2:
 # =====================================================================
 with tab3:
     # Aspecte
-    st.subheader("🔮 Aspecte active (orb ≤ 6°)")
+    st.subheader("Aspecte active (orb ≤ 6°)")
     
     df_aspecte = pd.DataFrame(
         [[a] for a in date_output.get("aspecte", [])],
@@ -1077,7 +1077,7 @@ with tab3:
     st.divider()
     
     # Puncte arabe
-    st.subheader("⚜️ Puncte arabe majore")
+    st.subheader(ȚPuncte arabe majore")
     
     st.text(date_output.get("tip_secta", ""))
     
