@@ -1221,14 +1221,18 @@ with tab2:
         parts = just_part.split(" | ")
         for part in parts:
             part = part.strip()
-            if any(word in part for word in ["Domiciliu", "Exaltare", "Exil", "Cadere", "Esențial"]):
+            if any(word in part for word in ["Domiciliu", "Exaltare", "Exil", "Cadere", "Esențial", "Pelerin"]):
                 demnitate = part
-            elif "D (+2)" in part or "R (-2)" in part or "D (+2)" in part or "R (-2)" in part:
+            elif "D (+2)" in part or "R (-2)" in part:
                 dr = part
             elif "Angulara" in part or "Succedenta" in part or "Cadenta" in part:
                 tip_casa = part
             elif "COMBUST" in part:
                 combust = part
+        
+        # Dacă nu s-a găsit nicio demnitate, dar există "Pelerin" în just_part
+        if not demnitate and "Pelerin" in just_part:
+            demnitate = "Pelerin (0)"
         
         # Dacă nu s-au găsit, încearcă pattern-uri mai simple
         if not dr:
