@@ -1175,20 +1175,75 @@ with tab2:
     st.divider()
     
     # Scoruri planetare
+    # Scoruri planetare - sparte în 7 coloane
     st.subheader("Scor planetar")
+    
+    def parse_scor(linie):
+        """
+        Linie exemplu: "Soare      : [Domiciliu Leo (+5) | D (+2) | Casa 01 Angulara (+3)] -> Scor: +10 | Eficiență: 100.0%"
+        """
+        if not linie:
+            return ["", "", "", "", "", "", ""]
+        
+        # Separă planeta de rest
+        if " : [" in linie:
+            planeta, rest = linie.split(" : [", 1)
+            planeta = planeta.strip()
+        else:
+            planeta = linie.split()[0] if linie else ""
+            rest = linie
+        
+        # Separă partea de justificări de scor
+        if "] -> Scor: " in rest:
+            just_part, scor_part = rest.split("] -> Scor: ", 1)
+        else:
+            just_part = rest
+            scor_part = ""
+        
+        # Extrage eficiența
+        eficienta = ""
+        if " | Eficiență: " in scor_part:
+            scor_val, eficienta = scor_part.split(" | Eficiență: ")
+        else:
+            scor_val = scor_part
+        
+        # Parsează justificările
+        demnitate = ""
+        dr = ""
+        tip_casa = ""
+        combust = ""
+        
+        parts = just_part.split(" | ")
+        for part in parts:
+            part = part.strip()
+            if any(word in part for word in ["Domiciliu", "Exaltare", "Exil", "Cadere", "Esențial"]):
+                demnitate = part
+            elif "D (+2)" in part or "R (-2)" in part or "D (+2)" in part or "R (-2)" in part:
+                dr = part
+            elif "Angulara" in part or "Succedenta" in part or "Cadenta" in part:
+                tip_casa = part
+            elif "COMBUST" in part:
+                combust = part
+        
+        # Dacă nu s-au găsit, încearcă pattern-uri mai simple
+        if not dr:
+            if "D (+2)" in just_part:
+                dr = "D (+2)"
+            elif "R (-2)" in just_part:
+                dr = "R (-2)"
+        
+        return [planeta, demnitate, dr, tip_casa, combust, scor_val.strip(), eficienta.replace("%", "") + "%" if eficienta else ""]
     
     scoruri_date = []
     for scor in date_output.get("scoruri", []):
-        parts = scor.split(" -> ")
-        if len(parts) == 2:
-            scoruri_date.append([parts[0], parts[1]])
+        scoruri_date.append(parse_scor(scor))
     
     if scoruri_date:
-        df_scoruri = pd.DataFrame(scoruri_date, columns=["Planetă", "Evaluare"])
+        df_scoruri = pd.DataFrame(scoruri_date, columns=["Planeta", "Demnitate", "D/R", "Casa", "Combust", "Scor", "Eficiență"])
         st.dataframe(df_scoruri, hide_index=True, use_container_width=False)
     
     st.divider()
-    
+        
     # Scor cosmic
     st.subheader("Scor global")
     scor = date_output.get("scor_cosmic", 0)
