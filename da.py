@@ -585,7 +585,7 @@ for nume, corp_id in corpuri.items():
             res_luna_brut = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
             lon_luna_brut = res_luna_brut[0][0]
             m_luna = determina_manzila_araba(lon_luna_brut)
-            manzila_luna_text = f"Stația {m_luna['numar']:02d}/28 - {m_luna['nume_arab']} ({m_luna['traducere']}) | Poziție: {m_luna['progres_text']}"
+            manzila_luna_text = f"Conac {m_luna['numar']:02d}/28 - {m_luna['nume_arab']} ({m_luna['traducere']}) | Poziție: {m_luna['progres_text']}"
             date_output["LUNA_manzila"] = manzila_luna_text
     except Exception as e:
         date_output[f"{nume}_fizice"] = {"eroare": str(e)}
