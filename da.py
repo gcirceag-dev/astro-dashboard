@@ -1006,6 +1006,7 @@ with tab1:
         st.dataframe(df_faze, hide_index=True, use_container_width=False)
 
     # Cercuri vizuale - Faza Lunii și Zi/Noapte
+    # Cercuri vizuale - Faza Lunii și Zi/Noapte
     st.subheader("Vizualizări")
     
     col1, col2 = st.columns(2)
@@ -1021,15 +1022,17 @@ with tab1:
         
         faza = date_output["luna_dinamica"].get("faza curenta", "")
         
-        # Calculăm offset-ul umbrei:
-        # La 0% iluminare -> offset = 1.0 (umbră completă)
-        # La 50% iluminare -> offset = 0.0 (jumătate)
-        # La 100% iluminare -> offset = -1.0 (fără umbră)
-        if iluminare_procent <= 50:
-            offset = 1.0 - (iluminare_procent / 50.0)  # 0% -> 1, 50% -> 0
-        else:
-            offset = (50 - (iluminare_procent - 50)) / 50.0  # 50% -> 0, 100% -> -1
-            offset = -offset
+        # Pentru semilună albă în dreapta:
+        # Desenăm un cerc gri (partea nevăzută)
+        # Apoi desenăm un cerc alb (partea iluminată) deplasat spre DREAPTA
+        # Cuât iluminarea e mai mică, cu atât cercul alb e mai deplasat la dreapta
+        
+        # Offset-ul: 0% -> 1.0 (cercul alb complet la dreapta, doar o fâșie vizibilă)
+        # 50% -> 0.0 (cercul alb centrat = jumătate)
+        # 100% -> -1.0 (cercul alb complet la stânga, acoperă tot)
+        offset = 1.0 - (iluminare_procent / 50.0)
+        if offset < -1.0:
+            offset = -1.0
         
         fig_luna, ax_luna = plt.subplots(figsize=(3, 3), facecolor='white')
         ax_luna.set_xlim(-1.5, 1.5)
@@ -1037,17 +1040,16 @@ with tab1:
         ax_luna.set_aspect('equal')
         ax_luna.axis('off')
         
-        # Fundal negru (pentru contrast)
+        # Fundal
         ax_luna.set_facecolor('white')
         
-        # Cerc principal (Luna - gri deschis pentru vizibilitate)
-        luna = plt.Circle((0, 0), 1, color='#dddddd', zorder=1)
-        ax_luna.add_patch(luna)
+        # Cerc gri (Luna nevăzută)
+        luna_gri = plt.Circle((0, 0), 1, color='#888888', zorder=1)
+        ax_luna.add_patch(luna_gri)
         
-        # Cerc de umbră (culoarea fundalului = alb)
-        if offset < 0.99:  # Dacă nu e umbră completă
-            umbra = plt.Circle((offset, 0), 1, color='white', zorder=2)
-            ax_luna.add_patch(umbra)
+        # Cerc alb (partea iluminată) - deplasat la dreapta (offset pozitiv)
+        luna_alb = plt.Circle((offset, 0), 1, color='white', zorder=2)
+        ax_luna.add_patch(luna_alb)
         
         # Bordură
         bordura = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
@@ -1070,9 +1072,13 @@ with tab1:
         ore_noapte = float(match_noapte.group(1)) if match_noapte else 12
         
         total = ore_zi + ore_noapte
-        # Unghiul pentru zi (în grade) - de la sus (ora 12)
-        # Începem de la -90° (sus) și desenăm în sensul acelor
-        unghi_zi = (ore_zi / total) * 360
+        procent_zi = (ore_zi / total) * 100
+        
+        # Pentru a obține linia între ORA 8 și ORA 4:
+        # Pe cerc: 0° = dreapta (ora 3), 90° = sus (ora 12), 180° = stânga (ora 9), 270° = jos (ora 6)
+        # Ora 8 = 240°, Ora 4 = 120°
+        # Vrem ca linia de separare să treacă prin 240° și 120°
+        # Așadar, începem desenul de la 120° (ora 4)
         
         fig_zn, ax_zn = plt.subplots(figsize=(3, 3), facecolor='white')
         ax_zn.set_xlim(-1.5, 1.5)
@@ -1080,14 +1086,18 @@ with tab1:
         ax_zn.set_aspect('equal')
         ax_zn.axis('off')
         
-        # Desenăm ziua (galben) - începe de la -90° (sus)
+        # Desenăm ziua (galben) - de la 120° (ora 4) la 120° + (procent_zi * 3.6°)
+        unghi_start = 120  # Ora 4
+        unghi_zi = (procent_zi / 100) * 360
+        unghi_end = unghi_start + unghi_zi
+        
         if unghi_zi > 0:
-            zi = Wedge((0, 0), 1, -90, -90 + unghi_zi, color='#FFD700', edgecolor='black', linewidth=0.5, zorder=1)
+            zi = Wedge((0, 0), 1, unghi_start, unghi_end, color='#FFD700', edgecolor='black', linewidth=0.5, zorder=1)
             ax_zn.add_patch(zi)
         
-        # Desenăm noaptea (albastru închis) - restul
+        # Noaptea (albastru închis) - restul
         if 360 - unghi_zi > 0:
-            noapte = Wedge((0, 0), 1, -90 + unghi_zi, 270, color='#1a1a2e', edgecolor='black', linewidth=0.5, zorder=1)
+            noapte = Wedge((0, 0), 1, unghi_end, unghi_start + 360, color='#1a1a2e', edgecolor='black', linewidth=0.5, zorder=1)
             ax_zn.add_patch(noapte)
         
         # Bordură
