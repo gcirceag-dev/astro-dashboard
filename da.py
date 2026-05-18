@@ -25,27 +25,36 @@ st.markdown("""
         margin: 0 auto;
     }
     
-    /* Mărește tot textul din aplicație */
-    .stMarkdown, .stText, .stMetric, label, p, div, .stCaption {
+    /* Toate textele */
+    .stMarkdown, .stText, .stMetric, label, p, div, .stCaption, h1, h2, h3, h4 {
         font-size: 18px !important;
     }
     
-    /* Mărește și tabelele */
-    .dataframe, .dataframe td, .dataframe th {
+    /* Tabelele st.dataframe */
+    [data-testid="stDataFrame"] table,
+    [data-testid="stDataFrame"] tbody,
+    [data-testid="stDataFrame"] tr,
+    [data-testid="stDataFrame"] td,
+    [data-testid="stDataFrame"] th {
         font-size: 18px !important;
     }
     
-    /* Mărește expanderele */
+    /* Celulele tabelelor */
+    .cell-view, .cell-text {
+        font-size: 18px !important;
+    }
+    
+    /* Expander */
     .stExpander summary {
         font-size: 18px !important;
     }
     
-    /* Mărește tab-urile */
+    /* Tab-uri */
     button[data-baseweb="tab"] {
         font-size: 18px !important;
     }
     
-    /* Păstrează wrap-ul în tabele */
+    /* Wrap în tabele */
     td, th {
         white-space: normal !important;
         word-wrap: break-word !important;
