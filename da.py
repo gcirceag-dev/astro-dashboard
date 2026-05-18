@@ -974,7 +974,9 @@ with tab1:
                 ["Traducere", traducere],
                 ["Poziție în manzil", pozitie]
             ], columns=["", "Detalii"])
-            st.dataframe(df_manzila, hide_index=True, use_container_width=False)
+            st.dataframe(df_manzila, hide_index=True, use_container_width=False, column_config={
+                "Detalii": st.column_config.TextColumn("Detalii", width="large")
+            })
     
     st.divider()
     
