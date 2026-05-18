@@ -1001,7 +1001,7 @@ with tab2:
     st.divider()
     
     # Poziții planete standard
-    st.subheader("ƒPozitii")
+    st.subheader("Pozitii")
     st.markdown("**Planete standard**")
     
     df_planete = pd.DataFrame(
