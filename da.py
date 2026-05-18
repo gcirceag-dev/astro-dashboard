@@ -424,10 +424,23 @@ def determina_manzila_araba(lon_zecimala):
 def deseneaza_sinusoida(acum_local, dt_r_azi, dt_a_azi, lon, lat):
     """Desenează sinusoida cu altitudinea Soarelui și Lunii."""
     
-    dt_r_maine = dt_r_azi + timedelta(days=1)
+    # Calculează răsăritul de mâine
+    maine = dt_r_azi + timedelta(days=1)
+    maine_utc = maine.astimezone(pytz.utc)
+    jd_main = swe.julday(maine_utc.year, maine_utc.month, maine_utc.day,
+                         maine_utc.hour + maine_utc.minute / 60.0)
     
-    start_time = dt_r_azi - timedelta(hours=1)
-    end_time = dt_r_maine + timedelta(hours=1)
+    geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
+    rezultat_main = calculeaza_evenimente_orizont(jd_main - 0.5, swe.SUN, geopos_lista)
+    dt_r_maine = None
+    if rezultat_main.get("Rasarit"):
+        dt_r_maine = jd_to_datetime(rezultat_main["Rasarit"])
+    
+    if not dt_r_maine:
+        dt_r_maine = dt_r_azi + timedelta(days=1)
+    
+    start_time = dt_r_azi - timedelta(hours=2)
+    end_time = dt_r_maine + timedelta(hours=2)
     
     timestamps = []
     current = start_time
@@ -437,7 +450,6 @@ def deseneaza_sinusoida(acum_local, dt_r_azi, dt_a_azi, lon, lat):
     
     alt_soare = []
     alt_luna = []
-    
     geopos = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     
     for ts in timestamps:
