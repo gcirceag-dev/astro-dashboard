@@ -781,29 +781,25 @@ if dt_r_azi and dt_a_azi:
         
         guvernator_zi = STAPAN_ZI[dt_r_azi.weekday()]
         
-        # ========== DEBUG - verifică intervalele ==========
-        st.write(f"Ora curentă curățată: {acum_local.replace(microsecond=0)}")
-        st.write("Ore de noapte:")
-        for numar, planeta, start, end in ore_noapte:
-            st.write(f"Ora {numar}: {start.replace(microsecond=0)} - {end.replace(microsecond=0)}")
-        # ========== SFÂRȘIT DEBUG ==========
-        
-        # Elimină microsecundele din acum_local pentru comparație corectă
+        # Elimină microsecundele și extrage doar ora
         acum_clean = acum_local.replace(microsecond=0)
+        ora_curenta = acum_clean.time()
         
+        # Caută în orele de zi
         for numar, planeta, start, end in ore_zi:
-            if start <= acum_clean < end:
+            if start.time() <= ora_curenta < end.time():
                 guvernator_ora = planeta
                 interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
                 break
-                
+        
+        # Dacă nu s-a găsit, caută în orele de noapte
         if guvernator_ora == "Nedeterminat":
             for numar, planeta, start, end in ore_noapte:
-                if start <= acum_clean < end:
+                if start.time() <= ora_curenta < end.time():
                     guvernator_ora = planeta
                     interval_ora_curenta = f"{start.strftime('%H:%M:%S')} - {end.strftime('%H:%M:%S')}"
                     break
-
+                    
 date_output["durata_zi"] = format_durata(durata_zi_ore)
 date_output["durata_noapte"] = format_durata(durata_noapte_ore)
 date_output["durata_totala"] = format_durata(durata_totala_ore)
