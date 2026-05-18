@@ -1004,28 +1004,67 @@ with tab1:
         )
         st.dataframe(df_faze, hide_index=True, use_container_width=False)
 
-    # Vizualizări text în loc de cercuri
+    # Cercuri vizuale - Faza Lunii și Zi/Noapte
     st.subheader("Vizualizări")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("**Faza Lunii**")
+        st.markdown("**Faza Lunii în timp real**")
+        
+        # Obține procentul de iluminare
         iluminare_procent = 0
         if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
             iluminare_str = date_output["luna_dinamica"].get("iluminare", "0%")
             iluminare_procent = float(iluminare_str.replace("%", ""))
-        faza = date_output["luna_dinamica"].get("faza curenta", "")
         
-        # Bară de progres pentru iluminare
-        st.progress(int(iluminare_procent))
-        st.caption(f"Iluminare: {iluminare_procent:.1f}%")
-        st.caption(f"{faza}")
+        faza = date_output["luna_dinamica"].get("faza curenta", "")
+        este_crescatoare = "crestere" in faza or "Noua" in faza
+        
+        # Calculează offset-ul umbrei (0 = centrat, 1 = complet la dreapta/stânga)
+        # La 0% iluminare -> offset = 1 (umbră completă)
+        # La 50% iluminare -> offset = 0 (jumătate)
+        # La 100% iluminare -> offset = -1 (fără umbră)
+        if iluminare_procent <= 50:
+            offset = 1.0 - (iluminare_procent / 50.0)
+        else:
+            offset = (100 - iluminare_procent) / 50.0
+        
+        # Pentru fază crescătoare, umbra este în stânga (offset negativ)
+        # Pentru fază descrescătoare, umbra este în dreapta (offset pozitiv)
+        if este_crescatoare:
+            shadow_x = -offset
+        else:
+            shadow_x = offset
+        
+        fig_luna, ax_luna = plt.subplots(figsize=(3, 3), facecolor='white')
+        ax_luna.set_xlim(-1.5, 1.5)
+        ax_luna.set_ylim(-1.5, 1.5)
+        ax_luna.set_aspect('equal')
+        ax_luna.axis('off')
+        
+        # Cerc principal (Luna plină - alb)
+        luna_plina = plt.Circle((0, 0), 1, color='white', zorder=1)
+        ax_luna.add_patch(luna_plina)
+        
+        # Cerc de umbră (aceeași culoare cu fundalul - alb)
+        # Dacă offset-ul este mai mic decât 1, adăugăm umbra
+        if abs(shadow_x) < 1.0:
+            umbra = plt.Circle((shadow_x, 0), 1, color='white', edgecolor='black', linewidth=0, zorder=2)
+            ax_luna.add_patch(umbra)
+        
+        # Bordură neagră
+        bordura = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
+        ax_luna.add_patch(bordura)
+        
+        st.pyplot(fig_luna)
+        st.caption(f"Iluminare: {iluminare_procent:.1f}% | {faza}")
     
     with col2:
         st.markdown("**Durata Zilei vs Nopții**")
-        durata_zi = date_output.get('durata_zi', '0 h')
-        durata_noapte = date_output.get('durata_noapte', '0 h')
+        
+        durata_zi = date_output.get('durata_zi', '0 h 00 m 00 s')
+        durata_noapte = date_output.get('durata_noapte', '0 h 00 m 00 s')
         
         import re
         match_zi = re.search(r'(\d+) h', durata_zi)
@@ -1033,10 +1072,40 @@ with tab1:
         
         ore_zi = float(match_zi.group(1)) if match_zi else 12
         ore_noapte = float(match_noapte.group(1)) if match_noapte else 12
-        total = ore_zi + ore_noapte
-        procent_zi = (ore_zi / total) * 100
         
-        st.progress(int(procent_zi))
+        total = ore_zi + ore_noapte
+        # Unghiul pentru zi (în grade)
+        unghi_zi = (ore_zi / total) * 360
+        
+        fig_zn, ax_zn = plt.subplots(figsize=(3, 3), facecolor='white')
+        ax_zn.set_xlim(-1.5, 1.5)
+        ax_zn.set_ylim(-1.5, 1.5)
+        ax_zn.set_aspect('equal')
+        ax_zn.axis('off')
+        
+        # Desenăm un cerc împărțit VERTICAL (ziua în dreapta, noaptea în stânga)
+        # Folosim Wedge pentru a desena semicerc
+        # Începem de la -90° (sus) și mergem în sens invers acelor
+        
+        # Partea zilei (dreapta) - de la 270° la 90°? Mai bine două wedge-uri
+        if unghi_zi <= 180:
+            # Ziua mai mică decât noaptea
+            zi = Wedge((0, 0), 1, -90, -90 + unghi_zi, color='#FFD700', edgecolor='black', linewidth=0.5, zorder=1)
+            ax_zn.add_patch(zi)
+            noapte = Wedge((0, 0), 1, -90 + unghi_zi, 270, color='#1a1a2e', edgecolor='black', linewidth=0.5, zorder=1)
+            ax_zn.add_patch(noapte)
+        else:
+            # Noaptea mai mică decât ziua
+            noapte = Wedge((0, 0), 1, -90, -90 + (unghi_zi - 180), color='#1a1a2e', edgecolor='black', linewidth=0.5, zorder=1)
+            ax_zn.add_patch(noapte)
+            zi = Wedge((0, 0), 1, -90 + (unghi_zi - 180), 270, color='#FFD700', edgecolor='black', linewidth=0.5, zorder=1)
+            ax_zn.add_patch(zi)
+        
+        # Bordură
+        bordura_zn = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
+        ax_zn.add_patch(bordura_zn)
+        
+        st.pyplot(fig_zn)
         st.caption(f"Zi: {durata_zi}  |  Noapte: {durata_noapte}")
     
     st.divider()
