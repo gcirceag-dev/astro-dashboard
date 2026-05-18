@@ -191,7 +191,7 @@ def format_orba_aspect(orba_zecimala):
     return f"{d}° {m:02d}' {s:02d}\""
     
 # =====================================================================
-# BLOCUL 3: LOGICA DE CALCUL EXPERTĂ (SWISS EPHEMERIS)
+# BLOCUL 3: LOGICA DE CALCUL (SWISS EPHEMERIS)
 # =====================================================================
 def calculeaza_evenimente_orizont(jd_miez, corp_id, geopos_lista):
     rezultate = {}
@@ -424,34 +424,27 @@ def determina_manzila_araba(lon_zecimala):
 def deseneaza_sinusoida(acum_local, dt_r_azi, dt_a_azi, lon, lat):
     """Desenează sinusoida cu altitudinea Soarelui și Lunii."""
     
-    # Intervalul: de la răsăritul de azi la răsăritul de mâine
     dt_r_maine = dt_r_azi + timedelta(days=1)
     
-    # Calculează corect răsăritul de mâine (aproximativ)
-    # Vom folosi un interval puțin mai mare pentru a include maximul
     start_time = dt_r_azi - timedelta(hours=1)
     end_time = dt_r_maine + timedelta(hours=1)
     
-    # Generează timestamp-uri la fiecare 30 de minute
     timestamps = []
     current = start_time
     while current <= end_time:
         timestamps.append(current)
         current += timedelta(minutes=30)
     
-    # Calculează altitudinile
     alt_soare = []
     alt_luna = []
     
     geopos = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     
     for ts in timestamps:
-        # Convertim la UTC pentru Swiss Ephemeris
         ts_utc = ts.astimezone(pytz.utc)
         jd = swe.julday(ts_utc.year, ts_utc.month, ts_utc.day,
                         ts_utc.hour + ts_utc.minute/60.0)
         
-        # Soarele
         try:
             res_s = swe.calc_ut(jd, swe.SUN, swe.FLG_SWIEPH)
             xin = [res_s[0][0], res_s[0][1], res_s[0][2]]
@@ -460,7 +453,6 @@ def deseneaza_sinusoida(acum_local, dt_r_azi, dt_a_azi, lon, lat):
         except:
             alt_soare.append(-90)
         
-        # Luna
         try:
             res_l = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH)
             xin = [res_l[0][0], res_l[0][1], res_l[0][2]]
@@ -469,10 +461,8 @@ def deseneaza_sinusoida(acum_local, dt_r_azi, dt_a_azi, lon, lat):
         except:
             alt_luna.append(-90)
     
-    # Creează graficul
     fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
     
-    # Ascunde axele
     ax.set_xticks([])
     ax.set_yticks([])
     ax.spines['top'].set_visible(False)
@@ -480,17 +470,12 @@ def deseneaza_sinusoida(acum_local, dt_r_azi, dt_a_azi, lon, lat):
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
     
-    # Desenează linia orizontului (y=0)
     ax.axhline(y=0, color='black', linewidth=1.5, linestyle='-', alpha=0.7)
     
-    # Desenează sinusoida Soarelui
     x_numeric = list(range(len(timestamps)))
     ax.plot(x_numeric, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
-    
-    # Desenează sinusoida Lunii
     ax.plot(x_numeric, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
     
-    # Găsește poziția curentă
     current_idx = None
     for i, ts in enumerate(timestamps):
         if ts >= acum_local:
@@ -498,24 +483,14 @@ def deseneaza_sinusoida(acum_local, dt_r_azi, dt_a_azi, lon, lat):
             break
     
     if current_idx and current_idx < len(alt_soare):
-        # Marchează poziția curentă a Soarelui
         ax.scatter(current_idx, alt_soare[current_idx], color='#FFD700', 
                    s=100, edgecolor='black', zorder=5, marker='o')
-        
-        # Marchează poziția curentă a Lunii
         ax.scatter(current_idx, alt_luna[current_idx], color='#888888', 
                    s=80, edgecolor='black', zorder=5, marker='o')
     
-    # Adaugă text pentru orizont
     ax.text(x_numeric[-1], 0.5, 'Orizont', ha='right', va='bottom', fontsize=8, color='black')
-    
-    # Setează limitele y pentru a arăta frumos
     ax.set_ylim(-35, 95)
-    
-    # Ascunde marginile
     ax.set_xlim(x_numeric[0], x_numeric[-1])
-    
-    # Legendă
     ax.legend(loc='upper right', frameon=False, fontsize=10)
     
     return fig
@@ -647,7 +622,7 @@ def calculeaza_punct_arab(lon_asc, lon_corp1, lon_corp2, este_diurn=True, formul
     }
     
 # =====================================================================
-# BLOCUL 9: EXECUTARE ȘI CALCULE (TOATE DATELE SUNT SALVATE ÎN VARIABILE)
+# BLOCUL 9: EXECUTARE ȘI CALCULE
 # =====================================================================
 acum_local, jd_acum, jd_miez = get_times()
 geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
@@ -754,17 +729,11 @@ durata_totala_ore = 0
 
 if dt_r_azi and dt_a_azi:
     # Calculează răsăritul de mâine
-    # Avem nevoie de JD pentru ziua de mâine pentru a calcula răsăritul corect
-    import pytz
-    import swisseph as swe
-    
-    # Calculează JD pentru mâine la aceeași oră aproximativă
     maine = dt_r_azi + timedelta(days=1)
     maine_utc = maine.astimezone(pytz.utc)
     jd_main = swe.julday(maine_utc.year, maine_utc.month, maine_utc.day,
                          maine_utc.hour + maine_utc.minute / 60.0)
     
-    # Calculează răsăritul de mâine
     geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     rezultat_main = calculeaza_evenimente_orizont(jd_main - 0.5, swe.SUN, geopos_lista)
     dt_r_maine = None
@@ -772,23 +741,18 @@ if dt_r_azi and dt_a_azi:
         dt_r_maine = jd_to_datetime(rezultat_main["Rasarit"])
     
     if dt_r_maine:
-        # Durata reală a zilei (de la răsărit la răsărit)
         durata_totala_sec = (dt_r_maine - dt_r_azi).total_seconds()
         durata_totala_ore = durata_totala_sec / 3600.0
         
-        # Durata luminii (ziua)
         durata_zi_sec = (dt_a_azi - dt_r_azi).total_seconds()
         durata_zi_ore = durata_zi_sec / 3600.0
         
-        # Durata nopții (de la apus la răsăritul de mâine)
         durata_noapte_sec = (dt_r_maine - dt_a_azi).total_seconds()
         durata_noapte_ore = durata_noapte_sec / 3600.0
         
-        # Acum generează orele planetare corecte
         lungime_ora_zi = timedelta(seconds=durata_zi_sec / 12)
         lungime_ora_noapte = timedelta(seconds=durata_noapte_sec / 12)
         
-        # Generează orele de zi
         zi_saptamana = dt_r_azi.weekday()
         stapan_pornire = STAPAN_ZI[zi_saptamana]
         index_curent = ORDINE_CHALDEAN.index(stapan_pornire)
@@ -801,7 +765,6 @@ if dt_r_azi and dt_a_azi:
             ore_zi.append((i + 1, planeta, start_ora, timp_cursor))
             index_curent = (index_curent + 1) % 7
         
-        # Generează orele de noapte
         timp_cursor = dt_a_azi
         for i in range(12):
             planeta = ORDINE_CHALDEAN[index_curent]
@@ -810,7 +773,6 @@ if dt_r_azi and dt_a_azi:
             ore_noapte.append((i + 1, planeta, start_ora, timp_cursor))
             index_curent = (index_curent + 1) % 7
         
-        # Guvernatorii
         guvernator_zi = STAPAN_ZI[dt_r_azi.weekday()]
         
         for numar, planeta, start, end in ore_zi:
@@ -887,12 +849,12 @@ for nume, corp_id in planete_standard.items():
         date_output["planete"].append(f"{nume:<15} : Eroare: {e}")
 
 puncte_fictive = {
-    "NNM": swe.MEAN_NODE,      # Nod Nord (Mean)
-    "NNT": swe.TRUE_NODE,      # Nod Nord (True)
-    "LM": swe.MEAN_APOG,       # Lilith (Mean)
-    "LT": swe.OSCU_APOG,       # Lilith (True)
-    "AI": 21,                  # Apogeu Interp.
-    "PI": 22                   # Perigeu Interp.
+    "NNM": swe.MEAN_NODE,
+    "NNT": swe.TRUE_NODE,
+    "LM": swe.MEAN_APOG,
+    "LT": swe.OSCU_APOG,
+    "AI": 21,
+    "PI": 22
 }
 
 date_output["puncte_fictive"] = []
@@ -903,7 +865,6 @@ for nume, corp_id in puncte_fictive.items():
         date_output["puncte_fictive"].append(f"{nume:<15} : {p['pozitie_text']:<25} | Casa: {numar_casa:02d} | ({p['miscare']})")
         coordonate_totale[nume] = p['lon_pura']
         
-        # Pentru Nodurile Sud (calculate pe loc)
         if nume == "NNM":
             lon_sud = (p['lon_pura'] + 180.0) % 360.0
             numar_casa_sud = determina_casa_planetei(lon_sud, jd_ut_case)
@@ -1041,23 +1002,19 @@ try:
     date_output["puncte_arabe"] = puncte_arabe_list
 except Exception as e:
     date_output["puncte_arabe"] = [f"Eroare la calculul Punctelor Arabe: {e}"]
-
 # =====================================================================
-# AFIȘAREA STREAMLIT - ORGANIZATĂ PE TAB-URI CU TABELE
+# AFIȘAREA STREAMLIT - ORGANIZATĂ PE TAB-URI
 # =====================================================================
 
-# Header nou pe mai multe rânduri
-# Dicționar pentru zile săptămână în engleză (abreviat)
+# Header
 ZILE_SAPTAMANA_EN = {
     0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat", 6: "Sun"
 }
 
 def numar_zi_din_an(data):
-    """Returnează numărul zilei din an (1-366)."""
     return data.timetuple().tm_yday
 
 def numar_saptamana_din_an(data):
-    """Returnează numărul săptămânii din an (1-53)."""
     return data.isocalendar()[1]
 
 zi_nume = ZILE_SAPTAMANA_EN[acum_local.weekday()]
@@ -1079,7 +1036,7 @@ tab1, tab2, tab3 = st.tabs(["Soare & Luna", "Astro", "Aspecte"])
 # TAB 1 - SOARE & LUNĂ
 # =====================================================================
 with tab1:
-    # Soarele - tabel cu popover pentru date fizice
+    # Soarele
     st.subheader("Soare")
     
     df_soare_ev = pd.DataFrame(
@@ -1097,7 +1054,7 @@ with tab1:
     
     st.divider()
     
-    # Luna - tabel cu popover pentru date fizice și Manzil
+    # Luna
     st.subheader("Luna")
     
     df_luna_ev = pd.DataFrame(
@@ -1114,7 +1071,6 @@ with tab1:
         )
         st.dataframe(df_luna_fiz, hide_index=True, use_container_width=False)
         
-        # Manzila pe 3 rânduri
         if date_output.get("LUNA_manzila"):
             manzila_str = date_output["LUNA_manzila"]
             import re
@@ -1141,7 +1097,7 @@ with tab1:
     
     st.divider()
     
-    # Fazele Lunii - tabele unite, coloană Valoare mai largă
+    # Fazele Lunii
     st.subheader("Fazele Lunii")
     
     if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
@@ -1154,133 +1110,116 @@ with tab1:
             "Valoare": st.column_config.TextColumn("Valoare", width="medium")
         })
         
-        # Fazele principale
         df_faze = pd.DataFrame(
             [faza.split(" : ") for faza in date_output.get("faze_luna", [])],
             columns=["Faza", "Data și ora"]
         )
         st.dataframe(df_faze, hide_index=True, use_container_width=False)
+    # ============================================================
+    # VIZUALIZĂRI - Cerc Lunar și Cerc Zi/Noapte
+    # ============================================================
+    st.subheader("Vizualizări")
+    col1, col2 = st.columns(2)
 
-st.subheader("Vizualizări")
-col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("**Faza Lunii în timp real**")
+        
+        iluminare_procent = 10.0
+        if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
+            iluminare_str = date_output["luna_dinamica"].get("iluminare", "0%")
+            iluminare_procent = float(iluminare_str.replace("%", "").strip())
+        
+        faza = date_output["luna_dinamica"].get("faza curenta", "").lower()
+        is_waning = "waning" in faza or "descrescatoare" in faza or "ultimul" in faza
 
-with col1:
-    st.markdown("**Faza Lunii în timp real**")
-    
-    iluminare_procent = 10.0  # Valoare din exemplul tău
-    if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
-        iluminare_str = date_output["luna_dinamica"].get("iluminare", "0%")
-        iluminare_procent = float(iluminare_str.replace("%", "").strip())
-    
-    faza = date_output["luna_dinamica"].get("faza curenta", "").lower()
-    is_waning = "waning" in faza or "descrescatoare" in faza or "ultimul" in faza
+        fig_luna, ax_luna = plt.subplots(figsize=(3, 3), facecolor='white')
+        ax_luna.set_xlim(-1.05, 1.05)
+        ax_luna.set_ylim(-1.05, 1.05)
+        ax_luna.set_aspect('equal')
+        ax_luna.axis('off')
 
-    fig_luna, ax_luna = plt.subplots(figsize=(3, 3), facecolor='white')
-    ax_luna.set_xlim(-1.05, 1.05)
-    ax_luna.set_ylim(-1.05, 1.05)
-    ax_luna.set_aspect('equal')
-    ax_luna.axis('off')
+        c_lumina = '#fefeec'
+        c_umbra = '#2c2c2c'
 
-    # Culori
-    c_lumina = '#fefeec'
-    c_umbra = '#2c2c2c'
+        if not is_waning:
+            stanga_color = c_umbra
+            dreapta_color = c_lumina
+            elipsa_color = c_umbra if iluminare_procent < 50 else c_lumina
+        else:
+            stanga_color = c_lumina
+            dreapta_color = c_umbra
+            elipsa_color = c_lumina if iluminare_procent < 50 else c_umbra
 
-    # Metoda trigonometrică infailibilă pentru fazele lunii:
-    # Desenăm o jumătate albă și una neagră, apoi o elipsă la mijloc care își schimbă culoarea
-    if not is_waning:  # Luna Crește (Lumina e în dreapta)
-        stanga_color = c_umbra
-        dreapta_color = c_lumina
-        elipsa_color = c_umbra if iluminare_procent < 50 else c_lumina
-    else:  # Luna Descrește (Lumina e în stânga)
-        stanga_color = c_lumina
-        dreapta_color = c_umbra
-        elipsa_color = c_lumina if iluminare_procent < 50 else c_umbra
+        baza_stanga = Wedge((0, 0), 1, 90, 270, color=stanga_color, zorder=1)
+        baza_dreapta = Wedge((0, 0), 1, -90, 90, color=dreapta_color, zorder=1)
+        ax_luna.add_patch(baza_stanga)
+        ax_luna.add_patch(baza_dreapta)
 
-    # Desenăm cele două jumătăți de bază (Wedges)
-    baza_stanga = Wedge((0, 0), 1, 90, 270, color=stanga_color, zorder=1)
-    baza_dreapta = Wedge((0, 0), 1, -90, 90, color=dreapta_color, zorder=1)
-    ax_luna.add_patch(baza_stanga)
-    ax_luna.add_patch(baza_dreapta)
+        latime_elipsa = abs(2.0 * (iluminare_procent / 100.0) - 1.0)
 
-    # Calculăm lățimea elipsei centrale (linia de demarcație a umbrei)
-    # Proporția variază de la 1.0 (lună plină/nouă) la 0.0 (sferturi)
-    latime_elipsa = abs(2.0 * (iluminare_procent / 100.0) - 1.0)
+        if latime_elipsa > 0:
+            elipsa_tranzitie = Ellipse((0, 0), latime_elipsa * 2, 2, color=elipsa_color, zorder=2)
+            ax_luna.add_patch(elipsa_tranzitie)
 
-    if latime_elipsa > 0:
-        elipsa_tranzitie = Ellipse((0, 0), latime_elipsa * 2, 2, color=elipsa_color, zorder=2)
-        ax_luna.add_patch(elipsa_tranzitie)
+        bordura = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
+        ax_luna.add_patch(bordura)
 
-    # Bordură exterioară perfectă
-    bordura = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
-    ax_luna.add_patch(bordura)
+        st.pyplot(fig_luna)
+        st.caption(f"Iluminare: {iluminare_procent:.1f}% | {faza.capitalize()}")
 
-    st.pyplot(fig_luna)
-    st.caption(f"Iluminare: {iluminare_procent:.1f}% | {faza.capitalize()}")
+    with col2:
+        st.markdown("**Durata Zilei vs Nopții**")
+        
+        durata_zi = date_output.get('durata_zi', '14 h 00 m 00 s')
+        durata_noapte = date_output.get('durata_noapte', '10 h 00 m 00 s')
+        
+        def extrage_ore_totale(durata_str):
+            match = re.search(r'(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?', durata_str)
+            if match:
+                h = float(match.group(1)) if match.group(1) else 0.0
+                m = float(match.group(2)) if match.group(2) else 0.0
+                return h + (m / 60.0)
+            return 12.0
 
-with col2:
-    st.markdown("**Durata Zilei vs Nopții**")
-    
-    durata_zi = date_output.get('durata_zi', '14 h 00 m 00 s')
-    durata_noapte = date_output.get('durata_noapte', '10 h 00 m 00 s')
-    
-    def extrage_ore_totale(durata_str):
-        match = re.search(r'(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?', durata_str)
-        if match:
-            h = float(match.group(1)) if match.group(1) else 0.0
-            m = float(match.group(2)) if match.group(2) else 0.0
-            return h + (m / 60.0)
-        return 12.0
+        ore_zi = extrage_ore_totale(durata_zi)
+        ore_noapte = extrage_ore_totale(durata_noapte)
+        total = ore_zi + ore_noapte
+        procent_zi = (ore_zi / total) * 100 if total > 0 else 50.0
 
-    ore_zi = extrage_ore_totale(durata_zi)
-    ore_noapte = extrage_ore_totale(durata_noapte)
-    total = ore_zi + ore_noapte
-    procent_zi = (ore_zi / total) * 100 if total > 0 else 50.0
+        fig_zn, ax_zn = plt.subplots(figsize=(3, 3), facecolor='white')
+        ax_zn.set_xlim(-1.05, 1.05)
+        ax_zn.set_ylim(-1.05, 1.05)
+        ax_zn.set_aspect('equal')
+        ax_zn.axis('off')
+        
+        unghi_zi_total = (procent_zi / 100.0) * 360.0
+        unghi_start = 90.0 - (unghi_zi_total / 2.0)
+        unghi_end = 90.0 + (unghi_zi_total / 2.0)
 
-    fig_zn, ax_zn = plt.subplots(figsize=(3, 3), facecolor='white')
-    ax_zn.set_xlim(-1.05, 1.05)
-    ax_zn.set_ylim(-1.05, 1.05)
-    ax_zn.set_aspect('equal')
-    ax_zn.axis('off')
+        if unghi_zi_total > 0:
+            zi = Wedge((0, 0), 1, unghi_start, unghi_end, color='#FFD700', edgecolor='black', linewidth=0.5, zorder=1)
+            ax_zn.add_patch(zi)
+        
+        if (360.0 - unghi_zi_total) > 0:
+            noapte = Wedge((0, 0), 1, unghi_end, unghi_start + 360.0, color='#1a1a2e', edgecolor='black', linewidth=0.5, zorder=1)
+            ax_zn.add_patch(noapte)
 
-    # ALINIERE ORA 8 (240°) și ORA 4 (120°)
-    # În Matplotlib: Ora 3 = 0°, Ora 12 = 90°, Ora 9 = 180°, Ora 6 = 270°
-    # Ora 4 geometric este la -30° (sau 330°), Ora 8 este la 210°
-    # Centrul arcului de zi (Sus) este fixat la 90° (Ora 12)
-    
-    unghi_zi_total = (procent_zi / 100.0) * 360.0
-    
-    # Ziua se va extinde simetric în stânga și dreapta axei de sus (90°)
-    unghi_start = 90.0 - (unghi_zi_total / 2.0)
-    unghi_end = 90.0 + (unghi_zi_total / 2.0)
+        bordura_zn = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
+        ax_zn.add_patch(bordura_zn)
 
-    # Felia pentru ZI (Galben - Sus)
-    if unghi_zi_total > 0:
-        zi = Wedge((0, 0), 1, unghi_start, unghi_end, color='#FFD700', edgecolor='black', linewidth=0.5, zorder=1)
-        ax_zn.add_patch(zi)
-    
-    # Felia pentru NOAPTE (Albastru închis - Jos)
-    if (360.0 - unghi_zi_total) > 0:
-        noapte = Wedge((0, 0), 1, unghi_end, unghi_start + 360.0, color='#1a1a2e', edgecolor='black', linewidth=0.5, zorder=1)
-        ax_zn.add_patch(noapte)
+        st.pyplot(fig_zn)
+        st.caption(f"Zi: {durata_zi}  |  Noapte: {durata_noapte}")
 
-    # Bordură exterioară neagră
-    bordura_zn = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
-    ax_zn.add_patch(bordura_zn)
-
-    st.pyplot(fig_zn)
-    st.caption(f"Zi: {durata_zi}  |  Noapte: {durata_noapte}")
-    
-    
-    # Sinusoida Soare - Lună
+    # ============================================================
+    # SINUSOIDA SOARE - LUNĂ
+    # ============================================================
     st.subheader("Altitudinea Soarelui și Lunii")
     
-    # Obține datele de răsărit și apus din date_output
     if date_output.get("SOARE_orizont"):
         rasarit_str = date_output["SOARE_orizont"].get("Rasarit")
         apus_str = date_output["SOARE_orizont"].get("Apus")
         
         if rasarit_str and apus_str:
-            # Convertim string-urile în datetime
             rasarit_azi = datetime.strptime(rasarit_str, "%H:%M:%S").replace(
                 year=acum_local.year, month=acum_local.month, day=acum_local.day
             )
@@ -1297,8 +1236,10 @@ with col2:
             st.info("Datele pentru sinusoidă nu sunt disponibile momentan.")
     else:
         st.info("Datele pentru sinusoidă nu sunt disponibile momentan.")
-    
-    # Durate și guvernatori
+
+    # ============================================================
+    # DURATE CALENDARISTICE
+    # ============================================================
     st.subheader("Durate calendaristice")
     
     df_durate = pd.DataFrame([
@@ -1308,8 +1249,10 @@ with col2:
         ["Guvernatorul orei", f"{date_output.get('guvernator_ora', 'N/A')} ({date_output.get('interval_ora', 'N/A')})"]
     ], columns=["Parametru", "Valoare"])
     st.dataframe(df_durate, hide_index=True, use_container_width=False)
-    
-    # Ore planetare cu expander
+
+    # ============================================================
+    # ORE PLANETARE
+    # ============================================================
     with st.expander("Ore de zi"):
         df_ore_zi = pd.DataFrame(
             [ora.split(" : ") for ora in date_output.get("ore_zi", [])],
@@ -1323,8 +1266,10 @@ with col2:
             columns=["Ora planetară", "Interval"]
         )
         st.dataframe(df_ore_noapte, hide_index=True, use_container_width=False)
-    
-    # Anotimpuri cu expander
+
+    # ============================================================
+    # ANOTIMPURI
+    # ============================================================
     with st.expander("Anotimpuri"):
         st.markdown(f"**Anotimpul curent:** {date_output.get('anotimp', 'N/A')}")
         df_cardinale = pd.DataFrame(
@@ -1332,20 +1277,16 @@ with col2:
             columns=["Eveniment", "Data și ora"]
         )
         st.dataframe(df_cardinale, hide_index=True, use_container_width=False)
-
 # =====================================================================
 # TAB 2 - ASTRO
 # =====================================================================
 with tab2:
-    # Case astrologice - expander închis implicit, tabel în 3 coloane
+    # Case astrologice
     st.subheader("Case")
     with st.expander("Afișează casele", expanded=False):
         if "case_astrologice" in date_output and "eroare" not in date_output["case_astrologice"]:
-            # Transformă dicționarul în listă de rânduri cu 3 coloane
             case_date = []
             for casa, pozitie in date_output["case_astrologice"].items():
-                # Poziția vine în format "19° 15'09\" Berbec"
-                # Separă grade/minute/secunde de zodie
                 import re
                 match = re.match(r'(\d+°\s+\d+\'\d+")\s+([A-Za-z]+)', pozitie)
                 if match:
@@ -1360,29 +1301,21 @@ with tab2:
             st.dataframe(df_case, hide_index=True, use_container_width=False)
     
     st.divider()
-        
-    # Poziții planete standard
-        # Poziții astrologice - sparte în 5 coloane
+    
+    # Poziții astrologice
     st.subheader("Pozitii")
     
-    # Funcție ajutătoare pentru a extrage cele 5 coloane
     def parse_pozitie(linie):
-        """
-        Linie exemplu: "Soare          : 19° 15'09\" Berbec | Casa: 07 | (D)"
-        """
         if not linie or "Eroare" in linie:
             return ["", "", "", "", ""]
         
-        # Separă numele de rest
         if " : " in linie:
             nume, rest = linie.split(" : ", 1)
         else:
             nume = linie.split()[0] if linie else ""
             rest = linie
         
-        # Extrage poziția, zodiacul, casa și mișcarea
         import re
-        # Pattern: grade° mm'ss" Zodie | Casa: nn | (D/R)
         match = re.match(r'(\d+°\s+\d+\'\d+")\s+([A-Za-z]+)\s+\|\s+Casa:\s+(\d+)\s+\|\s+\(([DR])\)', rest)
         if match:
             pozitie = match.group(1)
@@ -1406,13 +1339,10 @@ with tab2:
     st.dataframe(df_planete, hide_index=True, use_container_width=False)
     
     # Noduri și puncte fictive
-    # Noduri și puncte fictive - inclusiv Nodurile Sud
     with st.expander("Noduri & Lilith"):
         fictive_date = []
         for p in date_output.get("puncte_fictive", []):
-            # Verifică dacă linia conține "Nod Sud" (deja are format diferit)
             if "Nod Sud" in p:
-                # Linie exemplu: "Nod Sud (Mean) : 04° 52'55" Vir | Casa: 04"
                 if " : " in p:
                     nume, rest = p.split(" : ", 1)
                     import re
@@ -1427,11 +1357,10 @@ with tab2:
                 else:
                     fictive_date.append([p[:25], "", "", "", ""])
             else:
-                # Parsează normal pentru celelalte puncte
                 fictive_date.append(parse_pozitie(p))
         df_fictive = pd.DataFrame(fictive_date, columns=["Nume", "Poziție", "Zodie", "Casa", "D/R"])
         st.dataframe(df_fictive, hide_index=True, use_container_width=False)
-            
+    
     # Asteroizi
     with st.expander("Asteroizi"):
         asteroizi_date = []
@@ -1448,8 +1377,7 @@ with tab2:
         df_uraniene = pd.DataFrame(uraniene_date, columns=["Nume", "Poziție", "Zodie", "Casa", "D/R"])
         st.dataframe(df_uraniene, hide_index=True, use_container_width=False)
     
-    # Stele fixe (nu au D/R, doar poziție și casă)
-    # Stele fixe - fără coloana D/R (4 coloane)
+    # Stele fixe
     with st.expander("Stele fixe"):
         stele_date = []
         for s in date_output.get("stele", []):
@@ -1470,20 +1398,16 @@ with tab2:
                 stele_date.append([s[:20], "", "", ""])
         df_stele = pd.DataFrame(stele_date, columns=["Nume", "Poziție", "Zodie", "Casa"])
         st.dataframe(df_stele, hide_index=True, use_container_width=False)
-            
+    
     st.divider()
     
-    # Scoruri planetare - sparte în 7 coloane
+    # Scoruri planetare
     st.subheader("Scor planetar")
     
     def parse_scor(linie):
-        """
-        Linie exemplu: "Soare      : [Domiciliu Leo (+5) | D (+2) | Casa 01 Angulara (+3)] -> Scor: +10 | Eficiență: 100.0%"
-        """
         if not linie:
             return ["", "", "", "", "", "", ""]
         
-        # Separă planeta de rest
         if " : [" in linie:
             planeta, rest = linie.split(" : [", 1)
             planeta = planeta.strip()
@@ -1491,21 +1415,18 @@ with tab2:
             planeta = linie.split()[0] if linie else ""
             rest = linie
         
-        # Separă partea de justificări de scor
         if "] -> Scor: " in rest:
             just_part, scor_part = rest.split("] -> Scor: ", 1)
         else:
             just_part = rest
             scor_part = ""
         
-        # Extrage eficiența
         eficienta = ""
         if " | Eficiență: " in scor_part:
             scor_val, eficienta = scor_part.split(" | Eficiență: ")
         else:
             scor_val = scor_part
         
-        # Parsează justificările
         demnitate = ""
         dr = ""
         tip_casa = ""
@@ -1523,11 +1444,9 @@ with tab2:
             elif "COMBUST" in part:
                 combust = part
         
-        # Dacă nu s-a găsit nicio demnitate, dar există "Pelerin" în just_part
         if not demnitate and "Pelerin" in just_part:
             demnitate = "Pelerin (0)"
         
-        # Dacă nu s-au găsit, încearcă pattern-uri mai simple
         if not dr:
             if "D (+2)" in just_part:
                 dr = "D (+2)"
@@ -1545,7 +1464,7 @@ with tab2:
         st.dataframe(df_scoruri, hide_index=True, use_container_width=False)
     
     st.divider()
-        
+    
     # Scor cosmic
     st.subheader("Scor global")
     scor = date_output.get("scor_cosmic", 0)
@@ -1556,10 +1475,9 @@ with tab2:
 # TAB 3 - ASPECTE & FILOSOFIC
 # =====================================================================
 with tab3:
-    # Aspecte - cu slider pentru orbă
+    # Aspecte cu slider
     st.subheader("Aspecte active")
     
-    # Slider pentru selectarea orbei maxime
     orba_maxima = st.slider(
         "Orbă maximă (grade)",
         min_value=0.0,
@@ -1569,7 +1487,6 @@ with tab3:
         help="Selectează toleranța maximă pentru aspecte (0° - 10°)"
     )
     
-    # Recalculează aspectele cu noua orbă
     try:
         liste_aspecte_filtrate = calculeaza_toate_aspectele(coordonate_totale, orba_maxima=orba_maxima)
         aspecte_filtrate = liste_aspecte_filtrate if liste_aspecte_filtrate else ["Nu s-au găsit aspecte sub " + str(orba_maxima) + "°"]
@@ -1600,7 +1517,7 @@ with tab3:
     
     st.divider()
     
-    # Puncte arabe - sparte în 4 coloane
+    # Puncte arabe
     st.subheader("Puncte arabe majore")
     
     st.text(date_output.get("tip_secta", ""))
@@ -1632,5 +1549,7 @@ with tab3:
     df_pa = pd.DataFrame(puncte_date, columns=["Punct arab", "Poziție", "Zodie", "Casa"])
     st.dataframe(df_pa, hide_index=True, use_container_width=False)
 
-# Închidere
+# =====================================================================
+# ÎNCHIDERE
+# =====================================================================
 swe.close()
