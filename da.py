@@ -886,7 +886,7 @@ tab1, tab2, tab3 = st.tabs(["Soare & Luna", "Astro", "Aspecte"])
 # =====================================================================
 with tab1:
     # Soarele - două tabele
-    st.subheader("☀️ Soare")
+    st.subheader("Soare")
     
     col1, col2 = st.columns(2)
     
@@ -907,7 +907,7 @@ with tab1:
     st.divider()
     
     # Luna
-    st.subheader("🌙 Luna")
+    st.subheader("Luna")
     
     col1, col2 = st.columns(2)
     
