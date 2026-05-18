@@ -425,8 +425,8 @@ def deseneaza_sinusoida(acum_local, lon, lat):
     """Desenează sinusoida pe un interval de 24 de ore centrat pe momentul curent."""
     
     # Interval: 12 ore înainte și 12 ore după momentul curent (total 24 ore)
-    start_time = acum_local - timedelta(hours=12)
-    end_time = acum_local + timedelta(hours=12)
+    start_time = acum_local - timedelta(hours=14)
+    end_time = acum_local + timedelta(hours=14)
     
     # Generează timestamp-uri la fiecare 30 de minute
     timestamps = []
