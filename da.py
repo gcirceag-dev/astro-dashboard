@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 import pytz
 import swisseph as swe
 import pandas as pd
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+from matplotlib.patches import Wedge
 
 # =====================================================================
 # CONFIGURARE STREAMLIT
