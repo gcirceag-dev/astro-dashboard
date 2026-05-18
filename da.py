@@ -942,7 +942,7 @@ with tab1:
     )
     st.dataframe(df_luna_ev, hide_index=True, use_container_width=False)
     
-    with st.popover("📊 Date fizice și Manzil"):
+    with st.popover("Dinamica si Conac"):
         date_luna_fiz = {k: v for k, v in date_output.get("LUNA_fizice", {}).items() if k != "eroare"}
         df_luna_fiz = pd.DataFrame(
             list(date_luna_fiz.items()),
@@ -1038,14 +1038,15 @@ with tab1:
 # TAB 2 - ASTRO
 # =====================================================================
 with tab2:
-    # Case astrologice
+    # Case astrologice - expander închis implicit
     st.subheader("Case")
-    if "case_astrologice" in date_output and "eroare" not in date_output["case_astrologice"]:
-        df_case = pd.DataFrame(
-            list(date_output["case_astrologice"].items()),
-            columns=["Casă", "Poziție"]
-        )
-        st.dataframe(df_case, hide_index=True, use_container_width=False)
+    with st.expander("Afișează casele", expanded=False):
+        if "case_astrologice" in date_output and "eroare" not in date_output["case_astrologice"]:
+            df_case = pd.DataFrame(
+                list(date_output["case_astrologice"].items()),
+                columns=["Casă", "Poziție"]
+            )
+            st.dataframe(df_case, hide_index=True, use_container_width=False)
     
     st.divider()
     
