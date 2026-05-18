@@ -422,38 +422,28 @@ def determina_manzila_araba(lon_zecimala):
     }
 
 def deseneaza_sinusoida(acum_local, lon, lat):
-    """Desenează sinusoida pe un interval de 26 de ore de la răsăritul de azi."""
+    """Desenează sinusoida pe 26 de ore."""
     
-    geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
+    # Ia răsăritul direct din date_output
+    rasarit_str = date_output.get("SOARE_orizont", {}).get("Rasarit")
+    if not rasarit_str:
+        # Fallback: folosește ora 6:00
+        start_time = acum_local.replace(hour=6, minute=0, second=0, microsecond=0)
+    else:
+        start_time = datetime.strptime(rasarit_str, "%H:%M:%S").replace(
+            year=acum_local.year, month=acum_local.month, day=acum_local.day
+        )
+        start_time = zona_locala.localize(start_time)
     
-    # Calculează răsăritul de azi
-    def get_rasarit_azi():
-        azi_12 = acum_local.replace(hour=12, minute=0, second=0, microsecond=0)
-        data_utc = azi_12.astimezone(pytz.utc)
-        jd = swe.julday(data_utc.year, data_utc.month, data_utc.day,
-                        data_utc.hour + data_utc.minute / 60.0)
-        rezultat = calculeaza_evenimente_orizont(jd - 0.5, swe.SUN, geopos_lista)
-        if rezultat.get("Rasarit"):
-            return jd_to_datetime(rezultat["Rasarit"])
-        return None
+    end_time = start_time + timedelta(hours=26)
     
-    dt_r_azi = get_rasarit_azi()
-    
-    if not dt_r_azi:
-        dt_r_azi = acum_local.replace(hour=6, minute=0, second=0)
-    
-    # Interval fix: 26 de ore de la răsărit
-    start_time = dt_r_azi
-    end_time = dt_r_azi + timedelta(hours=26)
-    
-    # Generează timestamp-uri la fiecare 30 de minute
+    # Generează puncte la fiecare 30 minute
     timestamps = []
     current = start_time
     while current <= end_time:
         timestamps.append(current)
         current += timedelta(minutes=30)
     
-    # Calculează altitudinile
     alt_soare = []
     alt_luna = []
     geopos = [LONGITUDINE, LATITUDINE, ALTITUDINE]
@@ -463,55 +453,46 @@ def deseneaza_sinusoida(acum_local, lon, lat):
         jd = swe.julday(ts_utc.year, ts_utc.month, ts_utc.day,
                         ts_utc.hour + ts_utc.minute/60.0)
         
+        # Soarele
         try:
-            res_s = swe.calc_ut(jd, swe.SUN, swe.FLG_SWIEPH)
-            xin = [res_s[0][0], res_s[0][1], res_s[0][2]]
+            res = swe.calc_ut(jd, swe.SUN, swe.FLG_SWIEPH)
+            xin = [res[0][0], res[0][1], res[0][2]]
             az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
             alt_soare.append(alt)
         except:
             alt_soare.append(-90)
         
+        # Luna
         try:
-            res_l = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH)
-            xin = [res_l[0][0], res_l[0][1], res_l[0][2]]
+            res = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH)
+            xin = [res[0][0], res[0][1], res[0][2]]
             az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
             alt_luna.append(alt)
         except:
             alt_luna.append(-90)
     
-    # Desenează graficul
+    # Desenează
     fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
-    
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.spines['left'].set_visible(False)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
     
-    ax.axhline(y=0, color='black', linewidth=1.5, linestyle='-', alpha=0.7)
+    ax.axhline(y=0, color='black', linewidth=1.5, alpha=0.7)
     
-    x_numeric = list(range(len(timestamps)))
-    ax.plot(x_numeric, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
-    ax.plot(x_numeric, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
+    x_vals = list(range(len(timestamps)))
+    ax.plot(x_vals, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
+    ax.plot(x_vals, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
     
-    # Poziția curentă
-    current_idx = None
+    # Punctul curent
     for i, ts in enumerate(timestamps):
         if ts >= acum_local:
-            current_idx = i
+            ax.scatter(i, alt_soare[i], color='#FFD700', s=100, edgecolor='black', zorder=5)
+            ax.scatter(i, alt_luna[i], color='#888888', s=80, edgecolor='black', zorder=5)
             break
     
-    if current_idx and current_idx < len(alt_soare):
-        ax.scatter(current_idx, alt_soare[current_idx], color='#FFD700', 
-                   s=100, edgecolor='black', zorder=5, marker='o')
-        ax.scatter(current_idx, alt_luna[current_idx], color='#888888', 
-                   s=80, edgecolor='black', zorder=5, marker='o')
-    
-    ax.text(x_numeric[-1], 0.5, 'Orizont', ha='right', va='bottom', fontsize=8, color='black')
     ax.set_ylim(-35, 95)
-    ax.set_xlim(x_numeric[0], x_numeric[-1])
-    ax.legend(loc='upper right', frameon=False, fontsize=10)
+    ax.legend(loc='upper right', frameon=False)
     
     return fig
 
