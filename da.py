@@ -1094,11 +1094,14 @@ with tab1:
                 ["Poziție în manzil", pozitie]
             ], columns=["", "Detalii"])
             
-            # Container cu derulare orizontală pentru nume lungi de manzile
-            with st.container():
-                st.markdown('<div style="overflow-x: auto;">', unsafe_allow_html=True)
-                st.dataframe(df_manzila, hide_index=True, use_container_width=False)
-                st.markdown('</div>', unsafe_allow_html=True)    
+            # Container cu derulare orizontală FORȚATĂ
+            st.markdown(
+                '<div style="overflow-x: scroll; max-width: 100%; border: 1px solid #ddd; border-radius: 5px; padding: 5px;">', 
+                unsafe_allow_html=True
+            )
+            st.dataframe(df_manzila, hide_index=True, use_container_width=False)
+            st.markdown('</div>', unsafe_allow_html=True)
+                
     st.divider()
     
     # Fazele Lunii
