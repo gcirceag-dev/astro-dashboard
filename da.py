@@ -1150,12 +1150,12 @@ with tab2:
         st.dataframe(df_uraniene, hide_index=True, use_container_width=False)
     
     # Stele fixe (nu au D/R, doar poziție și casă)
+    # Stele fixe - fără coloana D/R (4 coloane)
     with st.expander("Stele fixe"):
         stele_date = []
         for s in date_output.get("stele", []):
             if " : " in s:
                 nume, rest = s.split(" : ", 1)
-                # Extrage poziția, zodiacul, casa
                 import re
                 match = re.match(r'(\d+°\s+\d+\'\d+")\s+([A-Za-z]+)\s+\|\s+Casa:\s+(\d+)', rest)
                 if match:
@@ -1166,12 +1166,12 @@ with tab2:
                     pozitie = rest[:25]
                     zodie = ""
                     casa = ""
-                stele_date.append([nume.strip(), pozitie, zodie, casa, "—"])
+                stele_date.append([nume.strip(), pozitie, zodie, casa])
             else:
-                stele_date.append([s[:20], "", "", "", ""])
-        df_stele = pd.DataFrame(stele_date, columns=["Nume", "Poziție", "Zodie", "Casa", "D/R"])
+                stele_date.append([s[:20], "", "", ""])
+        df_stele = pd.DataFrame(stele_date, columns=["Nume", "Poziție", "Zodie", "Casa"])
         st.dataframe(df_stele, hide_index=True, use_container_width=False)
-    
+            
     st.divider()
     
     # Scoruri planetare
