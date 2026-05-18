@@ -1174,7 +1174,6 @@ with tab2:
             
     st.divider()
     
-    # Scoruri planetare
     # Scoruri planetare - sparte în 7 coloane
     st.subheader("Scor planetar")
     
@@ -1254,13 +1253,34 @@ with tab2:
 # TAB 3 - ASPECTE & FILOSOFIC
 # =====================================================================
 with tab3:
-    # Aspecte
+    # Aspecte - sparte în 4 coloane
     st.subheader("Aspecte active (orb ≤ 6°)")
     
-    df_aspecte = pd.DataFrame(
-        [[a] for a in date_output.get("aspecte", [])],
-        columns=["Aspect"]
-    )
+    def parse_aspect(linie):
+        """
+        Linie exemplu: "Soare CON Luna (+2° 15' 00\")"
+        """
+        if not linie:
+            return ["", "", "", ""]
+        
+        import re
+        # Pattern: Planeta1 SPATIU ASPECT SPATIU Planeta2 (SPATIU+ORB)
+        match = re.match(r'^([A-Za-zăâîșț]+)\s+([A-Z]+)\s+([A-Za-zăâîșț]+)\s+\(\+?([^)]+)\)', linie)
+        if match:
+            planeta1 = match.group(1)
+            tip_aspect = match.group(2)
+            planeta2 = match.group(3)
+            orba = match.group(4).strip()
+            return [planeta1, tip_aspect, planeta2, orba]
+        
+        # Fallback pentru cazuri neașteptate
+        return [linie[:20], "", "", ""]
+    
+    aspecte_date = []
+    for a in date_output.get("aspecte", []):
+        aspecte_date.append(parse_aspect(a))
+    
+    df_aspecte = pd.DataFrame(aspecte_date, columns=["Planeta 1", "Aspect", "Planeta 2", "Orbă"])
     st.dataframe(df_aspecte, hide_index=True, use_container_width=False)
     
     st.divider()
