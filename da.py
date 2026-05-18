@@ -684,10 +684,10 @@ anotimp = calculeaza_anotimp_curent(lon_soare_acum)
 date_output["anotimp"] = f"{anotimp} (Pozitie Soare: {format_grade(lon_soare_acum)})"
 
 puncte_cardinale = {
-    "Echinoptiu Primavara (0°)": 0.0,
-    "Solstitiu Vara (90°)": 90.0,
-    "Echinoptiu Toamna (180°)": 180.0,
-    "Solstitiu Iarna (270°)": 270.0
+    "Echinoctiu de primavara": 0.0,
+    "Solstitiu de vara)": 90.0,
+    "Echinoctiu de toamna (180°)": 180.0,
+    "Solstitiu de iarna (270°)": 270.0
 }
 
 date_output["puncte_cardinale"] = []
@@ -941,7 +941,7 @@ with tab1:
         )
         st.dataframe(df_luna_din, hide_index=True, use_container_width=False)
         
-        st.markdown("**Momentele fazelor principale:**")
+        st.markdown("**Fazele principale**")
         df_faze = pd.DataFrame(
             [faza.split(" : ") for faza in date_output.get("faze_luna", [])],
             columns=["Faza", "Data și ora"]
@@ -951,7 +951,7 @@ with tab1:
     st.divider()
     
     # Durate și guvernatori
-    st.subheader("⏰ DURATE CALENDARISTICE")
+    st.subheader("Durate calendaristice")
     
     df_durate = pd.DataFrame([
         ["Durata zilei", date_output.get('durata_zi', 'N/A')],
