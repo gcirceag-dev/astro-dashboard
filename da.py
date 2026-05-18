@@ -158,7 +158,7 @@ def format_durata(ore_zecimale):
     s = int(round((((ore_zecimale - h) * 60) - m) * 60))
     if s >= 60: m += 1; s = 0
     if m >= 60: h += 1; m = 0
-    return f"{h:02d} ore, {m:02d} minute, {s:02d} secunde"
+    return f"{h:02d} h, {m:02d} m, {s:02d} s"
 
 def format_pozitie_astrologica(lon_zecimala):
     index_semn = int(lon_zecimala / 30.0) % 12
