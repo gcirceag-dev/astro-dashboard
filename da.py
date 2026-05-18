@@ -7,7 +7,7 @@ import pytz
 import swisseph as swe
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.patches import Wedge
+from matplotlib.patches import Wedge, Ellipse
 
 # =====================================================================
 # CONFIGURARE STREAMLIT
