@@ -28,7 +28,7 @@ st.markdown("""
     .stMarkdown, .stText, .stDataFrame, .stMetric {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         color: #000000;
-        font-size: 16px !important;
+        font-size: 18px !important;
     }
     .stDataFrame {
         font-size: 17px !important;
