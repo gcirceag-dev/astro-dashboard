@@ -629,6 +629,8 @@ def calculeaza_punct_arab(lon_asc, lon_corp1, lon_corp2, este_diurn=True, formul
 # BLOCUL 9: EXECUTARE ȘI CALCULE
 # =====================================================================
 acum_local, jd_acum, jd_miez = get_times()
+# Forțează actualizarea datei dacă este necesar
+acum_local = datetime.now(zona_locala).replace(second=0, microsecond=0)
 geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
 
 delta_t_zile = swe.deltat(jd_acum) / 86400.0
