@@ -229,7 +229,7 @@ def calculeaza_pozitie_astrologica(jd_ut, corp_id):
     lon = date_ecl[0]
     viteza = date_ecl[3]
     
-    miscare = "Retrograd" if viteza < 0 else "Direct"
+    miscare = "R" if viteza < 0 else "D"
     
     return {
         "pozitie_text": format_pozitie_astrologica(lon),
@@ -436,12 +436,12 @@ def evalueaza_forta_planeta(nume_p, lon_p, casa_p, miscare_p, lon_soare):
         else:
             justificari.append("Esențial: Standard (0)")
 
-    if miscare_p == "Direct":
+    if miscare_p == "D":
         scor += 2
-        justificari.append("Direct (+2)")
-    elif miscare_p == "Retrograd":
+        justificari.append("D (+2)")
+    elif miscare_p == "R":
         scor -= 2
-        justificari.append("Retrograd (-2)")
+        justificari.append("R (-2)")
 
     if casa_p in [1, 4, 7, 10]:
         scor += 3
@@ -601,7 +601,7 @@ try:
         "faza": date_luna_dinamica['faza'],
         "iluminare": f"{date_luna_dinamica['iluminare']:.2f}%",
         "varsta": f"{date_luna_dinamica['varsta']:.2f} zile",
-        "arc_soli_lunar": format_grade(elongatie_act)
+        "arc soli-lunar": format_grade(elongatie_act)
     }
     
     faze_ordine = [0.0, 90.0, 180.0, 270.0]
@@ -1010,28 +1010,28 @@ with tab2:
     )
     st.dataframe(df_planete, hide_index=True, use_container_width=False)
     
-    with st.expander("📋 Noduri & Lilith"):
+    with st.expander("Noduri & Lilith"):
         df_fictive = pd.DataFrame(
             [p.split(" : ") for p in date_output.get("puncte_fictive", [])],
             columns=["Punct", "Detalii"]
         )
         st.dataframe(df_fictive, hide_index=True, use_container_width=False)
     
-    with st.expander("🌠 Asteroizi"):
+    with st.expander("Asteroizi"):
         df_asteroizi = pd.DataFrame(
             [a.split(" : ") for a in date_output.get("asteroizi", [])],
             columns=["Asteroid", "Detalii"]
         )
         st.dataframe(df_asteroizi, hide_index=True, use_container_width=False)
     
-    with st.expander("🪐 Planete uraniene"):
+    with st.expander("Planete uraniene"):
         df_uraniene = pd.DataFrame(
             [u.split(" : ") for u in date_output.get("uraniene", [])],
             columns=["Planetă", "Detalii"]
         )
         st.dataframe(df_uraniene, hide_index=True, use_container_width=False)
     
-    with st.expander("✨ Stele fixe"):
+    with st.expander("Stele fixe"):
         df_stele = pd.DataFrame(
             [s.split(" : ") for s in date_output.get("stele", [])],
             columns=["Stea", "Detalii"]
