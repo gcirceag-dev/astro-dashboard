@@ -18,7 +18,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Stil CSS minimalist
 st.markdown("""
 <style>
     .stApp {
@@ -26,88 +25,30 @@ st.markdown("""
         margin: 0 auto;
     }
     
-    /* Text general */
-    .stMarkdown, .stText, .stMetric, .stCaption, label, p, div {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        color: #000000;
-        font-size: 20px !important;
+    /* Mărește tot textul din aplicație */
+    .stMarkdown, .stText, .stMetric, label, p, div, .stCaption {
+        font-size: 18px !important;
     }
     
-    /* Tabele Streamlit (st.dataframe) */
-    .stDataFrame, .stDataFrame div, .stDataFrame table {
-        font-size: 20px !important;
+    /* Mărește și tabelele */
+    .dataframe, .dataframe td, .dataframe th {
+        font-size: 18px !important;
     }
     
-    /* Orice tabel HTML */
-    table, th, td {
-        font-size: 20px !important;
+    /* Mărește expanderele */
+    .stExpander summary {
+        font-size: 18px !important;
     }
     
-    /* Antetul tabelului */
-    thead, th {
-        font-size: 20px !important;
-        font-weight: bold !important;
-    }
-    
-    /* Expander */
-    .stExpander, .stExpander details, .stExpander summary {
-        font-size: 20px !important;
-    }
-    
-    /* Sidebar */
-    .css-1d391kg, .stSidebar, .stSidebar p, .stSidebar div {
-        font-size: 20px !important;
-    }
-    
-    /* Butoane */
-    .stButton button {
-        font-size: 20px !important;
-    }
-    
-    /* Tabs */
+    /* Mărește tab-urile */
     button[data-baseweb="tab"] {
-        font-size: 20px !important;
+        font-size: 18px !important;
     }
     
-    /* Headere (st.subheader, st.title) */
-    h1, h2, h3, h4, h5, h6 {
-        font-size: 24px !important;
-    }
-    
-    .stExpander {
-        border: none;
-        box-shadow: none;
-    }
-    
+    /* Păstrează wrap-ul în tabele */
     td, th {
         white-space: normal !important;
         word-wrap: break-word !important;
-    }
-    
-    hr {
-        margin: 10px 0;
-    }
-        /* Forțează tabelele specifice Streamlit */
-    [data-testid="stDataFrame"] table,
-    [data-testid="stDataFrame"] tbody,
-    [data-testid="stDataFrame"] tr,
-    [data-testid="stDataFrame"] td,
-    [data-testid="stDataFrame"] th {
-        font-size: 20px !important;
-    }
-    
-    /* Forțează tabelele din popover */
-    div[data-testid="stPopover"] table,
-    div[data-testid="stPopover"] td,
-    div[data-testid="stPopover"] th {
-        font-size: 20px !important;
-    }
-    
-    /* Forțează tabelele din expander */
-    div[data-testid="stExpander"] table,
-    div[data-testid="stExpander"] td,
-    div[data-testid="stExpander"] th {
-        font-size: 20px !important;
     }
 </style>
 """, unsafe_allow_html=True)
