@@ -422,22 +422,13 @@ def determina_manzila_araba(lon_zecimala):
     }
 
 def deseneaza_sinusoida(acum_local, lon, lat):
-    """Desenează sinusoida pe 26 de ore."""
+    """Desenează sinusoida pe un interval de 24 de ore centrat pe momentul curent."""
     
-    # Ia răsăritul direct din date_output
-    rasarit_str = date_output.get("SOARE_orizont", {}).get("Rasarit")
-    if not rasarit_str:
-        # Fallback: folosește ora 6:00
-        start_time = acum_local.replace(hour=6, minute=0, second=0, microsecond=0)
-    else:
-        start_time = datetime.strptime(rasarit_str, "%H:%M:%S").replace(
-            year=acum_local.year, month=acum_local.month, day=acum_local.day
-        )
-        start_time = zona_locala.localize(start_time)
+    # Interval: 12 ore înainte și 12 ore după momentul curent (total 24 ore)
+    start_time = acum_local - timedelta(hours=12)
+    end_time = acum_local + timedelta(hours=12)
     
-    end_time = start_time + timedelta(hours=26)
-    
-    # Generează puncte la fiecare 30 minute
+    # Generează timestamp-uri la fiecare 30 de minute
     timestamps = []
     current = start_time
     while current <= end_time:
@@ -471,25 +462,25 @@ def deseneaza_sinusoida(acum_local, lon, lat):
         except:
             alt_luna.append(-90)
     
-    # Desenează
+    # Desenează graficul
     fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
+    
     ax.set_xticks([])
     ax.set_yticks([])
     for spine in ax.spines.values():
         spine.set_visible(False)
     
+    # Linia orizontului (y=0)
     ax.axhline(y=0, color='black', linewidth=1.5, alpha=0.7)
     
     x_vals = list(range(len(timestamps)))
     ax.plot(x_vals, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
     ax.plot(x_vals, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
     
-    # Punctul curent
-    for i, ts in enumerate(timestamps):
-        if ts >= acum_local:
-            ax.scatter(i, alt_soare[i], color='#FFD700', s=100, edgecolor='black', zorder=5)
-            ax.scatter(i, alt_luna[i], color='#888888', s=80, edgecolor='black', zorder=5)
-            break
+    # Poziția curentă (mijlocul graficului)
+    mid_idx = len(timestamps) // 2
+    ax.scatter(mid_idx, alt_soare[mid_idx], color='#FFD700', s=100, edgecolor='black', zorder=5)
+    ax.scatter(mid_idx, alt_luna[mid_idx], color='#888888', s=80, edgecolor='black', zorder=5)
     
     ax.set_ylim(-35, 95)
     ax.legend(loc='upper right', frameon=False)
