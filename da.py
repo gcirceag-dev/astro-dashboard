@@ -1005,14 +1005,13 @@ with tab1:
         )
         st.dataframe(df_faze, hide_index=True, use_container_width=False)
 
-# Cercuri vizuale - Faza Lunii și Zi/Noapte
 st.subheader("Vizualizări")
 col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("**Faza Lunii în timp real**")
     
-    iluminare_procent = 10.0  # Valoare de test bazată pe imaginea ta (aprox. 10%)
+    iluminare_procent = 10.0  # Valoare din exemplul tău
     if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
         iluminare_str = date_output["luna_dinamica"].get("iluminare", "0%")
         iluminare_procent = float(iluminare_str.replace("%", "").strip())
@@ -1021,48 +1020,42 @@ with col1:
     is_waning = "waning" in faza or "descrescatoare" in faza or "ultimul" in faza
 
     fig_luna, ax_luna = plt.subplots(figsize=(3, 3), facecolor='white')
-    ax_luna.set_xlim(-1.1, 1.1)
-    ax_luna.set_ylim(-1.1, 1.1)
+    ax_luna.set_xlim(-1.05, 1.05)
+    ax_luna.set_ylim(-1.05, 1.05)
     ax_luna.set_aspect('equal')
     ax_luna.axis('off')
 
-    # 1. Fundalul complet negru al lunii (partea neiluminată)
-    umbra_baza = plt.Circle((0, 0), 1, color='#2c2c2c', zorder=1)
-    ax_luna.add_patch(umbra_baza)
+    # Culori
+    c_lumina = '#fefeec'
+    c_umbra = '#2c2c2c'
 
-    # 2. Reconstruim semiluna folosind două Wedge-uri (gropi parțiale) suprapuse corect
-    # Transformăm procentul în lățimea axei semi-minor a elipsei de umbră (-1 la 1)
-    k = 2.0 * (iluminare_procent / 100.0) - 1.0
-    
-    # Desenăm faza exactă folosind arcuri matematice (Wedge + Elipse fictive)
-    if iluminare_procent <= 50:
-        # Semilună sub 50% (seceră subțire)
-        theta1, theta2 = (90, 270) if not is_waning else (-90, 90)
-        # Partea luminoasă de bază (o jumătate de cerc)
-        lumina_baza = Wedge((0, 0), 1, theta1, theta2, color='#fefeec', zorder=2)
-        ax_luna.add_patch(lumina_baza)
-        # Elipsa de umbră care mușcă din ea pentru a crea curbura concavă corectă
-        r_umbra = abs(k)
-        # Folosim un Wedge de acoperire ajustat pe axa X pentru simularea sferică
-        # Pentru simplitate vizuală perfectă în Matplotlib 2D:
-        offset_x = - (1.0 - (iluminare_procent / 50.0)) if not is_waning else (1.0 - (iluminare_procent / 50.0))
-        cerc_taiere = plt.Circle((offset_x * 1.1, 0), 1.05, color='#2c2c2c', zorder=3)
-        ax_luna.add_patch(cerc_taiere)
-        cerc_taiere.set_clip_path(umbra_baza)
-    else:
-        # Semilună peste 50% (luna giboasă - mai mult de jumătate iluminată)
-        theta1, theta2 = (-90, 90) if not is_waning else (90, 270)
-        lumina_baza = Wedge((0, 0), 1, theta1, theta2, color='#fefeec', zorder=2)
-        ax_luna.add_patch(lumina_baza)
-        
-        offset_x = ((iluminare_procent - 50.0) / 50.0)
-        if is_waning: offset_x = -offset_x
-        cerc_adaos = plt.Circle((offset_x * 0.9, 0), 1.0, color='#fefeec', zorder=3)
-        ax_luna.add_patch(cerc_adaos)
-        cerc_adaos.set_clip_path(umbra_baza)
+    # Metoda trigonometrică infailibilă pentru fazele lunii:
+    # Desenăm o jumătate albă și una neagră, apoi o elipsă la mijloc care își schimbă culoarea
+    if not is_waning:  # Luna Crește (Lumina e în dreapta)
+        stanga_color = c_umbra
+        dreapta_color = c_lumina
+        elipsa_color = c_umbra if iluminare_procent < 50 else c_lumina
+    else:  # Luna Descrește (Lumina e în stânga)
+        stanga_color = c_lumina
+        dreapta_color = c_umbra
+        elipsa_color = c_lumina if iluminare_procent < 50 else c_umbra
 
-    # Bordura exterioară curată
-    bordura = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=4)
+    # Desenăm cele două jumătăți de bază (Wedges)
+    baza_stanga = Wedge((0, 0), 1, 90, 270, color=stanga_color, zorder=1)
+    baza_dreapta = Wedge((0, 0), 1, -90, 90, color=dreapta_color, zorder=1)
+    ax_luna.add_patch(baza_stanga)
+    ax_luna.add_patch(baza_dreapta)
+
+    # Calculăm lățimea elipsei centrale (linia de demarcație a umbrei)
+    # Proporția variază de la 1.0 (lună plină/nouă) la 0.0 (sferturi)
+    latime_elipsa = abs(2.0 * (iluminare_procent / 100.0) - 1.0)
+
+    if latime_elipsa > 0:
+        elipsa_tranzitie = Ellipse((0, 0), latime_elipsa * 2, 2, color=elipsa_color, zorder=2)
+        ax_luna.add_patch(elipsa_tranzitie)
+
+    # Bordură exterioară perfectă
+    bordura = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
     ax_luna.add_patch(bordura)
 
     st.pyplot(fig_luna)
@@ -1088,30 +1081,33 @@ with col2:
     procent_zi = (ore_zi / total) * 100 if total > 0 else 50.0
 
     fig_zn, ax_zn = plt.subplots(figsize=(3, 3), facecolor='white')
-    ax_zn.set_xlim(-1.1, 1.1)
-    ax_zn.set_ylim(-1.1, 1.1)
+    ax_zn.set_xlim(-1.05, 1.05)
+    ax_zn.set_ylim(-1.05, 1.05)
     ax_zn.set_aspect('equal')
     ax_zn.axis('off')
 
-    # CORECȚIE UNGHI: Forțăm linia de demarcație să fie perfect orizontală (Stânga-Dreapta)
-    # Ziua (Galben) va ocupa partea de sus, Noaptea (Albastru) partea de jos.
-    # Schimbăm unghiul de start la 180° (Ora 9) pentru o simetrie perfectă sus/jos.
-    unghi_zi = (procent_zi / 100.0) * 360.0
+    # ALINIERE ORA 8 (240°) și ORA 4 (120°)
+    # În Matplotlib: Ora 3 = 0°, Ora 12 = 90°, Ora 9 = 180°, Ora 6 = 270°
+    # Ora 4 geometric este la -30° (sau 330°), Ora 8 este la 210°
+    # Centrul arcului de zi (Sus) este fixat la 90° (Ora 12)
     
-    # Calculăm unghiurile astfel încât linia de separare să se modifice curat pe verticală
-    # Dacă ziua e mai mare de 50%, coboară sub linia orizontală
-    jumatate_zi = unghi_zi / 2.0
-    unghi_start = 180.0 - jumatate_zi
-    unghi_end = 180.0 + jumatate_zi
+    unghi_zi_total = (procent_zi / 100.0) * 360.0
+    
+    # Ziua se va extinde simetric în stânga și dreapta axei de sus (90°)
+    unghi_start = 90.0 - (unghi_zi_total / 2.0)
+    unghi_end = 90.0 + (unghi_zi_total / 2.0)
 
-    if unghi_zi > 0:
+    # Felia pentru ZI (Galben - Sus)
+    if unghi_zi_total > 0:
         zi = Wedge((0, 0), 1, unghi_start, unghi_end, color='#FFD700', edgecolor='black', linewidth=0.5, zorder=1)
         ax_zn.add_patch(zi)
     
-    if (360.0 - unghi_zi) > 0:
+    # Felia pentru NOAPTE (Albastru închis - Jos)
+    if (360.0 - unghi_zi_total) > 0:
         noapte = Wedge((0, 0), 1, unghi_end, unghi_start + 360.0, color='#1a1a2e', edgecolor='black', linewidth=0.5, zorder=1)
         ax_zn.add_patch(noapte)
 
+    # Bordură exterioară neagră
     bordura_zn = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
     ax_zn.add_patch(bordura_zn)
 
