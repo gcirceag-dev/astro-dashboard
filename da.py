@@ -6,6 +6,10 @@ from datetime import datetime, timedelta
 import pytz
 import swisseph as swe
 import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.patches import Wedge
+import io
+from PIL import Image
 
 # =====================================================================
 # CONFIGURARE STREAMLIT
@@ -1002,6 +1006,111 @@ with tab1:
             columns=["Faza", "Data și ora"]
         )
         st.dataframe(df_faze, hide_index=True, use_container_width=False)
+
+    # Cercuri vizuale - Faza Lunii și Zi/Noapte
+    st.subheader("Vizualizări")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**Faza Lunii în timp real**")
+        
+        # Obține procentul de iluminare
+        iluminare_procent = 0
+        if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
+            iluminare_str = date_output["luna_dinamica"].get("iluminare", "0%")
+            iluminare_procent = float(iluminare_str.replace("%", ""))
+        
+        # Determină dacă e în creștere sau descreștere
+        faza = date_output["luna_dinamica"].get("faza curenta", "")
+        este_crescatoare = "crestere" in faza or "Primul Patrar" in faza or (iluminare_procent < 50 and "Luna Noua" not in faza)
+        este_descrescatoare = "descrestere" in faza or "Ultimul Patrar" in faza
+        
+        # Calculează procentul pentru afișare (0-1)
+        procent = iluminare_procent / 100.0
+        
+        # Pentru descreștere, masca se aplică invers
+        if este_descrescatoare and iluminare_procent > 50:
+            # După Lună Plină, începe descreșterea
+            procent = 1.0 - (iluminare_procent - 50) / 50
+        elif este_descrescatoare:
+            procent = iluminare_procent / 100.0
+        
+        # Creează cercul lunar
+        fig_luna, ax_luna = plt.subplots(figsize=(3, 3), facecolor='white')
+        ax_luna.set_xlim(-1.5, 1.5)
+        ax_luna.set_ylim(-1.5, 1.5)
+        ax_luna.set_aspect('equal')
+        ax_luna.axis('off')
+        
+        # Cerc de bază (negru)
+        cerc_negru = plt.Circle((0, 0), 1, color='#333333', zorder=1)
+        ax_luna.add_patch(cerc_negru)
+        
+        # Mască albă (partea iluminată) - din dreapta spre stânga
+        # Unghiul de start: 90° (sus), unghiul de sfârșit: 90° - 360° * procent
+        if procent > 0:
+            unghi_start = 90
+            unghi_sfarsit = 90 - 360 * procent
+            if unghi_sfarsit < -270:
+                unghi_sfarsit = -270
+            
+            masca = Wedge((0, 0), 1, unghi_start, unghi_sfarsit, color='white', zorder=2)
+            ax_luna.add_patch(masca)
+        
+        # Bordură cerc
+        bordura = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
+        ax_luna.add_patch(bordura)
+        
+        st.pyplot(fig_luna)
+        st.caption(f"Iluminare: {iluminare_procent:.1f}%")
+    
+    with col2:
+        st.markdown("**Durata Zilei vs Nopții**")
+        
+        # Obține duratele
+        durata_zi = date_output.get('durata_zi', '0 h 00 m 00 s')
+        durata_noapte = date_output.get('durata_noapte', '0 h 00 m 00 s')
+        
+        # Extrage orele din format "02 h 03 m 04 s"
+        import re
+        match_zi = re.search(r'(\d+) h', durata_zi)
+        match_noapte = re.search(r'(\d+) h', durata_noapte)
+        
+        ore_zi = float(match_zi.group(1)) if match_zi else 12
+        ore_noapte = float(match_noapte.group(1)) if match_noapte else 12
+        
+        # Calculează unghiurile (procent din 360°)
+        total = ore_zi + ore_noapte
+        unghi_zi = (ore_zi / total) * 360
+        unghi_noapte = (ore_noapte / total) * 360
+        
+        # Creează cercul zi/noapte
+        fig_zn, ax_zn = plt.subplots(figsize=(3, 3), facecolor='white')
+        ax_zn.set_xlim(-1.5, 1.5)
+        ax_zn.set_ylim(-1.5, 1.5)
+        ax_zn.set_aspect('equal')
+        ax_zn.axis('off')
+        
+        # Semicerc sus - Ziua (alb)
+        if unghi_zi > 0:
+            zi = Wedge((0, 0), 1, 0, unghi_zi, color='#FFD700', zorder=1)  # galben-auriu
+            ax_zn.add_patch(zi)
+        
+        # Semicerc jos - Noaptea (negru)
+        if unghi_noapte > 0:
+            noapte = Wedge((0, 0), 1, unghi_zi, 360, color='#1a1a2e', zorder=1)
+            ax_zn.add_patch(noapte)
+        
+        # Linie de separare
+        ax_zn.plot([-1, 1], [0, 0], color='black', linewidth=1, zorder=2)
+        
+        # Bordură cerc
+        bordura_zn = plt.Circle((0, 0), 1, color='black', fill=False, linewidth=1.5, zorder=3)
+        ax_zn.add_patch(bordura_zn)
+        
+        st.pyplot(fig_zn)
+        st.caption(f"Zi: {durata_zi}  |  Noapte: {durata_noapte}")
     
     st.divider()
     
