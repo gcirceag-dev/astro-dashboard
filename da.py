@@ -598,7 +598,7 @@ try:
     elongatie_act = (res_luna[0][0] - res_soare[0][0]) % 360.0
     
     date_output["luna_dinamica"] = {
-        "faza": date_luna_dinamica['faza'],
+        "faza curenta": date_luna_dinamica['faza'],
         "iluminare": f"{date_luna_dinamica['iluminare']:.2f}%",
         "varsta": f"{date_luna_dinamica['varsta']:.2f} zile",
         "arc soli-lunar": format_grade(elongatie_act)
