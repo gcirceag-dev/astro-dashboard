@@ -875,11 +875,11 @@ except Exception as e:
 # AFIȘAREA STREAMLIT - ORGANIZATĂ PE TAB-URI CU TABELE
 # =====================================================================
 
-st.title("🌙 AstroCalcul Pro")
+st.title("Dashboard astro")
 st.caption(f"Data: {acum_local.strftime('%d-%m-%Y %H:%M:%S')} | Coordonate: {LATITUDINE}° N, {LONGITUDINE}° E")
 
 # Creare tab-uri
-tab1, tab2, tab3 = st.tabs(["🌞 Soare & Lună", "⭐ Astro", "🔮 Aspecte & Filosofic"])
+tab1, tab2, tab3 = st.tabs(["Soare & Luna", "Astro", "Aspecte"])
 
 # =====================================================================
 # TAB 1 - SOARE & LUNĂ
