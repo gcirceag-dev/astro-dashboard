@@ -942,7 +942,7 @@ with tab1:
     )
     st.dataframe(df_luna_ev, hide_index=True, use_container_width=False)
     
-    with st.popover("📊 Date fizice și Manzil"):
+    with st.popover("Dinamica si conac"):
         date_luna_fiz = {k: v for k, v in date_output.get("LUNA_fizice", {}).items() if k != "eroare"}
         df_luna_fiz = pd.DataFrame(
             list(date_luna_fiz.items()),
