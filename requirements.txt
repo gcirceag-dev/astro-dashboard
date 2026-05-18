@@ -1,3 +1,6 @@
 streamlit
 pyswisseph
 pytz
+pandas
+matplotlib
+Pillow
