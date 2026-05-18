@@ -931,7 +931,7 @@ with tab1:
     st.divider()
     
     # Dinamica Lunii
-    st.subheader("🌙 DINAMICA ȘI FAZELE LUNII")
+    st.subheader("Fazele Lunii")
     
     if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
         ld = date_output["luna_dinamica"]
