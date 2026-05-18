@@ -942,7 +942,7 @@ with tab1:
     )
     st.dataframe(df_luna_ev, hide_index=True, use_container_width=False)
     
-    with st.popover("Dinamica si conac"):
+    with st.popover("📊 Date fizice și Manzil"):
         date_luna_fiz = {k: v for k, v in date_output.get("LUNA_fizice", {}).items() if k != "eroare"}
         df_luna_fiz = pd.DataFrame(
             list(date_luna_fiz.items()),
@@ -953,7 +953,6 @@ with tab1:
         # Manzila pe 3 rânduri
         if date_output.get("LUNA_manzila"):
             manzila_str = date_output["LUNA_manzila"]
-            # Parsează string-ul
             import re
             match_statie = re.search(r'Conac (\d+)/28 - ([^\(]+) \(([^\)]+)\)', manzila_str)
             match_pozitie = re.search(r'Poziție: ([^\|]+)', manzila_str)
@@ -974,9 +973,29 @@ with tab1:
                 ["Traducere", traducere],
                 ["Poziție în manzil", pozitie]
             ], columns=["", "Detalii"])
-            st.dataframe(df_manzila, hide_index=True, use_container_width=False, column_config={
-                "Detalii": st.column_config.TextColumn("Detalii", width="large")
-            })
+            st.dataframe(df_manzila, hide_index=True, use_container_width=False)
+    
+    st.divider()
+    
+    # Fazele Lunii - tabele unite, coloană Valoare mai largă
+    st.subheader("Fazele Lunii")
+    
+    if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
+        ld = date_output["luna_dinamica"]
+        df_luna_din = pd.DataFrame(
+            list(ld.items()),
+            columns=["Parametru", "Valoare"]
+        )
+        st.dataframe(df_luna_din, hide_index=True, use_container_width=False, column_config={
+            "Valoare": st.column_config.TextColumn("Valoare", width="medium")
+        })
+        
+        # Fazele principale
+        df_faze = pd.DataFrame(
+            [faza.split(" : ") for faza in date_output.get("faze_luna", [])],
+            columns=["Faza", "Data și ora"]
+        )
+        st.dataframe(df_faze, hide_index=True, use_container_width=False)
     
     st.divider()
     
