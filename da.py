@@ -1263,24 +1263,31 @@ with tab2:
 # TAB 3 - ASPECTE & FILOSOFIC
 # =====================================================================
 with tab3:
-    # Aspecte - sparte în 4 coloane
-    st.subheader("Aspecte active (orb ≤ 6°)")
+    # Aspecte - cu slider pentru orbă
+    st.subheader("Aspecte active")
+    
+    # Slider pentru selectarea orbei maxime
+    orba_maxima = st.slider(
+        "Orbă maximă (grade)",
+        min_value=0.0,
+        max_value=10.0,
+        value=6.0,
+        step=0.5,
+        help="Selectează toleranța maximă pentru aspecte (0° - 10°)"
+    )
+    
+    # Recalculează aspectele cu noua orbă
+    try:
+        liste_aspecte_filtrate = calculeaza_toate_aspectele(coordonate_totale, orba_maxima=orba_maxima)
+        aspecte_filtrate = liste_aspecte_filtrate if liste_aspecte_filtrate else ["Nu s-au găsit aspecte sub " + str(orba_maxima) + "°"]
+    except Exception as e:
+        aspecte_filtrate = [f"Eroare: {e}"]
     
     def parse_aspect(linie):
-        """
-        Linie exemplu: 
-        - "Soare CON Luna (+2° 15' 00\")"
-        - "Nod Nord (True) CAR Pluto (+1° 30' 00\")"
-        - "Lilith (True) OPO Admetos (-0° 15' 24\")"
-        """
         if not linie:
             return ["", "", "", ""]
         
         import re
-        
-        # Pattern care capturează orice text până la un ASPECT (CON, SEX, CAR, TRI, OPO)
-        # urmat de spațiu, apoi orice text până la paranteza cu orba
-        # Acceptă nume cu spații și paranteze
         match = re.match(r'^(.+?)\s+(CON|SEX|CAR|TRI|OPO)\s+(.+?)\s+\(([^)]+)\)', linie)
         if match:
             planeta1 = match.group(1).strip()
@@ -1289,17 +1296,48 @@ with tab3:
             orba = match.group(4).strip()
             return [planeta1, tip_aspect, planeta2, orba]
         
-        # Fallback pentru cazuri neașteptate
         return [linie[:30], "", "", ""]
     
     aspecte_date = []
-    for a in date_output.get("aspecte", []):
+    for a in aspecte_filtrate:
         aspecte_date.append(parse_aspect(a))
     
     df_aspecte = pd.DataFrame(aspecte_date, columns=["Planeta 1", "Aspect", "Planeta 2", "Orbă"])
     st.dataframe(df_aspecte, hide_index=True, use_container_width=False)
     
     st.divider()
+    
+    # Puncte arabe - sparte în 4 coloane
+    st.subheader("Puncte arabe majore")
+    
+    st.text(date_output.get("tip_secta", ""))
+    
+    def parse_punct_arab(linie):
+        if not linie or "Eroare" in linie:
+            return ["", "", "", ""]
+        
+        if " : " in linie:
+            nume, rest = linie.split(" : ", 1)
+        else:
+            nume = linie[:30]
+            rest = linie
+        
+        import re
+        match = re.match(r'(\d+°\s+\d+\'\d+")\s+([A-Za-z]+)\s+\|\s+Casa:\s+(\d+)', rest)
+        if match:
+            pozitie = match.group(1)
+            zodie = match.group(2)
+            casa = match.group(3)
+            return [nume.strip(), pozitie, zodie, casa]
+        else:
+            return [nume.strip(), rest[:30], "", ""]
+    
+    puncte_date = []
+    for pa in date_output.get("puncte_arabe", []):
+        puncte_date.append(parse_punct_arab(pa))
+    
+    df_pa = pd.DataFrame(puncte_date, columns=["Punct arab", "Poziție", "Zodie", "Casa"])
+    st.dataframe(df_pa, hide_index=True, use_container_width=False)
     
     # Puncte arabe - sparte în 4 coloane
     st.subheader("Puncte arabe majore")
