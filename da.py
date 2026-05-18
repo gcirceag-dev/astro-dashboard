@@ -158,7 +158,7 @@ def format_durata(ore_zecimale):
     s = int(round((((ore_zecimale - h) * 60) - m) * 60))
     if s >= 60: m += 1; s = 0
     if m >= 60: h += 1; m = 0
-    return f"{h:02d} h, {m:02d} m, {s:02d} s"
+    return f"{h:02d} h {m:02d} m {s:02d} s"
 
 def format_pozitie_astrologica(lon_zecimala):
     index_semn = int(lon_zecimala / 30.0) % 12
@@ -685,9 +685,9 @@ date_output["anotimp"] = f"{anotimp} (Pozitie Soare: {format_grade(lon_soare_acu
 
 puncte_cardinale = {
     "Echinoctiu de primavara": 0.0,
-    "Solstitiu de vara)": 90.0,
-    "Echinoctiu de toamna (180°)": 180.0,
-    "Solstitiu de iarna (270°)": 270.0
+    "Solstitiu de vara": 90.0,
+    "Echinoctiu de toamna": 180.0,
+    "Solstitiu de iarna": 270.0
 }
 
 date_output["puncte_cardinale"] = []
