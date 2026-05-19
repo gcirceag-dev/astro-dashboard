@@ -436,14 +436,41 @@ def determina_manzila_araba(lon_zecimala):
         "progres_text": format_grade(grade_rest)
     }
 
-def deseneaza_sinusoida(acum_local, lon, lat):
-    """Desenează sinusoida pe un interval de 24 de ore centrat pe momentul curent."""
+def deseneaza_sinusoida(acum_local, lon, lat, alt=0):
+    """Desenează sinusoida cu altitudinea Soarelui și Lunii folosind parametrii transmiși."""
     
-    # Interval: 12 ore înainte și 12 ore după momentul curent (total 24 ore)
-    start_time = acum_local - timedelta(hours=14)
-    end_time = acum_local + timedelta(hours=14)
+    geopos_lista = [lon, lat, alt]
     
-    # Generează timestamp-uri la fiecare 30 de minute
+    # Funcție internă corectată pentru a obține răsăritul unei zile
+    def get_rasarit(data_baza):
+        # Setăm ora la 12:00 în fusul orar local al datei primite pentru a evita saltul de zi la conversia UTC
+        local_noon = data_baza.replace(hour=12, minute=0, second=0, microsecond=0)
+        data_utc = local_noon.astimezone(pytz.utc)
+        
+        # Calculăm ziua iuliană exactă (inclusiv fracțiunile de secundă)
+        timp_ora = data_utc.hour + data_utc.minute / 60.0 + data_utc.second / 3600.0
+        jd = swe.julday(data_utc.year, data_utc.month, data_utc.day, timp_ora)
+        
+        rezultat = calculeaza_evenimente_orizont(jd - 0.5, swe.SUN, geopos_lista)
+        if rezultat and rezultat.get("Rasarit"):
+            return jd_to_datetime(rezultat["Rasarit"])
+        return None
+    
+    # Calculează răsăritul de azi și mâine
+    dt_r_azi = get_rasarit(acum_local)
+    dt_r_maine = get_rasarit(acum_local + timedelta(days=1))
+    
+    # Fallback stabil dacă nu găsește răsăritul
+    if not dt_r_azi:
+        dt_r_azi = acum_local.replace(hour=6, minute=0, second=0, microsecond=0)
+    if not dt_r_maine:
+        dt_r_maine = (acum_local + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
+    
+    # Interval fereastră grafic: de la răsăritul de azi la răsăritul de mâine
+    start_time = dt_r_azi - timedelta(hours=1)
+    end_time = dt_r_maine + timedelta(hours=1)
+    
+    # Generează timestamp-uri din 30 în 30 de minute
     timestamps = []
     current = start_time
     while current <= end_time:
@@ -452,54 +479,72 @@ def deseneaza_sinusoida(acum_local, lon, lat):
     
     alt_soare = []
     alt_luna = []
-    geopos = [LONGITUDINE, LATITUDINE, ALTITUDINE]
+    
+    # Setează steagul topocentric pentru acuratețe maximă la orizont
+    swe.set_topo(lon, lat, alt)
     
     for ts in timestamps:
         ts_utc = ts.astimezone(pytz.utc)
-        jd = swe.julday(ts_utc.year, ts_utc.month, ts_utc.day,
-                        ts_utc.hour + ts_utc.minute/60.0)
+        timp_ora = ts_utc.hour + ts_utc.minute / 60.0 + ts_utc.second / 3600.0
+        jd = swe.julday(ts_utc.year, ts_utc.month, ts_utc.day, timp_ora)
         
-        # Soarele
+        # Calcul altitudine Soare
         try:
-            res = swe.calc_ut(jd, swe.SUN, swe.FLG_SWIEPH)
-            xin = [res[0][0], res[0][1], res[0][2]]
-            az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
-            alt_soare.append(alt)
-        except:
+            res_s, _ = swe.calc_ut(jd, swe.SUN, swe.FLG_SWIEPH | swe.FLG_TOPOCTR)
+            xin = [res_s[0], res_s[1], res_s[2]]
+            az, alt_s, _ = swe.azalt(jd, swe.ECL2EQU, geopos_lista, 1013.25, 15.0, xin)
+            alt_soare.append(alt_s)
+        except Exception:
             alt_soare.append(-90)
-        
-        # Luna
+            
+        # Calcul altitudine Lună
         try:
-            res = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH)
-            xin = [res[0][0], res[0][1], res[0][2]]
-            az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
-            alt_luna.append(alt)
-        except:
+            res_l, _ = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH | swe.FLG_TOPOCTR)
+            xin = [res_l[0], res_l[1], res_l[2]]
+            az, alt_l, _ = swe.azalt(jd, swe.ECL2EQU, geopos_lista, 1013.25, 15.0, xin)
+            alt_luna.append(alt_l)
+        except Exception:
             alt_luna.append(-90)
+            
+    # Resetăm starea librăriei după buclă
+    swe.set_topo(0, 0, 0)
     
-    # Desenează graficul
-    fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
+    # Construcție grafic Matplotlib
+    fig, ax = plt.subplots(figsize=(6, 3.5), facecolor='white')
     
+    # Curățare margini și axe pentru design minimalist
     ax.set_xticks([])
     ax.set_yticks([])
     for spine in ax.spines.values():
         spine.set_visible(False)
+        
+    # Linia Orizontului (0 grade)
+    ax.axhline(y=0, color='#444444', linewidth=1.2, linestyle='-', alpha=0.5)
     
-    # Linia orizontului (y=0)
-    ax.axhline(y=0, color='black', linewidth=1.5, alpha=0.7)
+    x_numeric = np.arange(len(timestamps))
+    ax.plot(x_numeric, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
+    ax.plot(x_numeric, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
     
-    x_vals = list(range(len(timestamps)))
-    ax.plot(x_vals, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
-    ax.plot(x_vals, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
+    # Găsește cel mai apropiat index matematic pentru poziția curentă (previne salturile)
+    diferente = [abs((ts - acum_local).total_seconds()) for ts in timestamps]
+    current_idx = kernel_idx = diferentre_min_idx = independente_idx = dedicate = un_index = variante = diferente.index(min(diferente))
     
-    # Poziția curentă (mijlocul graficului)
-    mid_idx = len(timestamps) // 2
-    ax.scatter(mid_idx, alt_soare[mid_idx], color='#FFD700', s=100, edgecolor='black', zorder=5)
-    ax.scatter(mid_idx, alt_luna[mid_idx], color='#888888', s=80, edgecolor='black', zorder=5)
+    # Desenează markerul de poziție curentă
+    if 0 <= current_idx < len(alt_soare):
+        ax.scatter(current_idx, alt_soare[current_idx], color='#FFD700', 
+                   s=110, edgecolor='black', zorder=5, linewidth=1.5)
+        ax.scatter(current_idx, alt_luna[current_idx], color='#888888', 
+                   s=90, edgecolor='black', zorder=5, linewidth=1.5)
     
-    ax.set_ylim(-35, 95)
-    ax.legend(loc='upper right', frameon=False)
+    # Textul indicator pentru Orizont plasat subtil în dreapta
+    ax.text(x_numeric[-1], 2, ' Orizont (0°)', ha='right', va='bottom', fontsize=8, color='#666666')
     
+    # Limite adaptate dinamic pentru a nu tăia axele
+    ax.set_ylim(-40, 95)
+    ax.set_xlim(x_numeric[0], x_numeric[-1])
+    ax.legend(loc='upper right', frameon=False, fontsize=9)
+    
+    plt.tight_layout()
     return fig
 
 def evalueaza_forta_planeta(nume_p, lon_p, casa_p, miscare_p, lon_soare):
@@ -1223,9 +1268,9 @@ with tab1:
     # Sinusoida Soare - Lună
     st.subheader("Altitudinea Soarelui și Lunii")
     
-    fig_sin = deseneaza_sinusoida(acum_local, LONGITUDINE, LATITUDINE)
+    fig_sin = deseneaza_sinusoida(acum_local, LONGITUDINE, LATITUDINE, ALTITUDINE)
     st.pyplot(fig_sin)
-    st.caption("Linia orizontului (0°) | ● Poziția curentă")
+    st.caption("Linia orizontului (0°) | ● Poziția curentă pe curbe")
     # ============================================================
     # DURATE CALENDARISTICE
     # ============================================================
