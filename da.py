@@ -27,7 +27,7 @@ st.markdown("""
     
     /* FORȚAT NUCLEAR: tot ce e text în aplicație */
     html, body, [class*="css"] {
-        font-size: 20px !important;
+        font-size: 18px !important;
     }
     
     /* Wrap în tabele */
