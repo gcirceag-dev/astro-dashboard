@@ -1094,12 +1094,14 @@ with tab3:
         return [nume.strip(), rest[:30], "", ""]
     puncte_date = [parse_punct_arab(pa) for pa in date_output.get("puncte_arabe", [])]
     puncte_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
-    puncte_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Punct arab</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Pozitie</th><th style="padding:6px 8px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:center;width:50px;">Zod</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Casa</th></tr>'
+    puncte_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Punct arab</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Pozitie</th><th style="padding:6px 6px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:center;width:45px;">Zod</th><th style="padding:6px 6px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:center;width:45px;">Casa</th></tr>'
     for row in puncte_date:
         puncte_html += '<tr>'
         for idx, cell in enumerate(row):
             if idx == 2:
-                puncte_html += f'<td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;text-align:center;">{cell}</td>'
+                puncte_html += f'<td style="padding:6px 6px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;text-align:center;">{cell}</td>'
+            elif idx == 3:
+                puncte_html += f'<td style="padding:6px 6px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;text-align:center;">{cell}</td>'
             else:
                 puncte_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
         puncte_html += '</tr>'
