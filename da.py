@@ -1254,13 +1254,15 @@ with tab1:
     st.divider()
     
     # Luna
-    st.subheader("Luna")
-    
-    df_luna_ev = pd.DataFrame(
-        list(date_output.get("LUNA_orizont", {}).items()),
-        columns=["Eveniment", "Ora"]
+    st.dataframe(
+        df_luna_ev, 
+        hide_index=True, 
+        use_container_width=False,
+        column_config={
+            "Eveniment": st.column_config.TextColumn("Eveniment", width="small"),
+            "Ora": st.column_config.TextColumn("Ora", width="small")
+        }
     )
-    st.dataframe(df_luna_ev, hide_index=True, use_container_width=False)
     
     with st.popover("Dinamica si Conac"):
         date_luna_fiz = {k: v for k, v in date_output.get("LUNA_fizice", {}).items() if k != "eroare"}
