@@ -25,65 +25,8 @@ st.markdown("""
         margin: 0 auto;
     }
     
-    /* Toate textele */
-    .stMarkdown, .stText, .stMetric, label, p, div, .stCaption, h1, h2, h3, h4 {
-        font-size: 20px !important;
-    }
-    
-    /* FORȚAT: Orice tabel din aplicație */
-    table {
-        font-size: 20px !important;
-    }
-    table * {
-        font-size: 20px !important;
-    }
-    thead, tbody, tfoot, tr, th, td {
-        font-size: 20px !important;
-    }
-    
-    /* FORȚAT: Dataframe-uri Streamlit */
-    [data-testid="stDataFrame"] {
-        font-size: 20px !important;
-    }
-    [data-testid="stDataFrame"] * {
-        font-size: 20px !important;
-    }
-    div[data-testid="stDataFrame"] div {
-        font-size: 20px !important;
-    }
-    
-    /* FORȚAT: Celule interne Streamlit */
-    [data-testid="stDataFrame"] [data-testid="stTable"] {
-        font-size: 20px !important;
-    }
-    [data-testid="stDataFrame"] [data-testid="stTable"] * {
-        font-size: 20px !important;
-    }
-    
-    /* FORȚAT: Popup/Popover */
-    section[data-testid="stPopover"] {
-        font-size: 20px !important;
-    }
-    section[data-testid="stPopover"] * {
-        font-size: 20px !important;
-    }
-    div[data-testid="stPopover"] {
-        font-size: 20px !important;
-    }
-    div[data-testid="stPopover"] * {
-        font-size: 20px !important;
-    }
-    
-    /* Expander */
-    .stExpander summary {
-        font-size: 20px !important;
-    }
-    .stExpander details {
-        font-size: 20px !important;
-    }
-    
-    /* Tab-uri */
-    button[data-baseweb="tab"] {
+    /* FORȚAT NUCLEAR: tot ce e text în aplicație */
+    html, body, [class*="css"] {
         font-size: 20px !important;
     }
     
@@ -91,16 +34,6 @@ st.markdown("""
     td, th {
         white-space: normal !important;
         word-wrap: break-word !important;
-    }
-    
-    /* Selectbox și dropdown */
-    .stSelectbox div, .stSelectbox label, .stSelectbox span {
-        font-size: 20px !important;
-    }
-    
-    /* Slider */
-    .stSlider div, .stSlider label, .stSlider span {
-        font-size: 20px !important;
     }
 </style>
 """, unsafe_allow_html=True)
