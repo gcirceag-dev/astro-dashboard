@@ -445,13 +445,14 @@ def calculeaza_dinamica_lunii(jd_ut):
     }
 
 def gaseste_faza_dinamica(jd_baza, faza_tinta, cauta_in_trecut=False):
+    """Versiune optimizată - folosește cache-ul global ephe_cache"""
     t0 = jd_baza - 15.0 if cauta_in_trecut else jd_baza
     t1 = jd_baza if cauta_in_trecut else jd_baza + 15.0
     
     for _ in range(24):
         mijloc = (t0 + t1) / 2.0
-        res_soare = swe.calc_ut(mijloc, swe.SUN, swe.FLG_SWIEPH)
-        res_luna = swe.calc_ut(mijloc, swe.MOON, swe.FLG_SWIEPH)
+        res_soare = ephe_cache.get_calc_ut(mijloc, swe.SUN)
+        res_luna = ephe_cache.get_calc_ut(mijloc, swe.MOON)
         
         lon_soare = res_soare[0][0]
         lon_luna = res_luna[0][0]
