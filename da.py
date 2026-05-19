@@ -1000,7 +1000,7 @@ date_output["planete"] = []
 for nume, corp_id in planete_standard.items():
     try:
         p = calculeaza_pozitie_astrologica(jd_et_planete, corp_id)
-        numar_casa = determina_casa_planetei(p['lon_pura'], jd_ut_case)
+        numar_casa = house_calc.get_house(p['lon_pura'])
         date_output["planete"].append(f"{nume:<15} : {p['pozitie_text']:<25} | Casa: {numar_casa:02d} | ({p['miscare']})")
         coordonate_totale[nume] = p['lon_pura']
     except Exception as e:
@@ -1019,13 +1019,13 @@ date_output["puncte_fictive"] = []
 for nume, corp_id in puncte_fictive.items():
     try:
         p = calculeaza_pozitie_astrologica(jd_et_planete, corp_id)
-        numar_casa = determina_casa_planetei(p['lon_pura'], jd_ut_case)
+        numar_casa = house_calc.get_house(p['lon_pura'])
         date_output["puncte_fictive"].append(f"{nume:<15} : {p['pozitie_text']:<25} | Casa: {numar_casa:02d} | ({p['miscare']})")
         coordonate_totale[nume] = p['lon_pura']
         
         if nume == "NNM":
             lon_sud = (p['lon_pura'] + 180.0) % 360.0
-            numar_casa_sud = determina_casa_planetei(lon_sud, jd_ut_case)
+            numar_casa_sud = house_calc.get_house(lon_sud)
             pozitie_sud = format_pozitie_astrologica(lon_sud)
             date_output["puncte_fictive"].append(f"NSM : {pozitie_sud:<25} | Casa: {numar_casa_sud:02d} | ({p['miscare']})")
             coordonate_totale["NSM"] = lon_sud
@@ -1047,7 +1047,7 @@ date_output["asteroizi"] = []
 for nume, corp_id in asteroizi.items():
     try:
         p = calculeaza_pozitie_astrologica(jd_et_planete, corp_id)
-        numar_casa = determina_casa_planetei(p['lon_pura'], jd_ut_case)
+        numar_casa = house_calc.get_house(p['lon_pura'])
         date_output["asteroizi"].append(f"{nume:<15} : {p['pozitie_text']:<25} | Casa: {numar_casa:02d} | ({p['miscare']})")
         coordonate_totale[nume] = p['lon_pura']
     except Exception as e:
@@ -1062,7 +1062,7 @@ date_output["uraniene"] = []
 for nume, corp_id in uraniene.items():
     try:
         p = calculeaza_pozitie_astrologica(jd_et_planete, corp_id)
-        numar_casa = determina_casa_planetei(p['lon_pura'], jd_ut_case)
+        numar_casa = house_calc.get_house(p['lon_pura'])
         date_output["uraniene"].append(f"{nume:<15} : {p['pozitie_text']:<25} | Casa: {numar_casa:02d} | ({p['miscare']})")
         coordonate_totale[nume] = p['lon_pura']
     except Exception as e:
@@ -1079,7 +1079,7 @@ date_output["stele"] = []
 for nume_afisat, nume_se in stele_fixe.items():
     try:
         s = calculeaza_stea_fixa(jd_et_planete, nume_se)
-        numar_casa = determina_casa_planetei(s['lon_pura'], jd_ut_case)
+        numar_casa = house_calc.get_house(s['lon_pura'])
         date_output["stele"].append(f"{nume_afisat:<19} : {s['pozitie_text']:<25} | Casa: {numar_casa:02d}")
         coordonate_totale[nume_afisat] = s['lon_pura']
     except Exception as e:
@@ -1095,7 +1095,7 @@ date_output["scoruri"] = []
 for nume_p in ["Soare", "Luna", "Mercur", "Venus", "Marte", "Jupiter", "Saturn", "Uranus", "Neptun", "Pluto"]:
     if nume_p in coordonate_totale:
         lon_p = coordonate_totale[nume_p]
-        casa_p = determina_casa_planetei(lon_p, jd_ut_case)
+        casa_p = house_calc.get_house(lon_p)
         p_stat = calculeaza_pozitie_astrologica(jd_et_planete, planete_standard[nume_p])
         res_eval = evalueaza_forta_planeta(nume_p, lon_p, casa_p, p_stat['miscare'], l_soare_eval)
         
@@ -1138,23 +1138,23 @@ try:
     
     puncte_arabe_list = []
     fortuna = calculeaza_punct_arab(l_asc, l_luna, l_soare, este_harta_diurna, formula_diurna_fixa=True)
-    casa_fortuna = determina_casa_planetei(fortuna['lon_pura'], jd_ut_case)
+    casa_fortuna = house_calc.get_house(fortuna['lon_pura'])
     puncte_arabe_list.append(f"Pars Fortunae (Noroc)   : {fortuna['pozitie_text']:<25} | Casa: {casa_fortuna:02d}")
     
     spirit = calculeaza_punct_arab(l_asc, l_soare, l_luna, este_harta_diurna, formula_diurna_fixa=True)
-    casa_spirit = determina_casa_planetei(spirit['lon_pura'], jd_ut_case)
+    casa_spirit = house_calc.get_house(spirit['lon_pura'])
     puncte_arabe_list.append(f"Pars Spiritus (Suflet)  : {spirit['pozitie_text']:<25} | Casa: {casa_spirit:02d}")
     
     eros = calculeaza_punct_arab(l_asc, l_venus, spirit['lon_pura'], este_harta_diurna, formula_diurna_fixa=True)
-    casa_eros = determina_casa_planetei(eros['lon_pura'], jd_ut_case)
+    casa_eros = house_calc.get_house(eros['lon_pura'])
     puncte_arabe_list.append(f"Pars Amoris (Eros)      : {eros['pozitie_text']:<25} | Casa: {casa_eros:02d}")
     
     necesitate = calculeaza_punct_arab(l_asc, fortuna['lon_pura'], l_mercur, este_harta_diurna, formula_diurna_fixa=True)
-    casa_necesitate = determina_casa_planetei(necesitate['lon_pura'], jd_ut_case)
+    casa_necesitate = house_calc.get_house(necesitate['lon_pura'])
     puncte_arabe_list.append(f"Pars Necessitatis       : {necesitate['pozitie_text']:<25} | Casa: {casa_necesitate:02d}")
     
     victorie = calculeaza_punct_arab(l_asc, l_jupiter, fortuna['lon_pura'], este_harta_diurna, formula_diurna_fixa=True)
-    casa_victorie = determina_casa_planetei(victorie['lon_pura'], jd_ut_case)
+    casa_victorie = house_calc.get_house(victorie['lon_pura'])
     puncte_arabe_list.append(f"Pars Victoriae (Succes) : {victorie['pozitie_text']:<25} | Casa: {casa_victorie:02d}")
     
     date_output["puncte_arabe"] = puncte_arabe_list
