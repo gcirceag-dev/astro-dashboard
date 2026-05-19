@@ -42,7 +42,7 @@ st.markdown("""
     [data-testid="stDataFrame"] > div { overflow-x: auto !important; }
     
     section[data-testid="stPopover"] { min-width: 350px !important; }
-    section[data-testid="stPopover"] td, section[data-testid="stPopover"] th { font-size: 14px !important; padding: 5px 10px !important; }
+    section[data-testid="stPopover"] td, section[data-testid="stPopover"] th { font-size: 16px !important; padding: 6px 12px !important; }
     
     .stExpander summary { font-size: 15px !important; font-weight: 500 !important; }
     .stExpander details td, .stExpander details th { font-size: 14px !important; }
