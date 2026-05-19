@@ -751,7 +751,7 @@ with tab1:
         df_luna_fiz = pd.DataFrame(list(date_luna_fiz.items()), columns=["Parametru", "Valoare"])
         st.dataframe(df_luna_fiz, hide_index=True, use_container_width=True)
         if date_output.get("LUNA_manzila"):
-            st.markdown(f"<div class='card-mica'>{date_output['LUNA_manzila']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color:#111;font-size:16px;font-weight:500;margin-top:8px;'>{date_output['LUNA_manzila']}</div>", unsafe_allow_html=True)
 
     st.divider()
     st.subheader("Fazele Lunii")
