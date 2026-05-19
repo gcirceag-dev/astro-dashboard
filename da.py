@@ -437,14 +437,15 @@ def determina_manzila_araba(lon_zecimala):
     }
 
 def deseneaza_sinusoida(acum_local, lon, lat):
-    """Desenează sinusoida cu altitudinea Soarelui și Lunii centrată pe ora curentă."""
+    """Desenează sinusoida cu altitudinea Soarelui și Lunii pe un interval optim de 30 de ore."""
     
     geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     
-    # MODIFICARE LOGICĂ: Graficul va afișa mereu o fereastră de 24 de ore centrată pe ACUM
-    # 12 ore în trecut și 12 ore în viitor. Astfel, momentul actual va fi fix în CENTRU.
-    start_time = acum_local - timedelta(hours=12)
-    end_time = acum_local + timedelta(hours=12)
+    # SOLUȚIE OPTIMĂ: 30 de ore total (15 ore în trecut, 15 ore în viitor)
+    # Este intervalul matematic perfect: mai mare decât ciclul Lunii (24.8h),
+    # deci Luna nu va fi tăiată, dar elimină riscul de a vedea două vârfuri maxime.
+    start_time = acum_local - timedelta(hours=15)
+    end_time = acum_local + timedelta(hours=15)
     
     # Generează timestamp-uri la fiecare 30 de minute
     timestamps = []
@@ -495,7 +496,7 @@ def deseneaza_sinusoida(acum_local, lon, lat):
     ax.plot(x_numeric, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
     ax.plot(x_numeric, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
     
-    # Găsește poziția cea mai apropiată matematic
+    # Găsește poziția cea mai apropiată matematic pentru a centra markerul
     current_idx = 0
     min_dif = float('inf')
     for i, ts in enumerate(timestamps):
@@ -510,15 +511,20 @@ def deseneaza_sinusoida(acum_local, lon, lat):
         ax.scatter(current_idx, alt_luna[current_idx], color='#888888', 
                    s=80, edgecolor='black', zorder=5, marker='o')
         
-        # OPȚIONAL: Adăugăm o linie verticală punctată fină care marchează "ACUM" pe tot graficul
-        ax.axvline(x=current_idx, color='gray', linestyle=':', linewidth=1, alpha=0.5)
+        # Linie verticală discretă care marchează momentul ACUM
+        ax.axvline(x=current_idx, color='gray', linestyle=':', linewidth=1, alpha=0.4)
     
     ax.text(x_numeric[-1], 0.5, 'Orizont', ha='right', va='bottom', fontsize=8, color='black')
-    ax.set_ylim(-35, 95)
-    ax.set_xlim(x_numeric[0], x_numeric[-1])
+    
+    # Plajă verticală extinsă securizată
+    ax.set_ylim(-50, 95)
+    
+    # Setează limitele fixe de la primul la ultimul element din range
+    ax.set_xlim(x_numeric, x_numeric[-1])
     ax.legend(loc='upper right', frameon=False, fontsize=10)
     
     return fig
+
 
 
 def evalueaza_forta_planeta(nume_p, lon_p, casa_p, miscare_p, lon_soare):
