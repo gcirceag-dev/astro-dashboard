@@ -737,16 +737,16 @@ with tab1:
     so = date_output.get("SOARE_orizont", {})
     st.markdown(f"""
     <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:16px;color:#111;font-weight:700;">Răsărit</span>
-        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{so.get('Rasarit', '—')}</span>
+        <span style="font-size:18px;color:#111;font-weight:700;">Răsărit</span>
+        <span style="font-size:18px;font-weight:700;color:#111;">{so.get('Rasarit', '—')}</span>
     </div>
     <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:16px;color:#111;font-weight:700;">Meridian</span>
-        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{so.get('Meridian', '—')}</span>
+        <span style="font-size:18px;color:#111;font-weight:700;">Meridian</span>
+        <span style="font-size:18px;font-weight:700;color:#111;">{so.get('Meridian', '—')}</span>
     </div>
     <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:16px;color:#111;font-weight:700;">Apus</span>
-        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{so.get('Apus', '—')}</span>
+        <span style="font-size:18px;color:#111;font-weight:700;">Apus</span>
+        <span style="font-size:18px;font-weight:700;color:#111;">{so.get('Apus', '—')}</span>
     </div>
     """, unsafe_allow_html=True)
     with st.popover("Dinamica Soare"):
@@ -758,16 +758,16 @@ with tab1:
     lu = date_output.get("LUNA_orizont", {})
     st.markdown(f"""
     <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:16px;color:#111;font-weight:700;">Răsărit</span>
-        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{lu.get('Rasarit', '—')}</span>
+        <span style="font-size:18px;color:#111;font-weight:700;">Răsărit</span>
+        <span style="font-size:18px;font-weight:700;color:#111;">{lu.get('Rasarit', '—')}</span>
     </div>
     <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:16px;color:#111;font-weight:700;">Meridian</span>
-        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{lu.get('Meridian', '—')}</span>
+        <span style="font-size:18px;color:#111;font-weight:700;">Meridian</span>
+        <span style="font-size:18px;font-weight:700;color:#111;">{lu.get('Meridian', '—')}</span>
     </div>
     <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:16px;color:#111;font-weight:700;">Apus</span>
-        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{lu.get('Apus', '—')}</span>
+        <span style="font-size:18px;color:#111;font-weight:700;">Apus</span>
+        <span style="font-size:18px;font-weight:700;color:#111;">{lu.get('Apus', '—')}</span>
     </div>
     """, unsafe_allow_html=True)
     with st.popover("Dinamica si Conac"):
