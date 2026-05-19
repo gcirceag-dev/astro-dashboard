@@ -33,6 +33,11 @@ st.markdown("""
     [data-testid="stDataFrame"] td, [data-testid="stDataFrame"] th {
         font-size: 15px !important; padding: 6px 14px !important; white-space: nowrap !important;
         border: none !important; border-bottom: 1px solid #f0f0f0 !important;
+        color: #111 !important; font-weight: 500 !important;
+    }
+    [data-testid="stDataFrame"] th {
+        font-weight: 600 !important; color: #555 !important; background: none !important;
+        font-size: 13px !important; text-transform: uppercase !important; letter-spacing: 0.5px !important;
     }
     [data-testid="stDataFrame"] th {
         font-weight: 600 !important; color: #888 !important; background: none !important;
