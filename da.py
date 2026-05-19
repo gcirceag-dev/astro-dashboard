@@ -30,32 +30,47 @@ st.markdown("""
         font-size: 20px !important;
     }
     
-    /* Tabelele st.dataframe - FORȚAT cu selectori mai specifici */
-    [data-testid="stDataFrame"] table,
-    [data-testid="stDataFrame"] tbody,
-    [data-testid="stDataFrame"] tr,
-    [data-testid="stDataFrame"] td,
-    [data-testid="stDataFrame"] th {
+    /* FORȚAT: Orice tabel din aplicație */
+    table {
+        font-size: 20px !important;
+    }
+    table * {
+        font-size: 20px !important;
+    }
+    thead, tbody, tfoot, tr, th, td {
         font-size: 20px !important;
     }
     
-    /* Celulele tabelelor */
-    .cell-view, .cell-text {
+    /* FORȚAT: Dataframe-uri Streamlit */
+    [data-testid="stDataFrame"] {
+        font-size: 20px !important;
+    }
+    [data-testid="stDataFrame"] * {
+        font-size: 20px !important;
+    }
+    div[data-testid="stDataFrame"] div {
         font-size: 20px !important;
     }
     
-    /* Toate elementele din tabele (inclusiv cele din popup) */
-    table td, table th, .stDataFrame td, .stDataFrame th,
-    [data-testid="stTable"] td, [data-testid="stTable"] th,
-    .dataframe td, .dataframe th {
+    /* FORȚAT: Celule interne Streamlit */
+    [data-testid="stDataFrame"] [data-testid="stTable"] {
+        font-size: 20px !important;
+    }
+    [data-testid="stDataFrame"] [data-testid="stTable"] * {
         font-size: 20px !important;
     }
     
-    /* Popup-uri (popover) */
-    [data-testid="stPopover"] {
+    /* FORȚAT: Popup/Popover */
+    section[data-testid="stPopover"] {
         font-size: 20px !important;
     }
-    [data-testid="stPopover"] * {
+    section[data-testid="stPopover"] * {
+        font-size: 20px !important;
+    }
+    div[data-testid="stPopover"] {
+        font-size: 20px !important;
+    }
+    div[data-testid="stPopover"] * {
         font-size: 20px !important;
     }
     
