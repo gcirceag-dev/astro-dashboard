@@ -27,37 +27,65 @@ st.markdown("""
     
     /* Toate textele */
     .stMarkdown, .stText, .stMetric, label, p, div, .stCaption, h1, h2, h3, h4 {
-        font-size: 18px !important;
+        font-size: 20px !important;
     }
     
-    /* Tabelele st.dataframe */
+    /* Tabelele st.dataframe - FORȚAT cu selectori mai specifici */
     [data-testid="stDataFrame"] table,
     [data-testid="stDataFrame"] tbody,
     [data-testid="stDataFrame"] tr,
     [data-testid="stDataFrame"] td,
     [data-testid="stDataFrame"] th {
-        font-size: 18px !important;
+        font-size: 20px !important;
     }
     
     /* Celulele tabelelor */
     .cell-view, .cell-text {
-        font-size: 18px !important;
+        font-size: 20px !important;
+    }
+    
+    /* Toate elementele din tabele (inclusiv cele din popup) */
+    table td, table th, .stDataFrame td, .stDataFrame th,
+    [data-testid="stTable"] td, [data-testid="stTable"] th,
+    .dataframe td, .dataframe th {
+        font-size: 20px !important;
+    }
+    
+    /* Popup-uri (popover) */
+    [data-testid="stPopover"] {
+        font-size: 20px !important;
+    }
+    [data-testid="stPopover"] * {
+        font-size: 20px !important;
     }
     
     /* Expander */
     .stExpander summary {
-        font-size: 18px !important;
+        font-size: 20px !important;
+    }
+    .stExpander details {
+        font-size: 20px !important;
     }
     
     /* Tab-uri */
     button[data-baseweb="tab"] {
-        font-size: 18px !important;
+        font-size: 20px !important;
     }
     
     /* Wrap în tabele */
     td, th {
         white-space: normal !important;
         word-wrap: break-word !important;
+    }
+    
+    /* Selectbox și dropdown */
+    .stSelectbox div, .stSelectbox label, .stSelectbox span {
+        font-size: 20px !important;
+    }
+    
+    /* Slider */
+    .stSlider div, .stSlider label, .stSlider span {
+        font-size: 20px !important;
     }
 </style>
 """, unsafe_allow_html=True)
