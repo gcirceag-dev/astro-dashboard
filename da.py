@@ -129,6 +129,117 @@ ASPECTE_MAJORE = {
     "OPO": 180.0
 }
 
+
+# =====================================================================
+# OPTIMIZARE: Cache și calculatoare refolosibile
+# =====================================================================
+
+class EphemerisCache:
+    """Cache pentru apelurile Swiss Ephemeris - elimină calculele duplicate"""
+    def __init__(self):
+        self._cache = {}
+    
+    def get_calc_ut(self, jd, planet_id, flags=swe.FLG_SWIEPH | swe.FLG_SPEED):
+        """Cache pentru swe.calc_ut"""
+        key = (round(jd, 8), planet_id, flags)
+        if key not in self._cache:
+            self._cache[key] = swe.calc_ut(jd, planet_id, flags)
+        return self._cache[key]
+    
+    def get_houses(self, jd, lat, lon, system=b'P'):
+        """Cache pentru swe.houses"""
+        key = (round(jd, 8), round(lat, 6), round(lon, 6), system)
+        if key not in self._cache:
+            self._cache[key] = swe.houses(jd, lat, lon, system)
+        return self._cache[key]
+    
+    def get_pheno_ut(self, jd, planet_id, flags=swe.FLG_SWIEPH):
+        """Cache pentru swe.pheno_ut"""
+        key = (round(jd, 8), planet_id, flags)
+        if key not in self._cache:
+            self._cache[key] = swe.pheno_ut(jd, planet_id, flags)
+        return self._cache[key]
+    
+    def clear(self):
+        """Curăță cache-ul pentru recalculare forțată"""
+        self._cache.clear()
+
+
+class HouseCalculator:
+    """Calculează și cache-uiește casele astrologice - elimină recalculările"""
+    def __init__(self, jd_ut, lat, lon, ephe_cache):
+        self.ephe_cache = ephe_cache
+        self.cuspide, self.ascmc = self.ephe_cache.get_houses(jd_ut, lat, lon)
+        
+        # Pre-calculează limitele caselor pentru determinare rapidă
+        self.case_limits = []
+        for i in range(12):
+            start = self.cuspide[i]
+            end = self.cuspide[(i + 1) % 12]
+            self.case_limits.append((start, end))
+    
+    def get_house(self, lon_planeta):
+        """Determină casa pentru o longitudine dată"""
+        for i, (start, end) in enumerate(self.case_limits):
+            if start < end:
+                if start <= lon_planeta < end:
+                    return i + 1
+            else:
+                if lon_planeta >= start or lon_planeta < end:
+                    return i + 1
+        return 1
+
+
+class AspectCalculator:
+    """Calculator optimizat pentru aspecte astrologice"""
+    def __init__(self):
+        self.stele_fixe_set = {
+            "Algol", "Pleiades (Alcyone)", "Aldebaran", "Rigel", "Betelgeuse", 
+            "Sirius", "Regulus", "Spica", "Arcturus", "Antares", "Vega", "Altair", "Fomalhaut"
+        }
+        self.puncte_fictive_set = {"NNM", "NSM", "NNT", "NST", "LM", "LT", "AI", "PI"}
+        self.aspecte_stele = {"CON": 0.0, "OPO": 180.0}
+    
+    def calculeaza(self, toate_coordonatele, orba_maxima=6.0):
+        """Calculează toate aspectele optimizat"""
+        aspecte = []
+        corpuri = list(toate_coordonatele.items())
+        
+        for i in range(len(corpuri)):
+            nume1, lon1 = corpuri[i]
+            este_stea1 = nume1 in self.stele_fixe_set
+            este_fictiv1 = nume1 in self.puncte_fictive_set
+            
+            for j in range(i + 1, len(corpuri)):
+                nume2, lon2 = corpuri[j]
+                
+                if este_stea1 and nume2 in self.stele_fixe_set:
+                    continue
+                if este_fictiv1 and nume2 in self.puncte_fictive_set:
+                    continue
+                
+                dif = abs(lon1 - lon2)
+                distanta = dif if dif <= 180.0 else 360.0 - dif
+                
+                aspecte_de_verificat = (self.aspecte_stele if (este_stea1 or nume2 in self.stele_fixe_set) 
+                                      else ASPECTE_MAJORE)
+                
+                for abrevier, unghi_perfect in aspecte_de_verificat.items():
+                    orba_exacta = abs(distanta - unghi_perfect)
+                    if orba_exacta <= orba_maxima:
+                        semn = "+" if (distanta - unghi_perfect) >= 0 else "-"
+                        orba_text = format_orba_aspect(orba_exacta)
+                        aspecte.append((orba_exacta, f"{nume1} {abrevier} {nume2} ({semn}{orba_text})"))
+                        break
+        
+        aspecte.sort(key=lambda x: x[0])
+        return [item[1] for item in aspecte]
+
+
+# Inițializare globală
+ephe_cache = EphemerisCache()
+aspect_calc = AspectCalculator()
+
 # =====================================================================
 # BLOCUL 2: UTILITARE PENTRU TIMP ȘI FORMATĂRI
 # =====================================================================
