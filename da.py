@@ -835,13 +835,18 @@ with tab1:
     st.caption("Linia orizontului (0°) | ● Pozitia curenta")
 
     st.subheader("Durate calendaristice")
-    df_durate = pd.DataFrame([
+    
+    durate_rows = [
         ["Durata zilei", date_output.get('durata_zi', 'N/A')],
         ["Durata noptii", date_output.get('durata_noapte', 'N/A')],
         ["Guvernatorul zilei", date_output.get('guvernator_zi', 'N/A')],
         ["Guvernatorul orei", f"{date_output.get('guvernator_ora', 'N/A')} ({date_output.get('interval_ora', 'N/A')})"]
-    ], columns=["Parametru", "Valoare"])
-    st.dataframe(df_durate, hide_index=True, use_container_width=True)
+    ]
+    durate_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+    for row in durate_rows:
+        durate_html += f'<tr><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{row[0]}</td><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{row[1]}</td></tr>'
+    durate_html += '</table>'
+    st.markdown(durate_html, unsafe_allow_html=True)
 
     with st.expander("Ore de zi"):
         df_ore_zi = pd.DataFrame([ora.split(" : ") for ora in date_output.get("ore_zi", [])], columns=["Ora planetara", "Interval"])
