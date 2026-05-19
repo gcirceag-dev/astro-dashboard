@@ -719,7 +719,7 @@ guv_zi = date_output.get('guvernator_zi', 'N/A')
 
 st.title("Dashboard astro")
 st.markdown(f"**{zi_nume} {acum_local.strftime('%d-%b-%Y %H:%M:%S')}**")
-st.caption(f"Coordonate: {LATITUDINE}° N, {LONGITUDINE}° E  |  Guvernator zi: {guv_zi}  |  Oră: {guv_ora}")
+st.markdown(f"<span style='color:#111;font-size:15px;'>Coordonate: {LATITUDINE}° N, {LONGITUDINE}° E  |  Guvernator zi: {guv_zi}  |  Oră: {guv_ora}</span>", unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs(["Soare & Luna", "Astro", "Aspecte"])
 
