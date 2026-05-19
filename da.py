@@ -1237,13 +1237,15 @@ with tab1:
             width: 100%;
             border-collapse: collapse;
             font-size: 22px;
+            border: none;
+            outline: none;
         }
         .tabel-soare td {
             padding: 0px 16px;
             margin: 0px;
             line-height: 1.0;
             height: 30px;
-            border-bottom: 1px solid transparent;
+            border-bottom: 1px solid transparent;   
             vertical-align: middle;
         }
         .tabel-soare td:first-child {
