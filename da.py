@@ -721,53 +721,8 @@ def calculeaza_stea_fixa(jd_ut, nume_stea_se):
     }
 
 def calculeaza_toate_aspectele(toate_coordonatele, orba_maxima=6.0):
-    aspecte_temporare = []
-    nume_corpuri = list(toate_coordonatele.keys())
-    total_corpuri = len(nume_corpuri)
-    
-    nume_stele_fixe = [
-        "Algol", "Pleiades (Alcyone)", "Aldebaran", "Rigel", "Betelgeuse", 
-        "Sirius", "Regulus", "Spica", "Arcturus", "Antares", "Vega", "Altair", "Fomalhaut"
-    ]
-    
-    puncte_fictive_zgomot = [
-        "NNM", "NSM", "NNT", "NST",
-        "LM", "LT",
-        "AI", "PI"
-    ]    
-    for i in range(total_corpuri):
-        for j in range(i + 1, total_corpuri):
-            c1 = nume_corpuri[i]
-            c2 = nume_corpuri[j]
-            
-            if c1 in nume_stele_fixe and c2 in nume_stele_fixe:
-                continue
-            if c1 in puncte_fictive_zgomot and c2 in puncte_fictive_zgomot:
-                continue
-                
-            lon1 = toate_coordonatele[c1]
-            lon2 = toate_coordonatele[c2]
-            
-            dif = abs(lon1 - lon2)
-            distanta = dif if dif <= 180.0 else 360.0 - dif
-            
-            for abrevier, unghi_perfect in ASPECTE_MAJORE.items():
-                if (c1 in nume_stele_fixe or c2 in nume_stele_fixe) and abrevier not in ["CON", "OPO"]:
-                    continue
-                    
-                deviatie_bruta = distanta - unghi_perfect
-                orba_exacta = abs(deviatie_bruta)
-                
-                if orba_exacta <= orba_maxima:
-                    semn = "+" if deviatie_bruta >= 0 else "-"
-                    orba_text = format_orba_aspect(orba_exacta)
-                    
-                    text_formatat = f"{c1} {abrevier} {c2} ({semn}{orba_text})"
-                    aspecte_temporare.append((orba_exacta, text_formatat))
-                    break
-                    
-    aspecte_temporare.sort(key=lambda x: x[0])
-    return [item[1] for item in aspecte_temporare]
+    """Versiune optimizată - folosește AspectCalculator-ul global"""
+    return aspect_calc.calculeaza(toate_coordonatele, orba_maxima)
 
 def calculeaza_punct_arab(lon_asc, lon_corp1, lon_corp2, este_diurn=True, formula_diurna_fixa=True):
     if formula_diurna_fixa:
