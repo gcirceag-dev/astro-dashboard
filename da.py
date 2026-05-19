@@ -437,37 +437,14 @@ def determina_manzila_araba(lon_zecimala):
     }
 
 def deseneaza_sinusoida(acum_local, lon, lat):
-    """Desenează sinusoida cu altitudinea Soarelui și Lunii."""
+    """Desenează sinusoida cu altitudinea Soarelui și Lunii centrată pe ora curentă."""
     
     geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     
-    # Funcție pentru a obține răsăritul unei zile
-    def get_rasarit(data):
-        data_utc = data.astimezone(pytz.utc)
-        # Corecție: includem și secundele pentru precizie astronomică
-        jd = swe.julday(data_utc.year, data_utc.month, data_utc.day,
-                        data_utc.hour + data_utc.minute / 60.0 + data_utc.second / 3600.0)
-        rezultat = calculeaza_evenimente_orizont(jd - 0.5, swe.SUN, geopos_lista)
-        if rezultat and rezultat.get("Rasarit"):
-            return jd_to_datetime(rezultat["Rasarit"])
-        return None
-    
-    # Calculează răsăritul de azi și mâine
-    azi = acum_local.replace(hour=12, minute=0, second=0, microsecond=0)
-    maine = azi + timedelta(days=1)
-    
-    dt_r_azi = get_rasarit(azi)
-    dt_r_maine = get_rasarit(maine)
-    
-    # Fallback dacă nu găsește răsăritul
-    if not dt_r_azi:
-        dt_r_azi = azi.replace(hour=6, minute=0)
-    if not dt_r_maine:
-        dt_r_maine = maine.replace(hour=6, minute=0)
-    
-    # Interval: de la răsăritul de azi la răsăritul de mâine
-    start_time = dt_r_azi - timedelta(hours=1)
-    end_time = dt_r_maine + timedelta(hours=1)
+    # MODIFICARE LOGICĂ: Graficul va afișa mereu o fereastră de 24 de ore centrată pe ACUM
+    # 12 ore în trecut și 12 ore în viitor. Astfel, momentul actual va fi fix în CENTRU.
+    start_time = acum_local - timedelta(hours=12)
+    end_time = acum_local + timedelta(hours=12)
     
     # Generează timestamp-uri la fiecare 30 de minute
     timestamps = []
@@ -488,7 +465,7 @@ def deseneaza_sinusoida(acum_local, lon, lat):
         
         try:
             res_s = swe.calc_ut(jd, swe.SUN, swe.FLG_SWIEPH)
-            xin = [res_s[0][0], res_s[0][1], res_s[0][2]]
+            xin = [res_s, res_s, res_s]
             az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
             alt_soare.append(alt)
         except:
@@ -496,7 +473,7 @@ def deseneaza_sinusoida(acum_local, lon, lat):
         
         try:
             res_l = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH)
-            xin = [res_l[0][0], res_l[0][1], res_l[0][2]]
+            xin = [res_l, res_l, res_l]
             az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
             alt_luna.append(alt)
         except:
@@ -518,7 +495,7 @@ def deseneaza_sinusoida(acum_local, lon, lat):
     ax.plot(x_numeric, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
     ax.plot(x_numeric, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
     
-    # LOGICĂ CORECTATĂ: Găsește poziția cea mai apropiată matematic (previne desincronizarea markerului)
+    # Găsește poziția cea mai apropiată matematic
     current_idx = 0
     min_dif = float('inf')
     for i, ts in enumerate(timestamps):
@@ -532,6 +509,9 @@ def deseneaza_sinusoida(acum_local, lon, lat):
                    s=100, edgecolor='black', zorder=5, marker='o')
         ax.scatter(current_idx, alt_luna[current_idx], color='#888888', 
                    s=80, edgecolor='black', zorder=5, marker='o')
+        
+        # OPȚIONAL: Adăugăm o linie verticală punctată fină care marchează "ACUM" pe tot graficul
+        ax.axvline(x=current_idx, color='gray', linestyle=':', linewidth=1, alpha=0.5)
     
     ax.text(x_numeric[-1], 0.5, 'Orizont', ha='right', va='bottom', fontsize=8, color='black')
     ax.set_ylim(-35, 95)
@@ -539,6 +519,7 @@ def deseneaza_sinusoida(acum_local, lon, lat):
     ax.legend(loc='upper right', frameon=False, fontsize=10)
     
     return fig
+
 
 def evalueaza_forta_planeta(nume_p, lon_p, casa_p, miscare_p, lon_soare):
     scor = 0
