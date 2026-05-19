@@ -325,13 +325,15 @@ def calculeaza_evenimente_orizont(jd_miez, corp_id, geopos_lista):
     return rezultate
 
 def calculeaza_date_timp_real(jd_ut, corp_id):
-    date_ecl_tuplu, flag_ret = swe.calc_ut(jd_ut, corp_id, FLAG_FIIZIC)
+    """Versiune optimizată - folosește cache-ul global ephe_cache"""
+    date_ecl_tuplu, flag_ret = ephe_cache.get_calc_ut(jd_ut, corp_id, FLAG_FIIZIC)
     
     lon = date_ecl_tuplu[0]
     lat = date_ecl_tuplu[1]
     dist_raw = date_ecl_tuplu[2]
     
-    dlon_cos = date_ecl_tuplu[3] * math.cos(math.radians(lat))
+    lat_rad = math.radians(lat)
+    dlon_cos = date_ecl_tuplu[3] * math.cos(lat_rad)
     dlat = date_ecl_tuplu[4]
     viteza_unghiulara_zi = math.sqrt(dlon_cos**2 + dlat**2)
     
@@ -342,7 +344,10 @@ def calculeaza_date_timp_real(jd_ut, corp_id):
     az_nord = (az_sud + 180.0) % 360.0
     
     distanta_km = dist_raw * UA_IN_KM
-    omega = (viteza_unghiulara_zi * math.pi) / (180.0 * 86400.0)
+    
+    # Constanta pre-calculată pentru conversie
+    CONV_VITEZA = math.pi / (180.0 * 86400.0)
+    omega = viteza_unghiulara_zi * CONV_VITEZA
     viteza_km_s = omega * distanta_km
 
     return {
