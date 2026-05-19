@@ -908,14 +908,16 @@ with tab2:
     st.subheader("Case")
     with st.expander("Afiseaza casele", expanded=False):
         if "case_astrologice" in date_output and "eroare" not in date_output["case_astrologice"]:
-            case_date = []
+            case_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
             for casa, pozitie in date_output["case_astrologice"].items():
                 import re
                 match = re.match(r'(\d+°\s+\d+\'\d+")\s+([A-Za-z]+)', pozitie)
-                if match: case_date.append([casa, match.group(1), match.group(2)])
-                else: case_date.append([casa, pozitie, ""])
-            df_case = pd.DataFrame(case_date, columns=["Casa", "Pozitie", "Zodie"])
-            st.dataframe(df_case, hide_index=True, use_container_width=True)
+                if match:
+                    case_html += f'<tr><td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{casa}</td><td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{match.group(1)}</td><td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{match.group(2)}</td></tr>'
+                else:
+                    case_html += f'<tr><td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{casa}</td><td colspan="2" style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{pozitie}</td></tr>'
+            case_html += '</table>'
+            st.markdown(case_html, unsafe_allow_html=True)
 
     st.divider()
     st.subheader("Pozitii")
@@ -930,8 +932,15 @@ with tab2:
 
     st.markdown("**Planete standard**")
     planete_date = [parse_pozitie(p) for p in date_output.get("planete", [])]
-    df_planete = pd.DataFrame(planete_date, columns=["Nume", "Pozitie", "Zodie", "Casa", "D/R"])
-    st.dataframe(df_planete, hide_index=True, use_container_width=True)
+    planete_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+    planete_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Nume</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Pozitie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Zodie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Casa</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">D/R</th></tr>'
+    for row in planete_date:
+        planete_html += '<tr>'
+        for cell in row:
+            planete_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
+        planete_html += '</tr>'
+    planete_html += '</table>'
+    st.markdown(planete_html, unsafe_allow_html=True)
 
     with st.expander("Noduri & Lilith"):
         fictive_date = []
@@ -945,18 +954,39 @@ with tab2:
                     else: fictive_date.append([p[:25], "", "", "", ""])
                 else: fictive_date.append([p[:25], "", "", "", ""])
             else: fictive_date.append(parse_pozitie(p))
-        df_fictive = pd.DataFrame(fictive_date, columns=["Nume", "Pozitie", "Zodie", "Casa", "D/R"])
-        st.dataframe(df_fictive, hide_index=True, use_container_width=True)
+        fictive_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        fictive_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Nume</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Pozitie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Zodie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Casa</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">D/R</th></tr>'
+        for row in fictive_date:
+            fictive_html += '<tr>'
+            for cell in row:
+                fictive_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
+            fictive_html += '</tr>'
+        fictive_html += '</table>'
+        st.markdown(fictive_html, unsafe_allow_html=True)
 
     with st.expander("Asteroizi"):
         asteroizi_date = [parse_pozitie(a) for a in date_output.get("asteroizi", [])]
-        df_asteroizi = pd.DataFrame(asteroizi_date, columns=["Nume", "Pozitie", "Zodie", "Casa", "D/R"])
-        st.dataframe(df_asteroizi, hide_index=True, use_container_width=True)
+        asteroizi_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        asteroizi_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Nume</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Pozitie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Zodie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Casa</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">D/R</th></tr>'
+        for row in asteroizi_date:
+            asteroizi_html += '<tr>'
+            for cell in row:
+                asteroizi_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
+            asteroizi_html += '</tr>'
+        asteroizi_html += '</table>'
+        st.markdown(asteroizi_html, unsafe_allow_html=True)
 
     with st.expander("Planete uraniene"):
         uraniene_date = [parse_pozitie(u) for u in date_output.get("uraniene", [])]
-        df_uraniene = pd.DataFrame(uraniene_date, columns=["Nume", "Pozitie", "Zodie", "Casa", "D/R"])
-        st.dataframe(df_uraniene, hide_index=True, use_container_width=True)
+        uraniene_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        uraniene_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Nume</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Pozitie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Zodie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Casa</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">D/R</th></tr>'
+        for row in uraniene_date:
+            uraniene_html += '<tr>'
+            for cell in row:
+                uraniene_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
+            uraniene_html += '</tr>'
+        uraniene_html += '</table>'
+        st.markdown(uraniene_html, unsafe_allow_html=True)
 
     with st.expander("Stele fixe"):
         stele_date = []
@@ -968,8 +998,15 @@ with tab2:
                 if match: stele_date.append([nume.strip(), match.group(1), match.group(2), match.group(3)])
                 else: stele_date.append([nume.strip(), rest[:25], "", ""])
             else: stele_date.append([s[:20], "", "", ""])
-        df_stele = pd.DataFrame(stele_date, columns=["Nume", "Pozitie", "Zodie", "Casa"])
-        st.dataframe(df_stele, hide_index=True, use_container_width=True)
+        stele_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        stele_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Nume</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Pozitie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Zodie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Casa</th></tr>'
+        for row in stele_date:
+            stele_html += '<tr>'
+            for cell in row:
+                stele_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
+            stele_html += '</tr>'
+        stele_html += '</table>'
+        st.markdown(stele_html, unsafe_allow_html=True)
 
     st.divider()
     st.subheader("Scor planetar")
@@ -997,8 +1034,15 @@ with tab2:
         return [planeta, demnitate, dr, tip_casa, combust, scor_val.strip(), eficienta.replace("%", "") + "%" if eficienta else ""]
     scoruri_date = [parse_scor(scor) for scor in date_output.get("scoruri", [])]
     if scoruri_date:
-        df_scoruri = pd.DataFrame(scoruri_date, columns=["Planeta", "Demnitate", "D/R", "Casa", "Combust", "Scor", "Eficiență"])
-        st.dataframe(df_scoruri, hide_index=True, use_container_width=True)
+        scoruri_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        scoruri_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Planeta</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Demnitate</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">D/R</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Casa</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Combust</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Scor</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Eficiență</th></tr>'
+        for row in scoruri_date:
+            scoruri_html += '<tr>'
+            for cell in row:
+                scoruri_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
+            scoruri_html += '</tr>'
+        scoruri_html += '</table>'
+        st.markdown(scoruri_html, unsafe_allow_html=True)
 
     st.divider()
     st.subheader("Scor global")
