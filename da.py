@@ -750,8 +750,12 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
     with st.popover("Dinamica Soare"):
-        df_soare_fiz = pd.DataFrame(list(date_output.get("SOARE_fizice", {}).items()), columns=["Parametru", "Valoare"])
-        st.dataframe(df_soare_fiz, hide_index=True, use_container_width=True)
+        soare_fiz = date_output.get("SOARE_fizice", {})
+        soare_fiz_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        for k, v in soare_fiz.items():
+            soare_fiz_html += f'<tr><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{k}</td><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{v}</td></tr>'
+        soare_fiz_html += '</table>'
+        st.markdown(soare_fiz_html, unsafe_allow_html=True)
 
     st.divider()
     st.subheader("Luna")
@@ -772,8 +776,11 @@ with tab1:
     """, unsafe_allow_html=True)
     with st.popover("Dinamica si Conac"):
         date_luna_fiz = {k: v for k, v in date_output.get("LUNA_fizice", {}).items() if k != "eroare"}
-        df_luna_fiz = pd.DataFrame(list(date_luna_fiz.items()), columns=["Parametru", "Valoare"])
-        st.dataframe(df_luna_fiz, hide_index=True, use_container_width=True)
+        luna_fiz_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        for k, v in date_luna_fiz.items():
+            luna_fiz_html += f'<tr><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{k}</td><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{v}</td></tr>'
+        luna_fiz_html += '</table>'
+        st.markdown(luna_fiz_html, unsafe_allow_html=True)
         if date_output.get("LUNA_manzila"):
             st.markdown(f"<div style='color:#111;font-size:16px;font-weight:500;margin-top:8px;word-wrap:break-word;overflow-wrap:break-word;'>{date_output['LUNA_manzila']}</div>", unsafe_allow_html=True)
 
