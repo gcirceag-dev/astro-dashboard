@@ -244,23 +244,18 @@ aspect_calc = AspectCalculator()
 # BLOCUL 2: UTILITARE PENTRU TIMP ȘI FORMATĂRI
 # =====================================================================
 def get_times():
-    """Obține timpul curent, rotunjit la minutul fix, pentru sincronizare perfectă."""
-    acum_local = datetime.now(zona_locala)
-    
-    acum_local = acum_local.replace(second=0, microsecond=0)
+    """Versiune simplificată - obține timpul curent rotunjit la minutul fix."""
+    acum_local = datetime.now(zona_locala).replace(second=0, microsecond=0)
     acum_utc = acum_local.astimezone(pytz.utc)
     
-    jd_acum = swe.julday(
-        acum_utc.year, acum_utc.month, acum_utc.day,
-        acum_utc.hour + acum_utc.minute / 60.0 + acum_utc.second / 3600.0
-    )
+    def dt_to_jd(dt):
+        """Helper: convertește datetime în Julian Day"""
+        return swe.julday(dt.year, dt.month, dt.day,
+                         dt.hour + dt.minute / 60.0 + dt.second / 3600.0)
     
-    miez_local = acum_local.replace(hour=0, minute=0, second=0, microsecond=0)
-    miez_utc = miez_local.astimezone(pytz.utc)
-    jd_miez = swe.julday(
-        miez_utc.year, miez_utc.month, miez_utc.day,
-        miez_utc.hour + miez_utc.minute / 60.0 + miez_utc.second / 3600.0
-    )
+    jd_acum = dt_to_jd(acum_utc)
+    miez_utc = acum_local.replace(hour=0, minute=0).astimezone(pytz.utc)
+    jd_miez = dt_to_jd(miez_utc)
     
     return acum_local, jd_acum, jd_miez
 
