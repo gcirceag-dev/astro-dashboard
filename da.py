@@ -437,12 +437,12 @@ def determina_manzila_araba(lon_zecimala):
     }
 
 def deseneaza_sinusoida(acum_local, lon, lat):
-    """Desenează sinusoida cu altitudinea Soarelui și Lunii pe un interval optim de 30 de ore."""
+    """Desenează sinusoida cu altitudinea Soarelui și Lunii."""
     
     geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     
     # SOLUȚIE OPTIMĂ: 30 de ore total (15 ore în trecut, 15 ore în viitor)
-    # Este intervalul matematic perfect: mai mare decât ciclul Lunii (24.8h),
+    # Este intervalul perfect: mai mare decât ciclul Lunii (24.8h),
     # deci Luna nu va fi tăiată, dar elimină riscul de a vedea două vârfuri maxime.
     start_time = acum_local - timedelta(hours=15)
     end_time = acum_local + timedelta(hours=15)
@@ -519,12 +519,11 @@ def deseneaza_sinusoida(acum_local, lon, lat):
     # Plajă verticală extinsă securizată
     ax.set_ylim(-50, 95)
     
-    # Setează limitele fixe de la primul la ultimul element din range
-    ax.set_xlim(x_numeric, x_numeric[-1])
+    # CORECTAT CONCRET: Trimitem elementul numeric 0 (x_numeric[0]) în loc de listă
+    ax.set_xlim(x_numeric[0], x_numeric[-1])
     ax.legend(loc='upper right', frameon=False, fontsize=10)
     
     return fig
-
 
 
 def evalueaza_forta_planeta(nume_p, lon_p, casa_p, miscare_p, lon_soare):
