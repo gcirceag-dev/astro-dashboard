@@ -1080,7 +1080,7 @@ try:
     casa_soare = determina_casa_planetei(l_soare, jd_ut_case)
     este_harta_diurna = casa_soare >= 7
     
-    date_output["tip_secta"] = f"Tipul Sectei (Harta): {'DIURNĂ (Zi)' if este_harta_diurna else 'NOCTURNĂ (Noapte)'}"
+    date_output["tip_secta"] = f"Tip harta: {'DIURNĂ (Zi)' if este_harta_diurna else 'NOCTURNĂ (Noapte)'}"
     
     puncte_arabe_list = []
     fortuna = calculeaza_punct_arab(l_asc, l_luna, l_soare, este_harta_diurna, formula_diurna_fixa=True)
