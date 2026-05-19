@@ -20,20 +20,130 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+    /* ========== LĂȚIME MAXIMĂ ========== */
     .stApp {
         max-width: 1000px;
         margin: 0 auto;
     }
     
-    /* FORȚAT NUCLEAR: tot ce e text în aplicație */
-    html, body, [class*="css"] {
+    /* ========== TITLURI ========== */
+    h1 {
+        font-size: 28px !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.3rem !important;
+    }
+    h2 {
+        font-size: 22px !important;
+        font-weight: 600 !important;
+        margin-top: 1rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+    h3 {
         font-size: 18px !important;
+        font-weight: 500 !important;
+        margin-top: 0.8rem !important;
+        margin-bottom: 0.2rem !important;
     }
     
-    /* Wrap în tabele */
-    td, th {
-        white-space: normal !important;
-        word-wrap: break-word !important;
+    /* ========== TEXT GENERAL ========== */
+    p, .stMarkdown, .stCaption {
+        font-size: 15px !important;
+        line-height: 1.5 !important;
+    }
+    
+    /* ========== TABELE: Aspect uniform, modern ========== */
+    
+    /* Container tabel - lățime completă */
+    [data-testid="stDataFrame"] {
+        width: 100% !important;
+    }
+    
+    /* Celule tabel */
+    [data-testid="stDataFrame"] td,
+    [data-testid="stDataFrame"] th {
+        font-size: 16px !important;
+        padding: 8px 12px !important;
+        white-space: nowrap !important;
+        border-bottom: 1px solid #e0e0e0 !important;
+    }
+    
+    /* Header tabel */
+    [data-testid="stDataFrame"] th {
+        font-weight: 600 !important;
+        color: #555 !important;
+        background-color: #fafafa !important;
+    }
+    
+    /* Rânduri alternante */
+    [data-testid="stDataFrame"] tbody tr:nth-child(even) {
+        background-color: #f9f9f9 !important;
+    }
+    
+    /* ========== TABELE CU SCROLL ORIZONTAL ========== */
+    [data-testid="stDataFrame"] > div {
+        overflow-x: auto !important;
+    }
+    
+    /* ========== POPUP-URI (Popover) ========== */
+    section[data-testid="stPopover"] {
+        min-width: 350px !important;
+    }
+    section[data-testid="stPopover"] td,
+    section[data-testid="stPopover"] th {
+        font-size: 15px !important;
+        padding: 6px 10px !important;
+    }
+    
+    /* ========== EXPANDER ========== */
+    .stExpander summary {
+        font-size: 16px !important;
+        font-weight: 500 !important;
+    }
+    .stExpander details p,
+    .stExpander details td,
+    .stExpander details th {
+        font-size: 15px !important;
+    }
+    
+    /* ========== TAB-URI ========== */
+    button[data-baseweb="tab"] {
+        font-size: 16px !important;
+        font-weight: 500 !important;
+    }
+    
+    /* ========== METRICI ========== */
+    [data-testid="stMetric"] {
+        background-color: #f8f8f8 !important;
+        border-radius: 8px !important;
+        padding: 12px !important;
+        border: 1px solid #e8e8e8 !important;
+    }
+    [data-testid="stMetric"] label {
+        font-size: 14px !important;
+        color: #666 !important;
+    }
+    [data-testid="stMetric"] [data-testid="stMetricValue"] {
+        font-size: 24px !important;
+        font-weight: 600 !important;
+    }
+    
+    /* ========== SLIDER ========== */
+    .stSlider label {
+        font-size: 15px !important;
+        font-weight: 500 !important;
+    }
+    
+    /* ========== TEXT DIN HEADER (data/ora) ========== */
+    .stApp header + div p {
+        font-size: 14px !important;
+        color: #666 !important;
+    }
+    
+    /* ========== CAPTION SUB GRAFICE ========== */
+    .stCaption {
+        font-size: 13px !important;
+        color: #999 !important;
+        font-style: italic !important;
     }
 </style>
 """, unsafe_allow_html=True)
