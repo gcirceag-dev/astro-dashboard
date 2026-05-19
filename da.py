@@ -792,9 +792,7 @@ for nume, corp_id in corpuri.items():
 # Dinamica Lunii
 try:
     date_luna_dinamica = calculeaza_dinamica_lunii(jd_acum)
-    res_soare = swe.calc_ut(jd_et_planete, swe.SUN, swe.FLG_SWIEPH)
-    res_luna = swe.calc_ut(jd_et_planete, swe.MOON, swe.FLG_SWIEPH)
-    elongatie_act = (res_luna[0][0] - res_soare[0][0]) % 360.0
+    elongatie_act = date_luna_dinamica['elongatie']
     
     date_output["luna_dinamica"] = {
         "faza curenta": date_luna_dinamica['faza'],
