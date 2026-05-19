@@ -1230,6 +1230,9 @@ with tab1:
     # Soarele
     st.subheader("Soare")
     
+    # CSS pentru tabelul Soare
+    st.markdown("""
+    <style>
         .tabel-soare {
             width: 100%;
             border-collapse: collapse;
