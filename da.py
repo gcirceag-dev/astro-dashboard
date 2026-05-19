@@ -1245,6 +1245,7 @@ with tab1:
             line-height: 1.0;
             height: 30px;
             border: none;
+            border-bottom: none;
             vertical-align: middle;
         }
         .tabel-soare td:first-child {
