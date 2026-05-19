@@ -61,7 +61,7 @@ st.markdown("""
     /* Celule tabel */
     [data-testid="stDataFrame"] td,
     [data-testid="stDataFrame"] th {
-        font-size: 16px !important;
+        font-size: 18px !important;
         padding: 8px 12px !important;
         white-space: nowrap !important;
         border-bottom: 1px solid #e0e0e0 !important;
@@ -1230,49 +1230,19 @@ with tab1:
     # Soarele
     st.subheader("Soare")
     
-    # CSS pentru tabelul Soare
-    st.markdown("""
-    <style>
-        .tabel-soare {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 22px;
-            border: none;
+    df_soare_ev = pd.DataFrame(
+        list(date_output.get("SOARE_orizont", {}).items()),
+        columns=["Eveniment", "Ora"]
+    )
+    st.dataframe(
+        df_soare_ev, 
+        hide_index=True, 
+        use_container_width=True,
+        column_config={
+            "Eveniment": st.column_config.TextColumn("Eveniment", width="medium"),
+            "Ora": st.column_config.TextColumn("Ora", width="small")
         }
-        .tabel-soare tr {
-            border: none;
-            border-bottom: none;
-            outline: none;
-        }
-        .tabel-soare td {
-            padding: 0px 16px;
-            margin: 0px;
-            line-height: 1.0;
-            height: 30px;
-            border: none;
-            border-bottom: none;
-            vertical-align: middle;
-        }
-        .tabel-soare td:first-child {
-            font-weight: 600;
-            color: #444;
-            width: 45%;
-        }
-        .tabel-soare td:last-child {
-            font-size: 26px;
-            font-weight: 700;
-            color: #000;
-            letter-spacing: 1px;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Construim tabelul manual
-    tabel_html = '<table class="tabel-soare">'
-    for eveniment, ora in date_output.get("SOARE_orizont", {}).items():
-        tabel_html += f'<tr><td>{eveniment}</td><td>{ora}</td></tr>'
-    tabel_html += '</table>'
-    st.markdown(tabel_html, unsafe_allow_html=True)
+    )
     
     with st.popover("Dinamica"):
         df_soare_fiz = pd.DataFrame(
