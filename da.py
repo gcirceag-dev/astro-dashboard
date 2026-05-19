@@ -1069,11 +1069,14 @@ with tab3:
         return [linie[:30], "", "", ""]
     aspecte_date = [parse_aspect(a) for a in aspecte_filtrate]
     aspecte_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
-    aspecte_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">P 1</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Aspect</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">P 2</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Orbă</th></tr>'
+    aspecte_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Planeta 1</th><th style="padding:6px 8px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:center;width:50px;">ASP</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Planeta 2</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Orbă</th></tr>'
     for row in aspecte_date:
         aspecte_html += '<tr>'
-        for cell in row:
-            aspecte_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
+        for idx, cell in enumerate(row):
+            if idx == 1:
+                aspecte_html += f'<td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;text-align:center;">{cell}</td>'
+            else:
+                aspecte_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
         aspecte_html += '</tr>'
     aspecte_html += '</table>'
     st.markdown(aspecte_html, unsafe_allow_html=True)
@@ -1091,11 +1094,14 @@ with tab3:
         return [nume.strip(), rest[:30], "", ""]
     puncte_date = [parse_punct_arab(pa) for pa in date_output.get("puncte_arabe", [])]
     puncte_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
-    puncte_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Punct arab</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Pozitie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Zodie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Casa</th></tr>'
-    for row in puncte_date:
+    puncte_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Punct arab</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Pozitie</th><th style="padding:6px 8px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:center;width:50px;">Zod</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Casa</th></tr>'
+        for row in puncte_date:
         puncte_html += '<tr>'
-        for cell in row:
-            puncte_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
+        for idx, cell in enumerate(row):
+            if idx == 2:
+                puncte_html += f'<td style="padding:6px 8px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;text-align:center;">{cell}</td>'
+            else:
+                puncte_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
         puncte_html += '</tr>'
     puncte_html += '</table>'
     st.markdown(puncte_html, unsafe_allow_html=True)
