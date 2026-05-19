@@ -30,10 +30,13 @@ st.markdown("""
     
     [data-testid="stDataFrame"] { width: 100% !important; border: none !important; }
     [data-testid="stDataFrame"] table { border-collapse: collapse !important; }
-    [data-testid="stDataFrame"] td, [data-testid="stDataFrame"] th {
+    [data-testid="stDataFrame"] div[data-testid="stTable"] td,
+    [data-testid="stDataFrame"] table td,
+    [data-testid="stDataFrame"] div[data-testid="stTable"] th,
+    [data-testid="stDataFrame"] table th {
         font-size: 15px !important; padding: 6px 14px !important; white-space: nowrap !important;
         border: none !important; border-bottom: 1px solid #f0f0f0 !important;
-        color: #111 !important; font-weight: 900 !important;
+        color: #111 !important; font-weight: 700 !important;
     }
     [data-testid="stDataFrame"] th {
         font-weight: 600 !important; color: #555 !important; background: none !important;
