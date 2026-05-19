@@ -736,9 +736,18 @@ with tab1:
     st.subheader("Soare")
     so = date_output.get("SOARE_orizont", {})
     st.markdown(f"""
-    <div class="card-valoare"><span class="eticheta">Răsărit</span><span class="valoare">{so.get('Rasarit', '—')}</span></div>
-    <div class="card-valoare"><span class="eticheta">Meridian</span><span class="valoare">{so.get('Meridian', '—')}</span></div>
-    <div class="card-valoare"><span class="eticheta">Apus</span><span class="valoare">{so.get('Apus', '—')}</span></div>
+    <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:16px;color:#111;font-weight:700;">Răsărit</span>
+        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{so.get('Rasarit', '—')}</span>
+    </div>
+    <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:16px;color:#111;font-weight:700;">Meridian</span>
+        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{so.get('Meridian', '—')}</span>
+    </div>
+    <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:16px;color:#111;font-weight:700;">Apus</span>
+        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{so.get('Apus', '—')}</span>
+    </div>
     """, unsafe_allow_html=True)
     with st.popover("Dinamica Soare"):
         df_soare_fiz = pd.DataFrame(list(date_output.get("SOARE_fizice", {}).items()), columns=["Parametru", "Valoare"])
@@ -748,9 +757,18 @@ with tab1:
     st.subheader("Luna")
     lu = date_output.get("LUNA_orizont", {})
     st.markdown(f"""
-    <div class="card-valoare"><span class="eticheta">Răsărit</span><span class="valoare">{lu.get('Rasarit', '—')}</span></div>
-    <div class="card-valoare"><span class="eticheta">Meridian</span><span class="valoare">{lu.get('Meridian', '—')}</span></div>
-    <div class="card-valoare"><span class="eticheta">Apus</span><span class="valoare">{lu.get('Apus', '—')}</span></div>
+    <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:16px;color:#111;font-weight:700;">Răsărit</span>
+        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{lu.get('Rasarit', '—')}</span>
+    </div>
+    <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:16px;color:#111;font-weight:700;">Meridian</span>
+        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{lu.get('Meridian', '—')}</span>
+    </div>
+    <div style="background:white;border-radius:10px;padding:10px 20px;margin:6px 0;box-shadow:0 1px 3px rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:16px;color:#111;font-weight:700;">Apus</span>
+        <span style="font-size:22px;font-weight:700;color:#111;letter-spacing:0.5px;">{lu.get('Apus', '—')}</span>
+    </div>
     """, unsafe_allow_html=True)
     with st.popover("Dinamica si Conac"):
         date_luna_fiz = {k: v for k, v in date_output.get("LUNA_fizice", {}).items() if k != "eroare"}
