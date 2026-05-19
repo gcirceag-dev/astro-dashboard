@@ -765,8 +765,16 @@ with tab1:
         ld = date_output["luna_dinamica"]
         df_luna_din = pd.DataFrame(list(ld.items()), columns=["Parametru", "Valoare"])
         st.dataframe(df_luna_din, hide_index=True, use_container_width=True)
-        df_faze = pd.DataFrame([faza.split(" : ") for faza in date_output.get("faze_luna", [])], columns=["Faza", "Data si ora"])
-        st.dataframe(df_faze, hide_index=True, use_container_width=True)
+        faze_list = date_output.get("faze_luna", [])
+        faze_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        for f in faze_list:
+            if " : " in f:
+                nume, data = f.split(" : ", 1)
+                faze_html += f'<tr><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{nume.strip()}</td><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{data.strip()}</td></tr>'
+            else:
+                faze_html += f'<tr><td colspan="2" style="padding:8px 14px;font-size:15px;color:#111;font-weight:700;">{f}</td></tr>'
+        faze_html += '</table>'
+        st.markdown(faze_html, unsafe_allow_html=True)
 
     st.subheader("Vizualizari")
     col1, col2 = st.columns(2)
