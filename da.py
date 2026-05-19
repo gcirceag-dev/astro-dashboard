@@ -1230,11 +1230,38 @@ with tab1:
     # Soarele
     st.subheader("Soare")
     
-    df_soare_ev = pd.DataFrame(
-        list(date_output.get("SOARE_orizont", {}).items()),
-        columns=["Eveniment", "Ora"]
-    )
-    st.dataframe(df_soare_ev, hide_index=True, use_container_width=False)
+    # CSS pentru tabelul Soare
+    st.markdown("""
+    <style>
+        .tabel-soare {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 22px;
+        }
+        .tabel-soare td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .tabel-soare td:first-child {
+            font-weight: 600;
+            color: #444;
+            width: 45%;
+        }
+        .tabel-soare td:last-child {
+            font-size: 26px;
+            font-weight: 700;
+            color: #000;
+            letter-spacing: 1px;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Construim tabelul manual
+    tabel_html = '<table class="tabel-soare">'
+    for eveniment, ora in date_output.get("SOARE_orizont", {}).items():
+        tabel_html += f'<tr><td>{eveniment}</td><td>{ora}</td></tr>'
+    tabel_html += '</table>'
+    st.markdown(tabel_html, unsafe_allow_html=True)
     
     with st.popover("Dinamica"):
         df_soare_fiz = pd.DataFrame(
