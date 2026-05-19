@@ -1237,9 +1237,9 @@ with tab1:
     st.dataframe(
         df_soare_ev, 
         hide_index=True, 
-        use_container_width=True,
+        use_container_width=False,
         column_config={
-            "Eveniment": st.column_config.TextColumn("Eveniment", width="medium"),
+            "Eveniment": st.column_config.TextColumn("Eveniment", width="small"),
             "Ora": st.column_config.TextColumn("Ora", width="small")
         }
     )
@@ -1254,6 +1254,12 @@ with tab1:
     st.divider()
     
     # Luna
+    st.subheader("Luna")
+    
+    df_luna_ev = pd.DataFrame(
+        list(date_output.get("LUNA_orizont", {}).items()),
+        columns=["Eveniment", "Ora"]
+    )
     st.dataframe(
         df_luna_ev, 
         hide_index=True, 
@@ -1295,7 +1301,6 @@ with tab1:
                 ["Poziție în manzil", pozitie]
             ], columns=["", "Detalii"])
             
-            # Container cu derulare orizontală FORȚATĂ
             st.markdown(
                 '<div style="overflow-x: scroll; max-width: 100%; border: 1px solid #ddd; border-radius: 5px; padding: 5px;">', 
                 unsafe_allow_html=True
