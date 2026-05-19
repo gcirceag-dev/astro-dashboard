@@ -417,11 +417,12 @@ def determina_casa_planetei(lon_planeta, jd_ut):
     return 1
 
 def calculeaza_dinamica_lunii(jd_ut):
-    res_pheno = swe.pheno_ut(jd_ut, swe.MOON, swe.FLG_SWIEPH)
+    """Versiune optimizată - folosește cache-ul global ephe_cache"""
+    res_pheno = ephe_cache.get_pheno_ut(jd_ut, swe.MOON)
     procent_iluminare = res_pheno[1] * 100.0  
     
-    res_soare = swe.calc_ut(jd_ut, swe.SUN, swe.FLG_SWIEPH)
-    res_luna = swe.calc_ut(jd_ut, swe.MOON, swe.FLG_SWIEPH)
+    res_soare = ephe_cache.get_calc_ut(jd_ut, swe.SUN)
+    res_luna = ephe_cache.get_calc_ut(jd_ut, swe.MOON)
     
     lon_soare = res_soare[0][0]
     lon_luna = res_luna[0][0]
