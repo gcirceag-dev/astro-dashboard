@@ -436,115 +436,108 @@ def determina_manzila_araba(lon_zecimala):
         "progres_text": format_grade(grade_rest)
     }
 
-def deseneaza_sinusoida(acum_local, lon, lat, alt=0):
-    """Desenează sinusoida cu altitudinea Soarelui și Lunii folosind parametrii transmiși."""
+def deseneaza_sinusoida(acum_local, lon, lat):
+    """Desenează sinusoida cu altitudinea Soarelui și Lunii."""
     
-    geopos_lista = [lon, lat, alt]
+    geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     
-    # Funcție internă corectată pentru a obține răsăritul unei zile
-    def get_rasarit(data_baza):
-        # Setăm ora la 12:00 în fusul orar local al datei primite pentru a evita saltul de zi la conversia UTC
-        local_noon = data_baza.replace(hour=12, minute=0, second=0, microsecond=0)
-        data_utc = local_noon.astimezone(pytz.utc)
-        
-        # Calculăm ziua iuliană exactă (inclusiv fracțiunile de secundă)
-        timp_ora = data_utc.hour + data_utc.minute / 60.0 + data_utc.second / 3600.0
-        jd = swe.julday(data_utc.year, data_utc.month, data_utc.day, timp_ora)
-        
+    # Funcție pentru a obține răsăritul unei zile
+    def get_rasarit(data):
+        data_utc = data.astimezone(pytz.utc)
+        # Corecție: includem și secundele pentru precizie astronomică
+        jd = swe.julday(data_utc.year, data_utc.month, data_utc.day,
+                        data_utc.hour + data_utc.minute / 60.0 + data_utc.second / 3600.0)
         rezultat = calculeaza_evenimente_orizont(jd - 0.5, swe.SUN, geopos_lista)
         if rezultat and rezultat.get("Rasarit"):
             return jd_to_datetime(rezultat["Rasarit"])
         return None
     
     # Calculează răsăritul de azi și mâine
-    dt_r_azi = get_rasarit(acum_local)
-    dt_r_maine = get_rasarit(acum_local + timedelta(days=1))
+    azi = acum_local.replace(hour=12, minute=0, second=0, microsecond=0)
+    maine = azi + timedelta(days=1)
     
-    # Fallback stabil dacă nu găsește răsăritul
+    dt_r_azi = get_rasarit(azi)
+    dt_r_maine = get_rasarit(maine)
+    
+    # Fallback dacă nu găsește răsăritul
     if not dt_r_azi:
-        dt_r_azi = acum_local.replace(hour=6, minute=0, second=0, microsecond=0)
+        dt_r_azi = azi.replace(hour=6, minute=0)
     if not dt_r_maine:
-        dt_r_maine = (acum_local + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
+        dt_r_maine = maine.replace(hour=6, minute=0)
     
-    # Interval fereastră grafic: de la răsăritul de azi la răsăritul de mâine
+    # Interval: de la răsăritul de azi la răsăritul de mâine
     start_time = dt_r_azi - timedelta(hours=1)
     end_time = dt_r_maine + timedelta(hours=1)
     
-    # Generează timestamp-uri din 30 în 30 de minute
+    # Generează timestamp-uri la fiecare 30 de minute
     timestamps = []
     current = start_time
     while current <= end_time:
         timestamps.append(current)
         current += timedelta(minutes=30)
     
+    # Calculează altitudinile
     alt_soare = []
     alt_luna = []
-    
-    # Setează steagul topocentric pentru acuratețe maximă la orizont
-    swe.set_topo(lon, lat, alt)
+    geopos = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     
     for ts in timestamps:
         ts_utc = ts.astimezone(pytz.utc)
-        timp_ora = ts_utc.hour + ts_utc.minute / 60.0 + ts_utc.second / 3600.0
-        jd = swe.julday(ts_utc.year, ts_utc.month, ts_utc.day, timp_ora)
+        jd = swe.julday(ts_utc.year, ts_utc.month, ts_utc.day,
+                        ts_utc.hour + ts_utc.minute/60.0 + ts_utc.second/3600.0)
         
-        # Calcul altitudine Soare
         try:
-            res_s, _ = swe.calc_ut(jd, swe.SUN, swe.FLG_SWIEPH | swe.FLG_TOPOCTR)
-            xin = [res_s[0], res_s[1], res_s[2]]
-            az, alt_s, _ = swe.azalt(jd, swe.ECL2EQU, geopos_lista, 1013.25, 15.0, xin)
-            alt_soare.append(alt_s)
-        except Exception:
+            res_s = swe.calc_ut(jd, swe.SUN, swe.FLG_SWIEPH)
+            xin = [res_s[0][0], res_s[0][1], res_s[0][2]]
+            az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
+            alt_soare.append(alt)
+        except:
             alt_soare.append(-90)
-            
-        # Calcul altitudine Lună
+        
         try:
-            res_l, _ = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH | swe.FLG_TOPOCTR)
-            xin = [res_l[0], res_l[1], res_l[2]]
-            az, alt_l, _ = swe.azalt(jd, swe.ECL2EQU, geopos_lista, 1013.25, 15.0, xin)
-            alt_luna.append(alt_l)
-        except Exception:
+            res_l = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH)
+            xin = [res_l[0][0], res_l[0][1], res_l[0][2]]
+            az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
+            alt_luna.append(alt)
+        except:
             alt_luna.append(-90)
-            
-    # Resetăm starea librăriei după buclă
-    swe.set_topo(0, 0, 0)
     
-    # Construcție grafic Matplotlib
-    fig, ax = plt.subplots(figsize=(6, 3.5), facecolor='white')
+    # Desenează graficul
+    fig, ax = plt.subplots(figsize=(6, 4), facecolor='white')
     
-    # Curățare margini și axe pentru design minimalist
     ax.set_xticks([])
     ax.set_yticks([])
-    for spine in ax.spines.values():
-        spine.set_visible(False)
-        
-    # Linia Orizontului (0 grade)
-    ax.axhline(y=0, color='#444444', linewidth=1.2, linestyle='-', alpha=0.5)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
     
-    x_numeric = np.arange(len(timestamps))
+    ax.axhline(y=0, color='black', linewidth=1.5, linestyle='-', alpha=0.7)
+    
+    x_numeric = list(range(len(timestamps)))
     ax.plot(x_numeric, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
     ax.plot(x_numeric, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
     
-    # Găsește cel mai apropiat index matematic pentru poziția curentă (previne salturile)
-    diferente = [abs((ts - acum_local).total_seconds()) for ts in timestamps]
-    current_idx = kernel_idx = diferentre_min_idx = independente_idx = dedicate = un_index = variante = diferente.index(min(diferente))
+    # LOGICĂ CORECTATĂ: Găsește poziția cea mai apropiată matematic (previne desincronizarea markerului)
+    current_idx = 0
+    min_dif = float('inf')
+    for i, ts in enumerate(timestamps):
+        dif = abs((ts - acum_local).total_seconds())
+        if dif < min_dif:
+            min_dif = dif
+            current_idx = i
     
-    # Desenează markerul de poziție curentă
-    if 0 <= current_idx < len(alt_soare):
+    if current_idx < len(alt_soare):
         ax.scatter(current_idx, alt_soare[current_idx], color='#FFD700', 
-                   s=110, edgecolor='black', zorder=5, linewidth=1.5)
+                   s=100, edgecolor='black', zorder=5, marker='o')
         ax.scatter(current_idx, alt_luna[current_idx], color='#888888', 
-                   s=90, edgecolor='black', zorder=5, linewidth=1.5)
+                   s=80, edgecolor='black', zorder=5, marker='o')
     
-    # Textul indicator pentru Orizont plasat subtil în dreapta
-    ax.text(x_numeric[-1], 2, ' Orizont (0°)', ha='right', va='bottom', fontsize=8, color='#666666')
-    
-    # Limite adaptate dinamic pentru a nu tăia axele
-    ax.set_ylim(-40, 95)
+    ax.text(x_numeric[-1], 0.5, 'Orizont', ha='right', va='bottom', fontsize=8, color='black')
+    ax.set_ylim(-35, 95)
     ax.set_xlim(x_numeric[0], x_numeric[-1])
-    ax.legend(loc='upper right', frameon=False, fontsize=9)
+    ax.legend(loc='upper right', frameon=False, fontsize=10)
     
-    plt.tight_layout()
     return fig
 
 def evalueaza_forta_planeta(nume_p, lon_p, casa_p, miscare_p, lon_soare):
@@ -1267,10 +1260,9 @@ with tab1:
     # ============================================================
     # Sinusoida Soare - Lună
     st.subheader("Altitudinea Soarelui și Lunii")
-    
-    fig_sin = deseneaza_sinusoida(acum_local, LONGITUDINE, LATITUDINE, ALTITUDINE)
+    fig_sin = deseneaza_sinusoida(acum_local, LONGITUDINE, LATITUDINE)
     st.pyplot(fig_sin)
-    st.caption("Linia orizontului (0°) | ● Poziția curentă pe curbe")
+    st.caption("Linia orizontului (0°) | ● Poziția curentă")
     # ============================================================
     # DURATE CALENDARISTICE
     # ============================================================
