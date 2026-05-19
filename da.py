@@ -1067,12 +1067,19 @@ with tab3:
         if match: return [match.group(1).strip(), match.group(2), match.group(3).strip(), match.group(4).strip()]
         return [linie[:30], "", "", ""]
     aspecte_date = [parse_aspect(a) for a in aspecte_filtrate]
-    df_aspecte = pd.DataFrame(aspecte_date, columns=["Planeta 1", "Aspect", "Planeta 2", "Orbă"])
-    st.dataframe(df_aspecte, hide_index=True, use_container_width=True)
+    aspecte_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+    aspecte_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Planeta 1</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Aspect</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Planeta 2</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Orbă</th></tr>'
+    for row in aspecte_date:
+        aspecte_html += '<tr>'
+        for cell in row:
+            aspecte_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
+        aspecte_html += '</tr>'
+    aspecte_html += '</table>'
+    st.markdown(aspecte_html, unsafe_allow_html=True)
 
     st.divider()
     st.subheader("Puncte arabe majore")
-    st.text(date_output.get("tip_secta", ""))
+    st.markdown(f"<span style='font-size:15px;color:#111;font-weight:700;'>{date_output.get('tip_secta', '')}</span>", unsafe_allow_html=True)
     def parse_punct_arab(linie):
         if not linie or "Eroare" in linie: return ["", "", "", ""]
         if " : " in linie: nume, rest = linie.split(" : ", 1)
@@ -1082,7 +1089,14 @@ with tab3:
         if match: return [nume.strip(), match.group(1), match.group(2), match.group(3)]
         return [nume.strip(), rest[:30], "", ""]
     puncte_date = [parse_punct_arab(pa) for pa in date_output.get("puncte_arabe", [])]
-    df_pa = pd.DataFrame(puncte_date, columns=["Punct arab", "Pozitie", "Zodie", "Casa"])
-    st.dataframe(df_pa, hide_index=True, use_container_width=True)
+    puncte_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+    puncte_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Punct arab</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Pozitie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Zodie</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Casa</th></tr>'
+    for row in puncte_date:
+        puncte_html += '<tr>'
+        for cell in row:
+            puncte_html += f'<td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{cell}</td>'
+        puncte_html += '</tr>'
+    puncte_html += '</table>'
+    st.markdown(puncte_html, unsafe_allow_html=True)
 
 swe.close()
