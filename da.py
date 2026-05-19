@@ -781,13 +781,11 @@ with tab1:
     st.subheader("Fazele Lunii")
     if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
         ld = date_output["luna_dinamica"]
-        luna_din_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
-        for k, v in ld.items():
-            luna_din_html += f'<tr><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{k}</td><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{v}</td></tr>'
-        luna_din_html += '</table>'
-        st.markdown(luna_din_html, unsafe_allow_html=True)
         faze_list = date_output.get("faze_luna", [])
+        
         faze_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        for k, v in ld.items():
+            faze_html += f'<tr><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{k}</td><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{v}</td></tr>'
         for f in faze_list:
             if " : " in f:
                 nume, data = f.split(" : ", 1)
@@ -797,7 +795,7 @@ with tab1:
         faze_html += '</table>'
         st.markdown(faze_html, unsafe_allow_html=True)
 
-    st.subheader("Vizualizari")
+    st.subheader("Grafice")
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Faza Lunii in timp real**")
@@ -856,7 +854,6 @@ with tab1:
     st.caption("Linia orizontului (0°) | ● Pozitia curenta")
 
     st.subheader("Durate calendaristice")
-    
     durate_rows = [
         ["Durata zilei", date_output.get('durata_zi', 'N/A')],
         ["Durata noptii", date_output.get('durata_noapte', 'N/A')],
@@ -870,15 +867,32 @@ with tab1:
     st.markdown(durate_html, unsafe_allow_html=True)
 
     with st.expander("Ore de zi"):
-        df_ore_zi = pd.DataFrame([ora.split(" : ") for ora in date_output.get("ore_zi", [])], columns=["Ora planetara", "Interval"])
-        st.dataframe(df_ore_zi, hide_index=True, use_container_width=True)
+        ore_zi_rows = [ora.split(" : ") for ora in date_output.get("ore_zi", [])]
+        ore_zi_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        for row in ore_zi_rows:
+            if len(row) >= 2:
+                ore_zi_html += f'<tr><td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{row[0].strip()}</td><td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{row[1].strip()}</td></tr>'
+        ore_zi_html += '</table>'
+        st.markdown(ore_zi_html, unsafe_allow_html=True)
+
     with st.expander("Ore de noapte"):
-        df_ore_noapte = pd.DataFrame([ora.split(" : ") for ora in date_output.get("ore_noapte", [])], columns=["Ora planetara", "Interval"])
-        st.dataframe(df_ore_noapte, hide_index=True, use_container_width=True)
+        ore_noapte_rows = [ora.split(" : ") for ora in date_output.get("ore_noapte", [])]
+        ore_noapte_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        for row in ore_noapte_rows:
+            if len(row) >= 2:
+                ore_noapte_html += f'<tr><td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{row[0].strip()}</td><td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{row[1].strip()}</td></tr>'
+        ore_noapte_html += '</table>'
+        st.markdown(ore_noapte_html, unsafe_allow_html=True)
+
     with st.expander("Anotimpuri"):
-        st.markdown(f"**Anotimpul curent:** {date_output.get('anotimp', 'N/A')}")
-        df_cardinale = pd.DataFrame([pct.split(" : ") for pct in date_output.get("puncte_cardinale", [])], columns=["Eveniment", "Data si ora"])
-        st.dataframe(df_cardinale, hide_index=True, use_container_width=True)
+        st.markdown(f"<span style='font-size:15px;color:#111;font-weight:700;'>Anotimpul curent: {date_output.get('anotimp', 'N/A')}</span>", unsafe_allow_html=True)
+        anotimp_rows = [pct.split(" : ") for pct in date_output.get("puncte_cardinale", [])]
+        anotimp_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;margin-top:8px;">'
+        for row in anotimp_rows:
+            if len(row) >= 2:
+                anotimp_html += f'<tr><td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{row[0].strip()}</td><td style="padding:6px 14px;border-bottom:1px solid #f0f0f0;font-size:14px;color:#111;font-weight:700;">{row[1].strip()}</td></tr>'
+        anotimp_html += '</table>'
+        st.markdown(anotimp_html, unsafe_allow_html=True)
 
 # =====================================================================
 # TAB 2 - ASTRO
