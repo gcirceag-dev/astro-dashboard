@@ -730,12 +730,14 @@ dt_a_initial = date_orizont_soare.get("Apus")
 
 acum_clean = acum_local.replace(microsecond=0, second=0)
 
-# Dacă este noapte (înainte de răsărit), folosește data de ieri
-if acum_clean < dt_r_initial:
+# LOGICĂ CORECTATĂ: Determină dacă suntem înainte de răsăritul calendaristic (aparținem nopții anterioare)
+este_noapte_inainte_de_rasarit = acum_clean < dt_r_initial
+
+if este_noapte_inainte_de_rasarit:
+    # Dacă este noapte (înainte de răsărit), calculăm evenimentele pentru ziua de ieri
     ieri = dt_r_initial - timedelta(days=1)
     ieri_utc = ieri.astimezone(pytz.utc)
-    jd_ieri = swe.julday(ieri_utc.year, ieri_utc.month, ieri_utc.day,
-                         ieri_utc.hour + ieri_utc.minute / 60.0)
+    jd_ieri = swe.julday(ieri_utc.year, ieri_utc.month, ieri_utc.day, 12.0) # Forțat la prânz pentru stabilitate
     rezultat_ieri = calculeaza_evenimente_orizont(jd_ieri - 0.5, swe.SUN, [LONGITUDINE, LATITUDINE, ALTITUDINE])
     dt_r_azi = jd_to_datetime(rezultat_ieri["Rasarit"]) if rezultat_ieri.get("Rasarit") else dt_r_initial - timedelta(days=1)
     dt_a_azi = jd_to_datetime(rezultat_ieri["Apus"]) if rezultat_ieri.get("Apus") else dt_a_initial - timedelta(days=1)
@@ -750,8 +752,7 @@ durata_zi_ore = durata_zi_sec / 3600
 # Calculează răsăritul de mâine (necesar pentru durata nopții)
 maine = dt_r_azi + timedelta(days=1)
 maine_utc = maine.astimezone(pytz.utc)
-jd_main = swe.julday(maine_utc.year, maine_utc.month, maine_utc.day,
-                     maine_utc.hour + maine_utc.minute / 60.0)
+jd_main = swe.julday(maine_utc.year, maine_utc.month, maine_utc.day, 12.0) # Forțat la prânz pentru stabilitate
 rezultat_main = calculeaza_evenimente_orizont(jd_main - 0.5, swe.SUN, [LONGITUDINE, LATITUDINE, ALTITUDINE])
 dt_r_maine = jd_to_datetime(rezultat_main["Rasarit"]) if rezultat_main.get("Rasarit") else dt_r_azi + timedelta(days=1)
 
@@ -767,21 +768,19 @@ index_curent = ordine.index(STAPAN_ZI[dt_r_azi.weekday()])
 ore_zi = []
 timp = dt_r_azi
 for i in range(12):
-    planeta = ordine[index_curent % 7]
+    planeta = ordine[(index_curent + i) % 7] # LOGICĂ CORECTATĂ: Mapare fixă fără alterarea indexului de bază
     start = timp
     timp += timedelta(seconds=durata_zi_sec / 12)
     ore_zi.append((i + 1, planeta, start, timp))
-    index_curent += 1
 
 # Orele de noapte
 ore_noapte = []
 timp = dt_a_azi
 for i in range(12):
-    planeta = ordine[index_curent % 7]
+    planeta = ordine[(index_curent + 12 + i) % 7] # LOGICĂ CORECTATĂ: Continuă exact de la ora 13 (index_curent + 12)
     start = timp
     timp += timedelta(seconds=durata_noapte_sec / 12)
     ore_noapte.append((i + 1, planeta, start, timp))
-    index_curent += 1
 
 # Determină guvernatorul curent
 guvernator_ora = "Nedeterminat"
@@ -804,6 +803,7 @@ ore_zi_list = [f"Ora {n:02d} ({p:<7}) : {s.strftime('%H:%M:%S')} - {e.strftime('
 ore_noapte_list = [f"Ora {n:02d} ({p:<7}) : {s.strftime('%H:%M:%S')} - {e.strftime('%H:%M:%S')}" for n, p, s, e in ore_noapte]
 date_output["ore_zi"] = ore_zi_list
 date_output["ore_noapte"] = ore_noapte_list
+
 
 # Anotimpuri
 anotimp = calculeaza_anotimp_curent(lon_soare_acum)
