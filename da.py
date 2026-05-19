@@ -781,8 +781,11 @@ with tab1:
     st.subheader("Fazele Lunii")
     if "luna_dinamica" in date_output and "eroare" not in date_output["luna_dinamica"]:
         ld = date_output["luna_dinamica"]
-        df_luna_din = pd.DataFrame(list(ld.items()), columns=["Parametru", "Valoare"])
-        st.dataframe(df_luna_din, hide_index=True, use_container_width=True)
+        luna_din_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
+        for k, v in ld.items():
+            luna_din_html += f'<tr><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{k}</td><td style="padding:8px 14px;border-bottom:1px solid #f0f0f0;font-size:15px;color:#111;font-weight:700;">{v}</td></tr>'
+        luna_din_html += '</table>'
+        st.markdown(luna_din_html, unsafe_allow_html=True)
         faze_list = date_output.get("faze_luna", [])
         faze_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
         for f in faze_list:
