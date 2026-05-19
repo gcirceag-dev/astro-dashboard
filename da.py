@@ -1243,7 +1243,7 @@ with tab1:
             margin: 0px;
             line-height: 1.0;
             height: 30px;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid transparent;
             vertical-align: middle;
         }
         .tabel-soare td:first-child {
