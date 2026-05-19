@@ -441,11 +441,33 @@ def deseneaza_sinusoida(acum_local, lon, lat):
     
     geopos_lista = [LONGITUDINE, LATITUDINE, ALTITUDINE]
     
-    # SOLUȚIE OPTIMĂ: 30 de ore total (15 ore în trecut, 15 ore în viitor)
-    # Este intervalul perfect: mai mare decât ciclul Lunii (24.8h),
-    # deci Luna nu va fi tăiată, dar elimină riscul de a vedea două vârfuri maxime.
-    start_time = acum_local - timedelta(hours=15)
-    end_time = acum_local + timedelta(hours=15)
+    # Funcție pentru a obține răsăritul unei zile
+    def get_rasarit(data):
+        data_utc = data.astimezone(pytz.utc)
+        jd = swe.julday(data_utc.year, data_utc.month, data_utc.day,
+                        data_utc.hour + data_utc.minute / 60.0)
+        rezultat = calculeaza_evenimente_orizont(jd - 0.5, swe.SUN, geopos_lista)
+        if rezultat.get("Rasarit"):
+            return jd_to_datetime(rezultat["Rasarit"])
+        return None
+    
+    # Calculează răsăritul de azi și mâine
+    azi = acum_local.replace(hour=12, minute=0, second=0, microsecond=0)
+    maine = azi + timedelta(days=1)
+    
+    dt_r_azi = get_rasarit(azi)
+    dt_r_maine = get_rasarit(maine)
+    
+    # Fallback dacă nu găsește răsăritul
+    if not dt_r_azi:
+        dt_r_azi = azi.replace(hour=6, minute=0)
+    if not dt_r_maine:
+        dt_r_maine = maine.replace(hour=6, minute=0)
+    
+    # MODIFICARE STRICTĂ: Am lărgit fereastra în trecut și viitor (4 ore în loc de 1 oră)
+    # Acest lucru mută Soarele și Luna mai spre centru și le face vizibile corect
+    start_time = dt_r_azi - timedelta(hours=4)
+    end_time = dt_r_maine + timedelta(hours=4)
     
     # Generează timestamp-uri la fiecare 30 de minute
     timestamps = []
@@ -462,11 +484,11 @@ def deseneaza_sinusoida(acum_local, lon, lat):
     for ts in timestamps:
         ts_utc = ts.astimezone(pytz.utc)
         jd = swe.julday(ts_utc.year, ts_utc.month, ts_utc.day,
-                        ts_utc.hour + ts_utc.minute/60.0 + ts_utc.second/3600.0)
+                        ts_utc.hour + ts_utc.minute/60.0)
         
         try:
             res_s = swe.calc_ut(jd, swe.SUN, swe.FLG_SWIEPH)
-            xin = [res_s, res_s, res_s]
+            xin = [res_s[0][0], res_s[0][1], res_s[0][2]]
             az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
             alt_soare.append(alt)
         except:
@@ -474,7 +496,7 @@ def deseneaza_sinusoida(acum_local, lon, lat):
         
         try:
             res_l = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH)
-            xin = [res_l, res_l, res_l]
+            xin = [res_l[0][0], res_l[0][1], res_l[0][2]]
             az, alt, _ = swe.azalt(jd, 0, geopos, 1013.25, 15.0, xin)
             alt_luna.append(alt)
         except:
@@ -496,31 +518,22 @@ def deseneaza_sinusoida(acum_local, lon, lat):
     ax.plot(x_numeric, alt_soare, color='#FFD700', linewidth=2.5, label='Soare')
     ax.plot(x_numeric, alt_luna, color='#888888', linewidth=2.0, linestyle='--', label='Lună')
     
-    # Găsește poziția cea mai apropiată matematic pentru a centra markerul
-    current_idx = 0
-    min_dif = float('inf')
+    # Găsește poziția curentă (Logica ta originală intactă)
+    current_idx = None
     for i, ts in enumerate(timestamps):
-        dif = abs((ts - acum_local).total_seconds())
-        if dif < min_dif:
-            min_dif = dif
+        if ts >= acum_local:
             current_idx = i
+            break
     
-    if current_idx < len(alt_soare):
+    if current_idx and current_idx < len(alt_soare):
         ax.scatter(current_idx, alt_soare[current_idx], color='#FFD700', 
                    s=100, edgecolor='black', zorder=5, marker='o')
         ax.scatter(current_idx, alt_luna[current_idx], color='#888888', 
                    s=80, edgecolor='black', zorder=5, marker='o')
-        
-        # Linie verticală discretă care marchează momentul ACUM
-        ax.axvline(x=current_idx, color='gray', linestyle=':', linewidth=1, alpha=0.4)
     
     ax.text(x_numeric[-1], 0.5, 'Orizont', ha='right', va='bottom', fontsize=8, color='black')
-    
-    # Plajă verticală extinsă securizată
-    ax.set_ylim(-50, 95)
-    
-    # CORECTAT CONCRET: Trimitem elementul numeric 0 (x_numeric[0]) în loc de listă
-    ax.set_xlim(x_numeric[0], x_numeric[-1])
+    ax.set_ylim(-35, 95)
+    ax.set_xlim(x_numeric[0], x_numeric[-1])  # Resetat la sintaxa ta inițială sigură
     ax.legend(loc='upper right', frameon=False, fontsize=10)
     
     return fig
