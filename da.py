@@ -1069,7 +1069,7 @@ with tab3:
         return [linie[:30], "", "", ""]
     aspecte_date = [parse_aspect(a) for a in aspecte_filtrate]
     aspecte_html = '<table style="width:100%;border-collapse:collapse;font-family:Segoe UI,Roboto,sans-serif;">'
-    aspecte_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Planeta 1</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Aspect</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Planeta 2</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Orbă</th></tr>'
+    aspecte_html += '<tr><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">P 1</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Aspect</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">P 2</th><th style="padding:6px 14px;border-bottom:2px solid #ddd;font-size:13px;color:#888;text-transform:uppercase;text-align:left;">Orbă</th></tr>'
     for row in aspecte_date:
         aspecte_html += '<tr>'
         for cell in row:
