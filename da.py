@@ -374,11 +374,10 @@ def calculeaza_pozitie_astrologica(jd_ut, corp_id):
         "lon_pura": lon
     }
 
-def calculeaza_case_astrologice(jd_ut, sistem_caracter=b'P'):
-    lat_rad = math.radians(float(LATITUDINE))
-    lat_geocentrica = math.degrees(math.atan(0.993277 * math.tan(lat_rad)))
-    
-    cuspide, ascmc = swe.houses(jd_ut, lat_geocentrica, float(LONGITUDINE), sistem_caracter)
+def calculeaza_case_astrologice(house_calc):
+    """Versiune optimizată - primește direct HouseCalculator în loc să recalculeze"""
+    cuspide = house_calc.cuspide
+    ascmc = house_calc.ascmc
     
     ascendent = ascmc[0]
     mc = ascmc[1]
@@ -388,15 +387,17 @@ def calculeaza_case_astrologice(jd_ut, sistem_caracter=b'P'):
     case_redenumite = {}
     etichete_case = {1: "AS", 4: "IC", 7: "DS", 10: "MC"}
     
+    # Pre-calculează pozițiile speciale
+    pozitii_speciale = {
+        1: ascendent,
+        4: ic,
+        7: descendent,
+        10: mc
+    }
+    
     for i in range(1, 13):
         nume_afisat = etichete_case.get(i, f"Casa {i:02d}")
-        
-        if i == 1: lon_punct = ascendent
-        elif i == 4: lon_punct = ic
-        elif i == 7: lon_punct = descendent
-        elif i == 10: lon_punct = mc
-        else: lon_punct = cuspide[i - 1]
-            
+        lon_punct = pozitii_speciale.get(i, cuspide[i - 1])
         case_redenumite[nume_afisat] = format_pozitie_astrologica(lon_punct)
         
     return case_redenumite
@@ -794,6 +795,9 @@ delta_t_zile = swe.deltat(jd_acum) / 86400.0
 jd_et_planete = jd_acum + delta_t_zile
 jd_ut_case = jd_acum
 
+# Inițializare HouseCalculator o singură dată
+house_calc = HouseCalculator(jd_ut_case, LATITUDINE, LONGITUDINE, ephe_cache)
+
 # Dicționar pentru a salva toate rezultatele
 date_output = {}
 
@@ -978,7 +982,7 @@ for nume_pct, unghi in puncte_cardinale.items():
 
 # Case astrologice
 try:
-    tabel_case = calculeaza_case_astrologice(jd_acum, b'P')
+    tabel_case = calculeaza_case_astrologice(house_calc)
     date_output["case_astrologice"] = tabel_case
 except Exception as e:
     date_output["case_astrologice"] = {"eroare": str(e)}
