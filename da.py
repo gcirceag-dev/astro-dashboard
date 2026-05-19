@@ -359,8 +359,8 @@ def calculeaza_date_timp_real(jd_ut, corp_id):
     }
 
 def calculeaza_pozitie_astrologica(jd_ut, corp_id):
-    flag_astrologic = swe.FLG_SWIEPH | swe.FLG_SPEED
-    res_calc = swe.calc_ut(jd_ut, corp_id, flag_astrologic)
+    """Versiune optimizată - folosește cache-ul global ephe_cache"""
+    res_calc = ephe_cache.get_calc_ut(jd_ut, corp_id, swe.FLG_SWIEPH | swe.FLG_SPEED)
     
     date_ecl = res_calc[0]
     lon = date_ecl[0]
