@@ -1239,6 +1239,11 @@ with tab1:
             font-size: 22px;
             border: none;
         }
+        .tabel-soare tr {
+            border: none;
+            border-bottom: none;
+            outline: none;
+        }
         .tabel-soare td {
             padding: 0px 16px;
             margin: 0px;
