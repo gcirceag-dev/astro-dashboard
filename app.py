@@ -819,7 +819,7 @@ with tab1:
         
         fig.update_layout(title="Altitudinea Soarelui (azi)", xaxis_title="Ora", yaxis_title="Altitudine (°)",
                           height=400, margin=dict(l=20, r=20, t=40, b=20), template="plotly_white")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={'responsive': True})
     
     # Expander 7: Grafic proporție zi/noapte
     with st.expander("Proporția zi/noapte"):
