@@ -768,11 +768,10 @@ with tab1:
             else:
                 st.caption(f"Acum: {current_dist:,.0f} km ← ne întoarcem spre periheliu")
     
-    # Expander 6: Sinusoida
+    # Expander 6: Sinusoida altitudinii Soarelui (24h)
     with st.expander("Sinusoida altitudinii Soarelui (24h)"):
         times_sin = []
         alts_sin = []
-        
         midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
         
         for minutes in range(0, 24*60, 5):
@@ -780,46 +779,67 @@ with tab1:
             t = ts.from_datetime(dt.astimezone(pytz.UTC))
             alt, _, _ = observer.at(t).observe(sun).apparent().altaz()
             times_sin.append(dt.strftime('%H:%M'))
-            alts_sin.append(alt.degrees)
+            alts_sin.append(alt.degrees)        
+        import plotly.graph_objects as go
         
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=times_sin, y=alts_sin, mode='lines',
-                                 name='Altitudine', line=dict(color='#f0c040', width=2)))
-        fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5,
-                      annotation_text="Orizont", annotation_position="bottom right")
+                                 line=dict(color='#f0c040', width=1.5), showlegend=False))
+        fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.4)
         
         def closest_index(target_dt):
-            target_minutes = target_dt.hour * 60 + target_dt.minute
-            return round(target_minutes / 5)
+            return round((target_dt.hour * 60 + target_dt.minute) / 5)
         
         alt_now_sun, _, _ = observer.at(t_now).observe(sun).apparent().altaz()
         idx_now = closest_index(now)
         fig.add_trace(go.Scatter(x=[times_sin[idx_now]], y=[alt_now_sun.degrees], mode='markers',
-                                 marker=dict(color='gold', size=15, symbol='circle',
-                                             line=dict(color='orange', width=2)),
-                                 name='Soare (acum)', showlegend=True))
+                                 marker=dict(color='gold', size=10, symbol='circle',
+                                             line=dict(color='orange', width=1)),
+                                 showlegend=False))
         
         if sunrise_today:
             idx_sr = closest_index(sunrise_today)
-            fig.add_trace(go.Scatter(x=[times_sin[idx_sr]], y=[0.0], mode='markers+text',
-                                     marker=dict(color='orange', size=12, symbol='triangle-up'),
-                                     text=['Răsărit'], textposition='top center', showlegend=False))
+            fig.add_trace(go.Scatter(x=[times_sin[idx_sr]], y=[0], mode='markers+text',
+                                     marker=dict(color='orange', size=8, symbol='triangle-up'),
+                                     text=['R'], textposition='top center', textfont=dict(size=9),
+                                     showlegend=False))
         
         if sunset_today:
             idx_ss = closest_index(sunset_today)
-            fig.add_trace(go.Scatter(x=[times_sin[idx_ss]], y=[0.0], mode='markers+text',
-                                     marker=dict(color='red', size=12, symbol='triangle-down'),
-                                     text=['Apus'], textposition='top center', showlegend=False))
+            fig.add_trace(go.Scatter(x=[times_sin[idx_ss]], y=[0], mode='markers+text',
+                                     marker=dict(color='red', size=8, symbol='triangle-down'),
+                                     text=['A'], textposition='top center', textfont=dict(size=9),
+                                     showlegend=False))
         
         if culm_sup:
             idx_culm = closest_index(culm_sup)
             fig.add_trace(go.Scatter(x=[times_sin[idx_culm]], y=[alt_culm_sup], mode='markers+text',
-                                     marker=dict(color='yellow', size=12, symbol='diamond'),
-                                     text=['Culminație'], textposition='bottom center', showlegend=False))
+                                     marker=dict(color='yellow', size=8, symbol='diamond'),
+                                     text=['C'], textposition='bottom center', textfont=dict(size=9),
+                                     showlegend=False))
         
-        fig.update_layout(title="Altitudinea Soarelui (azi)", xaxis_title="Ora", yaxis_title="Altitudine (°)",
-                          height=400, margin=dict(l=20, r=20, t=40, b=20), template="plotly_white")
-        st.plotly_chart(fig, use_container_width=True, config={'responsive': True})
+        # Ore pe axa X: doar răsărit, culminație, apus
+        tick_vals = []
+        tick_texts = []
+        if sunrise_today: tick_vals.append(sunrise_today.strftime('%H:%M')); tick_texts.append('R')
+        if culm_sup: tick_vals.append(culm_sup.strftime('%H:%M')); tick_texts.append('C')
+        if sunset_today: tick_vals.append(sunset_today.strftime('%H:%M')); tick_texts.append('A')
+        
+        fig.update_layout(
+            xaxis=dict(tickmode='array', tickvals=tick_vals, ticktext=tick_texts, showgrid=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            height=200, margin=dict(l=0, r=0, t=0, b=20),
+            template="plotly_white"
+        )
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    
+    
+    # Expander 6b: Sinusoida Soarelui (mobil)
+    with st.expander("Sinusoida Soarelui (simplu)"):
+        chart_data = {'Altitudine (°)': alts_sin}
+        st.line_chart(chart_data, height=200)
+        st.caption(f"Răsărit: {sunrise_today.strftime('%H:%M')} | Apus: {sunset_today.strftime('%H:%M')} | Culminație: {culm_sup.strftime('%H:%M')}" if culm_sup else "")
+    
     
     # Expander 7: Grafic proporție zi/noapte
     with st.expander("Proporția zi/noapte"):
@@ -1069,6 +1089,13 @@ with tab2:
         fig_moon.update_layout(title="Altitudinea Lunii (azi)", xaxis_title="Ora", yaxis_title="Altitudine (°)",
                                 height=400, margin=dict(l=20, r=20, t=40, b=20), template="plotly_white")
         st.plotly_chart(fig_moon, use_container_width=True)
+    
+    
+    # Expander 4b: Sinusoida Lunii (mobil)
+    with st.expander("Sinusoida Lunii (simplu)"):
+        chart_data_moon = {'Altitudine (°)': alts_sin_moon}
+        st.line_chart(chart_data_moon, height=200)    
+    
     
     # Expander 5: Faza Lunii
     with st.expander("Faza Lunii (vizual)"):
