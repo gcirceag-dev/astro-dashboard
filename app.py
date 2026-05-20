@@ -834,13 +834,6 @@ with tab1:
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     
     
-    # Expander 6b: Sinusoida Soarelui (mobil)
-    with st.expander("Sinusoida Soarelui (simplu)"):
-        chart_data = {'Altitudine (°)': alts_sin}
-        st.line_chart(chart_data, height=200)
-        st.caption(f"Răsărit: {sunrise_today.strftime('%H:%M')} | Apus: {sunset_today.strftime('%H:%M')} | Culminație: {culm_sup.strftime('%H:%M')}" if culm_sup else "")
-    
-    
     # Expander 7: Grafic proporție zi/noapte
     with st.expander("Proporția zi/noapte"):
         if sunrise_today and sunset_today:
@@ -1034,11 +1027,10 @@ with tab2:
         )
         st.plotly_chart(fig_timeline, use_container_width=True)
     
-    # Expander 4: Sinusoida altitudinii Lunii
+    # Expander 4: Sinusoida altitudinii Lunii (24h)
     with st.expander("Sinusoida altitudinii Lunii (24h)"):
         times_sin_moon = []
         alts_sin_moon = []
-        
         midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
         
         for minutes in range(0, 24*60, 5):
@@ -1048,53 +1040,57 @@ with tab2:
             times_sin_moon.append(dt.strftime('%H:%M'))
             alts_sin_moon.append(alt.degrees)
         
+        import plotly.graph_objects as go
+        
         fig_moon = go.Figure()
         fig_moon.add_trace(go.Scatter(x=times_sin_moon, y=alts_sin_moon, mode='lines',
-                                      name='Altitudine Lună', line=dict(color='#c0c0c0', width=2)))
-        fig_moon.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5,
-                           annotation_text="Orizont", annotation_position="bottom right")
+                                      line=dict(color='#c0c0c0', width=1.5), showlegend=False))
+        fig_moon.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.4)
         
         def closest_index(target_dt):
-            target_minutes = target_dt.hour * 60 + target_dt.minute
-            return round(target_minutes / 5)
+            return round((target_dt.hour * 60 + target_dt.minute) / 5)
         
         alt_now_moon, _, _ = observer.at(t_now).observe(moon_eph).apparent().altaz()
         idx_now_moon = closest_index(now)
         fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_now_moon]], y=[alt_now_moon.degrees],
-                                      mode='markers', marker=dict(color='silver', size=15, symbol='circle',
-                                                                  line=dict(color='gray', width=2)),
-                                      name='Luna (acum)', showlegend=True))
+                                      mode='markers', marker=dict(color='silver', size=10, symbol='circle',
+                                                                  line=dict(color='gray', width=1)),
+                                      showlegend=False))
         
         if moonrise_next:
             idx_mr = closest_index(moonrise_next)
-            if 0 <= idx_mr < len(times_sin_moon):
-                fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_mr]], y=[0.0], mode='markers+text',
-                                              marker=dict(color='lightblue', size=12, symbol='triangle-up'),
-                                              text=['Răsărit'], textposition='top center', showlegend=False))
+            fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_mr]], y=[0], mode='markers+text',
+                                          marker=dict(color='lightblue', size=8, symbol='triangle-up'),
+                                          text=['R'], textposition='top center', textfont=dict(size=9),
+                                          showlegend=False))
         
         if moonset_next:
             idx_ms = closest_index(moonset_next)
-            if 0 <= idx_ms < len(times_sin_moon):
-                fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_ms]], y=[0.0], mode='markers+text',
-                                              marker=dict(color='lightcoral', size=12, symbol='triangle-down'),
-                                              text=['Apus'], textposition='top center', showlegend=False))
+            fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_ms]], y=[0], mode='markers+text',
+                                          marker=dict(color='lightcoral', size=8, symbol='triangle-down'),
+                                          text=['A'], textposition='top center', textfont=dict(size=9),
+                                          showlegend=False))
         
         if moon_culm_sup:
             idx_mc = closest_index(moon_culm_sup)
-            if 0 <= idx_mc < len(times_sin_moon):
-                fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_mc]], y=[moon_alt_culm_sup], mode='markers+text',
-                                              marker=dict(color='yellow', size=12, symbol='diamond'),
-                                              text=['Culminație'], textposition='bottom center', showlegend=False))
+            fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_mc]], y=[moon_alt_culm_sup], mode='markers+text',
+                                          marker=dict(color='yellow', size=8, symbol='diamond'),
+                                          text=['C'], textposition='bottom center', textfont=dict(size=9),
+                                          showlegend=False))
         
-        fig_moon.update_layout(title="Altitudinea Lunii (azi)", xaxis_title="Ora", yaxis_title="Altitudine (°)",
-                                height=400, margin=dict(l=20, r=20, t=40, b=20), template="plotly_white")
-        st.plotly_chart(fig_moon, use_container_width=True)
-    
-    
-    # Expander 4b: Sinusoida Lunii (mobil)
-    with st.expander("Sinusoida Lunii (simplu)"):
-        chart_data_moon = {'Altitudine (°)': alts_sin_moon}
-        st.line_chart(chart_data_moon, height=200)    
+        tick_vals = []
+        tick_texts = []
+        if moonrise_next: tick_vals.append(moonrise_next.strftime('%H:%M')); tick_texts.append('R')
+        if moon_culm_sup: tick_vals.append(moon_culm_sup.strftime('%H:%M')); tick_texts.append('C')
+        if moonset_next: tick_vals.append(moonset_next.strftime('%H:%M')); tick_texts.append('A')
+        
+        fig_moon.update_layout(
+            xaxis=dict(tickmode='array', tickvals=tick_vals, ticktext=tick_texts, showgrid=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            height=200, margin=dict(l=0, r=0, t=0, b=20),
+            template="plotly_white"
+        )
+        st.plotly_chart(fig_moon, use_container_width=True, config={'displayModeBar': False})    
     
     
     # Expander 5: Faza Lunii
