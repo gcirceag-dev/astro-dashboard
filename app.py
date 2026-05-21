@@ -1231,22 +1231,178 @@ with tab2:
                     bar_labels.append(icon)
             
             if days_from_start:
-                fig_timeline = go.Figure()
-                fig_timeline.add_trace(go.Scatter(x=[0, 45], y=[0, 0], mode='lines',
-                                                  line=dict(color='gray', width=2), showlegend=False))
-                fig_timeline.add_trace(go.Scatter(x=days_from_start, y=[0]*len(days_from_start),
-                                                  mode='markers+text', marker=dict(size=18, color='#1a1a2e', symbol='circle'),
-                                                  text=bar_labels, textposition='top center',
-                                                  textfont=dict(size=14), showlegend=False))
+                # ============================================
+                # VIZUALIZARE CERC (în loc de linie orizontală)
+                # ============================================
+                import plotly.graph_objects as go
+                import numpy as np
                 
-                day_marks = list(range(0, 46, 5))
-                fig_timeline.update_layout(
-                    xaxis=dict(tickmode='array', tickvals=day_marks,
-                               ticktext=[(start_dt + timedelta(days=d)).strftime('%d %b') for d in day_marks],
-                               range=[-2, 47]),
-                    yaxis=dict(visible=False), height=120,
-                    margin=dict(l=20, r=20, t=10, b=30), template="plotly_white"
+                total_days = 45
+                
+                # Creează cercul de bază
+                theta_circle = np.linspace(0, 360, 100)
+                r_circle = [1] * len(theta_circle)
+                
+                fig = go.Figure()
+                
+                # Desenează cercul principal
+                fig.add_trace(go.Scatterpolar(
+                    r=r_circle, theta=theta_circle,
+                    mode='lines',
+                    line=dict(color='#cccccc', width=2),
+                    showlegend=False,
+                    fill='toself',
+                    fillcolor='rgba(240, 240, 240, 0.2)'
+                ))
+                
+                # Adaugă liniile radiale pentru fiecare 5 zile
+                for day in [0, 5, 10, 15, 20, 25, 30, 35, 40, 45]:
+                    angle = (day / total_days) * 360
+                    # Linie subțire de la centru la cerc
+                    fig.add_trace(go.Scatterpolar(
+                        r=[0, 1], theta=[angle, angle],
+                        mode='lines',
+                        line=dict(color='#dddddd', width=0.5),
+                        showlegend=False,
+                        hoverinfo='none'
+                    ))
+                    # Etichetă pentru zi
+                    if day % 10 == 0 or day == 45:
+                        fig.add_trace(go.Scatterpolar(
+                            r=[1.08], theta=[angle],
+                            mode='text',
+                            text=[f"{day}z"],
+                            textfont=dict(size=9, color='#999999'),
+                            showlegend=False,
+                            hoverinfo='none'
+                        ))
+                
+                # Adaugă evenimentele pe cerc
+                colors = {
+                    'phase': '#f0c040',      # galben pentru faze
+                    'node': '#4299e1',       # albastru pentru noduri
+                    'perigee': '#9b59b6',    # violet pentru perigeu
+                    'apogee': '#9b59b6'      # violet pentru apogeu
+                }
+                
+                # Stochează evenimentele pentru a găsi primul
+                event_points = []
+                
+                for i, (days, icon, label, event_type, date_str) in enumerate(zip(days_from_start, bar_labels, [e[1] for e in all_events if e[0].astimezone(TZ) >= now], [e[2] for e in all_events if e[0].astimezone(TZ) >= now], [e[0].astimezone(TZ).strftime('%d %b') for e in all_events if e[0].astimezone(TZ) >= now])):
+                    angle = (days / total_days) * 360
+                    
+                    # Determină culoarea în funcție de tip
+                    if '🌑' in label or '🌓' in label or '🌕' in label or '🌗' in label:
+                        color = colors['phase']
+                        marker_symbol = 'circle'
+                    elif 'Ascendent' in label or 'Descendent' in label:
+                        color = colors['node']
+                        marker_symbol = 'diamond'
+                    elif 'Perigeu' in label:
+                        color = colors['perigee']
+                        marker_symbol = 'triangle-up'
+                    elif 'Apogeu' in label:
+                        color = colors['apogee']
+                        marker_symbol = 'triangle-down'
+                    else:
+                        color = '#888888'
+                        marker_symbol = 'circle'
+                    
+                    # Adaugă punctul evenimentului
+                    fig.add_trace(go.Scatterpolar(
+                        r=[1.02], theta=[angle],
+                        mode='markers+text',
+                        marker=dict(size=14, color=color, symbol=marker_symbol, line=dict(width=1, color='white')),
+                        text=[icon],
+                        textposition='middle center',
+                        textfont=dict(size=12, color='white'),
+                        name=label,
+                        showlegend=False,
+                        hoverinfo='text',
+                        hovertext=f"{label}<br>{date_str}"
+                    ))
+                    
+                    # Adaugă eticheta cu data lângă punct (în afara cercului)
+                    text_angle = angle
+                    r_text = 1.12
+                    fig.add_trace(go.Scatterpolar(
+                        r=[r_text], theta=[text_angle],
+                        mode='text',
+                        text=[date_str],
+                        textfont=dict(size=10, color='#555555'),
+                        showlegend=False,
+                        hoverinfo='none'
+                    ))
+                    
+                    event_points.append((days, angle, label))
+                
+                # Adaugă acul roșu care arată spre primul eveniment (sau spre 0° dacă nu există)
+                if event_points:
+                    # Găsește primul eveniment (cel mai apropiat, days minim)
+                    first_event = min(event_points, key=lambda x: x[0])
+                    first_angle = first_event[1]
+                else:
+                    first_angle = 0  # arată spre "azi"
+                
+                # Desenează acul (linie de la centru la cerc)
+                fig.add_trace(go.Scatterpolar(
+                    r=[0, 1], theta=[first_angle, first_angle],
+                    mode='lines',
+                    line=dict(color='#e53e3e', width=3),
+                    showlegend=False,
+                    hoverinfo='none'
+                ))
+                
+                # Adaugă un punct roșu în centru
+                fig.add_trace(go.Scatterpolar(
+                    r=[0], theta=[0],
+                    mode='markers',
+                    marker=dict(size=10, color='#e53e3e', symbol='circle'),
+                    showlegend=False,
+                    hoverinfo='text',
+                    hovertext='Acum'
+                ))
+                
+                # Adaugă un cerc mic la capătul acului (vârf)
+                fig.add_trace(go.Scatterpolar(
+                    r=[0.98], theta=[first_angle],
+                    mode='markers',
+                    marker=dict(size=6, color='#e53e3e', symbol='circle'),
+                    showlegend=False,
+                    hoverinfo='none'
+                ))
+                
+                # Configurează layout-ul
+                fig.update_layout(
+                    polar=dict(
+                        radialaxis=dict(visible=False, range=[0, 1.2]),
+                        angularaxis=dict(
+                            tickmode='array',
+                            tickvals=[0, 90, 180, 270],
+                            ticktext=['Azi', '11 z', '22 z', '33 z'],
+                            direction='clockwise',
+                            rotation=0
+                        )
+                    ),
+                    height=400,
+                    margin=dict(l=20, r=20, t=20, b=20),
+                    template="plotly_white",
+                    showlegend=False
                 )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Legendă
+                st.markdown("""
+                <div style="display: flex; gap: 20px; justify-content: center; margin-top: 10px; font-size: 12px;">
+                    <span style="color: #f0c040;">●</span> Faze Lunii
+                    <span style="color: #4299e1;">◆</span> Noduri
+                    <span style="color: #9b59b6;">▲</span> Perigeu (P)
+                    <span style="color: #9b59b6;">▼</span> Apogeu (A)
+                    <span style="color: #e53e3e;">⬤</span> Acum
+                    <span style="color: #e53e3e;">─</span> Primul eveniment
+                </div>
+                """, unsafe_allow_html=True)
                 st.plotly_chart(fig_timeline, use_container_width=True)
         else:
             st.caption("Nu s-au găsit evenimente")
