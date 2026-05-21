@@ -1379,6 +1379,16 @@ with tab2:
             times_sin_moon.append(dt.strftime('%H:%M'))
             alts_sin_moon.append(alt.degrees)
         
+        # DEBUG: Afișează valorile
+        if moon_culm_sup:
+            st.caption(f"DEBUG Culminație la: {moon_culm_sup.strftime('%H:%M')}")
+            # Găsește indexul culminației în listă
+            culm_str = moon_culm_sup.strftime('%H:%M')
+            if culm_str in times_sin_moon:
+                idx = times_sin_moon.index(culm_str)
+                st.caption(f"DEBUG Altitudine la culminație: {alts_sin_moon[idx]:.2f}°")
+                st.caption(f"DEBUG Altitudine max în grafic: {max(alts_sin_moon):.2f}°")
+        
         import plotly.graph_objects as go
         
         fig_moon = go.Figure()
