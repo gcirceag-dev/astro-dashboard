@@ -1384,10 +1384,19 @@ with tab2:
     
     
     
-    # Expander 4: Sinusoida altitudinii Lunii (36 ore)
-    with st.expander("Sinusoida altitudinii Lunii (36 ore)"):
-        start_time = now - timedelta(hours=18)
-        end_time = now + timedelta(hours=18)
+    # Expander 4: Sinusoida altitudinii Lunii
+    with st.expander("Sinusoida altitudinii Lunii"):
+        # Găsește timpii minim și maxim dintre evenimente și now
+        all_times = [now]
+        if moonrise_next:
+            all_times.append(moonrise_next)
+        if moonset_next:
+            all_times.append(moonset_next)
+        if moon_culm_sup:
+            all_times.append(moon_culm_sup)
+        
+        start_time = min(all_times) - timedelta(hours=2)
+        end_time = max(all_times) + timedelta(hours=2)
         
         times_sin_moon = []
         alts_sin_moon = []
@@ -1396,7 +1405,7 @@ with tab2:
         while current <= end_time:
             t = ts.from_datetime(current.astimezone(pytz.UTC))
             alt, _, _ = observer.at(t).observe(moon_eph).apparent().altaz()
-            times_sin_moon.append(current.strftime('%H:%M'))
+            times_sin_moon.append(current)
             alts_sin_moon.append(alt.degrees)
             current += timedelta(minutes=5)
         
@@ -1405,51 +1414,32 @@ with tab2:
                                       line=dict(color='#c0c0c0', width=1.5), showlegend=False))
         fig_moon.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.4)
         
-        def closest_index(target_dt):
-            target_minutes = target_dt.hour * 60 + target_dt.minute
-            best_idx = 0
-            best_diff = 9999
-            for i, t_str in enumerate(times_sin_moon):
-                h, m = map(int, t_str.split(':'))
-                current_minutes = h * 60 + m
-                diff = abs(current_minutes - target_minutes)
-                if diff < best_diff:
-                    best_diff = diff
-                    best_idx = i
-            return best_idx
-        
+        # Adaugă puncte
         alt_now_moon, _, _ = observer.at(t_now).observe(moon_eph).apparent().altaz()
-        idx_now_moon = closest_index(now)
-        fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_now_moon]], y=[alt_now_moon.degrees],
-                                      mode='markers', marker=dict(color='silver', size=10, symbol='circle',
-                                                                  line=dict(color='gray', width=1)),
+        fig_moon.add_trace(go.Scatter(x=[now], y=[alt_now_moon.degrees], mode='markers',
+                                      marker=dict(color='silver', size=10, symbol='circle'),
                                       showlegend=False))
         
         if moonrise_next:
-            idx_mr = closest_index(moonrise_next)
-            fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_mr]], y=[0], mode='markers+text',
+            fig_moon.add_trace(go.Scatter(x=[moonrise_next], y=[0], mode='markers+text',
                                           marker=dict(color='lightblue', size=8, symbol='triangle-up'),
-                                          text=['R'], textposition='top center', textfont=dict(size=9),
-                                          showlegend=False))
+                                          text=['R'], textposition='top center', showlegend=False))
         
         if moonset_next:
-            idx_ms = closest_index(moonset_next)
-            fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_ms]], y=[0], mode='markers+text',
+            fig_moon.add_trace(go.Scatter(x=[moonset_next], y=[0], mode='markers+text',
                                           marker=dict(color='lightcoral', size=8, symbol='triangle-down'),
-                                          text=['A'], textposition='top center', textfont=dict(size=9),
-                                          showlegend=False))
+                                          text=['A'], textposition='top center', showlegend=False))
         
         if moon_culm_sup:
-            idx_mc = closest_index(moon_culm_sup)
-            fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_mc]], y=[moon_alt_culm_sup], mode='markers+text',
+            fig_moon.add_trace(go.Scatter(x=[moon_culm_sup], y=[moon_alt_culm_sup], mode='markers+text',
                                           marker=dict(color='yellow', size=8, symbol='diamond'),
-                                          text=['C'], textposition='bottom center', textfont=dict(size=9),
-                                          showlegend=False))
+                                          text=['C'], textposition='bottom center', showlegend=False))
         
         fig_moon.update_layout(
-            xaxis=dict(showgrid=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            height=200, margin=dict(l=0, r=0, t=0, b=20),
+            xaxis=dict(title='Data și ora', tickformat='%d %b %H:%M', tickangle=45),
+            yaxis=dict(title='Altitudine (°)', showgrid=False),
+            height=350,
+            margin=dict(l=20, r=20, t=20, b=80),
             template="plotly_white"
         )
         st.plotly_chart(fig_moon, use_container_width=True, config={'displayModeBar': False})    
