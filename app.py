@@ -1400,46 +1400,75 @@ with tab2:
         
         times_sin_moon = []
         alts_sin_moon = []
+        time_labels = []  # pentru etichete simple
         
         current = start_time
         while current <= end_time:
             t = ts.from_datetime(current.astimezone(pytz.UTC))
             alt, _, _ = observer.at(t).observe(moon_eph).apparent().altaz()
             times_sin_moon.append(current)
+            time_labels.append(current.strftime('%H:%M'))  # doar ora pentru afișare
             alts_sin_moon.append(alt.degrees)
             current += timedelta(minutes=5)
         
         fig_moon = go.Figure()
-        fig_moon.add_trace(go.Scatter(x=times_sin_moon, y=alts_sin_moon, mode='lines',
+        fig_moon.add_trace(go.Scatter(x=list(range(len(times_sin_moon))), y=alts_sin_moon, mode='lines',
                                       line=dict(color='#c0c0c0', width=1.5), showlegend=False))
         fig_moon.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.4)
         
+        # Funcție pentru a găsi indexul cel mai apropiat
+        def find_index(target_dt):
+            if target_dt is None:
+                return None
+            target_ts = target_dt.timestamp()
+            best_idx = 0
+            best_diff = 9999
+            for i, dt in enumerate(times_sin_moon):
+                diff = abs(dt.timestamp() - target_ts)
+                if diff < best_diff:
+                    best_diff = diff
+                    best_idx = i
+            return best_idx
+        
         # Adaugă puncte
         alt_now_moon, _, _ = observer.at(t_now).observe(moon_eph).apparent().altaz()
-        fig_moon.add_trace(go.Scatter(x=[now], y=[alt_now_moon.degrees], mode='markers',
-                                      marker=dict(color='silver', size=10, symbol='circle'),
-                                      showlegend=False))
+        idx_now = find_index(now)
+        if idx_now is not None:
+            fig_moon.add_trace(go.Scatter(x=[idx_now], y=[alt_now_moon.degrees], mode='markers',
+                                          marker=dict(color='silver', size=10, symbol='circle'),
+                                          showlegend=False))
         
         if moonrise_next:
-            fig_moon.add_trace(go.Scatter(x=[moonrise_next], y=[0], mode='markers+text',
-                                          marker=dict(color='lightblue', size=8, symbol='triangle-up'),
-                                          text=['R'], textposition='top center', showlegend=False))
+            idx_mr = find_index(moonrise_next)
+            if idx_mr is not None:
+                fig_moon.add_trace(go.Scatter(x=[idx_mr], y=[0], mode='markers+text',
+                                              marker=dict(color='lightblue', size=8, symbol='triangle-up'),
+                                              text=['R'], textposition='top center', showlegend=False))
         
         if moonset_next:
-            fig_moon.add_trace(go.Scatter(x=[moonset_next], y=[0], mode='markers+text',
-                                          marker=dict(color='lightcoral', size=8, symbol='triangle-down'),
-                                          text=['A'], textposition='top center', showlegend=False))
+            idx_ms = find_index(moonset_next)
+            if idx_ms is not None:
+                fig_moon.add_trace(go.Scatter(x=[idx_ms], y=[0], mode='markers+text',
+                                              marker=dict(color='lightcoral', size=8, symbol='triangle-down'),
+                                              text=['A'], textposition='top center', showlegend=False))
         
         if moon_culm_sup:
-            fig_moon.add_trace(go.Scatter(x=[moon_culm_sup], y=[moon_alt_culm_sup], mode='markers+text',
-                                          marker=dict(color='yellow', size=8, symbol='diamond'),
-                                          text=['C'], textposition='bottom center', showlegend=False))
+            idx_mc = find_index(moon_culm_sup)
+            if idx_mc is not None:
+                fig_moon.add_trace(go.Scatter(x=[idx_mc], y=[moon_alt_culm_sup], mode='markers+text',
+                                              marker=dict(color='yellow', size=8, symbol='diamond'),
+                                              text=['C'], textposition='bottom center', showlegend=False))
+        
+        # Calculează tick-urile pentru axa X (afișează doar orele la fiecare 2 ore)
+        total_points = len(times_sin_moon)
+        step = max(1, total_points // 12)  # aproximativ 12 tick-uri
+        tick_indices = list(range(0, total_points, step))
+        tick_labels = [time_labels[i] for i in tick_indices]
         
         fig_moon.update_layout(
-            xaxis=dict(title='Data și ora', tickformat='%d %b %H:%M', tickangle=45),
-            yaxis=dict(title='Altitudine (°)', showgrid=False),
-            height=350,
-            margin=dict(l=20, r=20, t=20, b=80),
+            xaxis=dict(tickmode='array', tickvals=tick_indices, ticktext=tick_labels, showgrid=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            height=200, margin=dict(l=0, r=0, t=0, b=20),
             template="plotly_white"
         )
         st.plotly_chart(fig_moon, use_container_width=True, config={'displayModeBar': False})    
