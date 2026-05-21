@@ -1003,7 +1003,18 @@ with tab1:
         fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.4)
         
         def closest_index(target_dt):
-            return round((target_dt.hour * 60 + target_dt.minute) / 5)
+            target_minutes = target_dt.hour * 60 + target_dt.minute
+            # Găsește indexul în times_sin list (care are valori din 5 în 5 minute)
+            best_idx = 0
+            best_diff = 9999
+            for i, t_str in enumerate(times_sin):
+                h, m = map(int, t_str.split(':'))
+                current_minutes = h * 60 + m
+                diff = abs(current_minutes - target_minutes)
+                if diff < best_diff:
+                    best_diff = diff
+                    best_idx = i
+            return best_idx
         
         alt_now_sun, _, _ = observer.at(t_now).observe(sun).apparent().altaz()
         idx_now = closest_index(now)
@@ -1397,7 +1408,18 @@ with tab2:
         fig_moon.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.4)
         
         def closest_index(target_dt):
-            return round((target_dt.hour * 60 + target_dt.minute) / 5)
+            target_minutes = target_dt.hour * 60 + target_dt.minute
+            # Găsește indexul în times_sin list (care are valori din 5 în 5 minute)
+            best_idx = 0
+            best_diff = 9999
+            for i, t_str in enumerate(times_sin):
+                h, m = map(int, t_str.split(':'))
+                current_minutes = h * 60 + m
+                diff = abs(current_minutes - target_minutes)
+                if diff < best_diff:
+                    best_diff = diff
+                    best_idx = i
+            return best_idx
         
         alt_now_moon, _, _ = observer.at(t_now).observe(moon_eph).apparent().altaz()
         idx_now_moon = closest_index(now)
