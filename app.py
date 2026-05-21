@@ -772,9 +772,6 @@ def calculate_all_data(_now_utc, _now_local):
 # INTERFAȚA STREAMLIT
 # ═══════════════════════════════════════════════════════════════
 
-st.set_page_config(page_title="Astro", layout="wide")
-
-# Stilizare uniformă
 st.markdown("""
 <style>
     .stApp, .stMarkdown, .stCaption, .stText, p, div, span, label {
@@ -793,6 +790,25 @@ st.markdown("""
     .streamlit-expanderContent p {
         font-size: 18px !important;
         color: #000000 !important;
+    }
+    
+    /* NOI REGULI PENTRU BARELE DE PROGRES */
+    div[data-testid="column"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 50px;
+    }
+    
+    div[data-testid="column"] h1 {
+        font-size: 28px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+    }
+    
+    .stProgress > div {
+        margin: 0 !important;
     }
 </style>
 """, unsafe_allow_html=True)
