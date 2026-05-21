@@ -1296,11 +1296,11 @@ with tab2:
                 
                 col1, col2, col3 = st.columns([1, 8, 1])
                 with col1:
-                    st.markdown(f"<h1 style='text-align:center'>{left_icon}</h1>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='font-size: 32px; line-height: 1; text-align: center;'>{left_icon}</div>", unsafe_allow_html=True)
                 with col2:
                     st.progress(float(progress_phase))
                 with col3:
-                    st.markdown(f"<h1 style='text-align:center'>{right_icon}</h1>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='font-size: 32px; line-height: 1; text-align: center;'>{right_icon}</div>", unsafe_allow_html=True)
                 
                 st.caption(f"{prev_phase[0]} → {next_phase[0]} ({rem_d}z {rem_h}h {rem_m}m)")
             else:
@@ -1341,11 +1341,11 @@ with tab2:
                 
                 col1, col2, col3 = st.columns([1, 8, 1])
                 with col1:
-                    st.markdown(f"<h1 style='text-align:center'>{left_icon}</h1>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='font-size: 32px; line-height: 1; text-align: center;'>{left_icon}</div>", unsafe_allow_html=True)
                 with col2:
                     st.progress(float(progress_node))
                 with col3:
-                    st.markdown(f"<h1 style='text-align:center'>{right_icon}</h1>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='font-size: 32px; line-height: 1; text-align: center;'>{right_icon}</div>", unsafe_allow_html=True)
                 
                 st.caption(f"{prev_node[0]} → {next_node[0]} ({rem_d_n}z {rem_h_n}h {rem_m_n}m)")
             else:
@@ -1380,11 +1380,11 @@ with tab2:
             
             col1, col2, col3 = st.columns([1, 8, 1])
             with col1:
-                st.markdown(f"<h1 style='text-align:center'>{label_prev}</h1>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size: 32px; font-weight: bold; line-height: 1; text-align: center;'>{label_prev}</div>", unsafe_allow_html=True)
             with col2:
                 st.progress(float(progress_ap))
             with col3:
-                st.markdown(f"<h1 style='text-align:center'>{label_next}</h1>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size: 32px; font-weight: bold; line-height: 1; text-align: center;'>{label_next}</div>", unsafe_allow_html=True)
             
             st.caption(f"{label_prev} ({dist_prev:,.0f} km) → {label_next} ({dist_next:,.0f} km) ({rem_d_ap}z {rem_h_ap}h {rem_m_ap}m)")
         else:
