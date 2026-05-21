@@ -1579,7 +1579,7 @@ with tab3:
         retro_str = " R" if pdata['retro'] else ""
         dign_str = f" [{dign}]" if dign else ""
         
-        st.caption(f"{name}: {format_zodiac(pdata['lon'])}{retro_str}{dign_str} | Viteză: {pdata['speed']:.4f}°/zi")
+        st.caption(f"{name}: {format_zodiac(pdata['lon'])}{retro_str}{dign_str} | V: {pdata['speed']:.4f}°/zi")
     
     # Expander 1: Date orbitale complete
     with st.expander("Date orbitale și coordonate"):
@@ -1592,7 +1592,7 @@ with tab3:
                 equ_pos = swe.calc_ut(jd, planet_ids[name], swe.FLG_SWIEPH | swe.FLG_EQUATORIAL)[0]
                 dec_str = f" | Decl {format_dms(equ_pos[1], True)}"
             
-            st.caption(f"{name}: L {format_dms(pdata['lon'])} | B {format_dms(pdata['lat'], True)} | Dist {pdata['dist']:.6f} AU | Viteză {pdata['speed']:.4f}°/zi{dec_str}")
+            st.caption(f"{name}: L {format_dms(pdata['lon'])} | B {format_dms(pdata['lat'], True)} | Dist {pdata['dist']:.6f} AU | V {pdata['speed']:.4f}°/zi{dec_str}")
     
     # Expander 2: Altitudine/Azimut
     with st.expander("Altitudine și Azimut (acum)"):
