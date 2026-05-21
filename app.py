@@ -1393,14 +1393,14 @@ with tab2:
         times_sin_moon = []
         alts_sin_moon = []
         
-        # Eșantionare din 10 în 10 minute pentru 36 de ore
-        total_minutes = 36 * 60
-        for minutes in range(0, total_minutes, 10):
-            dt = start_time + timedelta(minutes=minutes)
-            t = ts.from_datetime(dt.astimezone(pytz.UTC))
+        # Eșantionare din 5 în 5 minute
+        current = start_time
+        while current <= end_time:
+            t = ts.from_datetime(current.astimezone(pytz.UTC))
             alt, _, _ = observer.at(t).observe(moon_eph).apparent().altaz()
-            times_sin_moon.append(dt.strftime('%d %b %H:%M'))
+            times_sin_moon.append(current.strftime('%H:%M'))
             alts_sin_moon.append(alt.degrees)
+            current += timedelta(minutes=5)
         
         import plotly.graph_objects as go
         
@@ -1409,25 +1409,19 @@ with tab2:
                                       line=dict(color='#c0c0c0', width=1.5), showlegend=False))
         fig_moon.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.4)
         
-        # Funcție pentru a găsi cel mai apropiat index
         def closest_index(target_dt):
+            target_minutes = target_dt.hour * 60 + target_dt.minute
             best_idx = 0
             best_diff = 9999
             for i, t_str in enumerate(times_sin_moon):
-                try:
-                    t_str_clean = t_str.split(' ')[1]  # extrage doar HH:MM
-                    h, m = map(int, t_str_clean.split(':'))
-                    # Construim un datetime pentru comparație
-                    t_compare = target_dt.replace(hour=h, minute=m, second=0)
-                    diff = abs((t_compare - target_dt).total_seconds())
-                    if diff < best_diff:
-                        best_diff = diff
-                        best_idx = i
-                except:
-                    pass
+                h, m = map(int, t_str.split(':'))
+                current_minutes = h * 60 + m
+                diff = abs(current_minutes - target_minutes)
+                if diff < best_diff:
+                    best_diff = diff
+                    best_idx = i
             return best_idx
         
-        # Poziția curentă
         alt_now_moon, _, _ = observer.at(t_now).observe(moon_eph).apparent().altaz()
         idx_now_moon = closest_index(now)
         fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_now_moon]], y=[alt_now_moon.degrees],
@@ -1435,7 +1429,6 @@ with tab2:
                                                                   line=dict(color='gray', width=1)),
                                       showlegend=False))
         
-        # Răsărit (caută în tot intervalul)
         if moonrise_next:
             idx_mr = closest_index(moonrise_next)
             fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_mr]], y=[0], mode='markers+text',
@@ -1443,7 +1436,6 @@ with tab2:
                                           text=['R'], textposition='top center', textfont=dict(size=9),
                                           showlegend=False))
         
-        # Apus
         if moonset_next:
             idx_ms = closest_index(moonset_next)
             fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_ms]], y=[0], mode='markers+text',
@@ -1451,7 +1443,6 @@ with tab2:
                                           text=['A'], textposition='top center', textfont=dict(size=9),
                                           showlegend=False))
         
-        # Culminație superioară
         if moon_culm_sup:
             idx_mc = closest_index(moon_culm_sup)
             fig_moon.add_trace(go.Scatter(x=[times_sin_moon[idx_mc]], y=[moon_alt_culm_sup], mode='markers+text',
@@ -1459,20 +1450,25 @@ with tab2:
                                           text=['C'], textposition='bottom center', textfont=dict(size=9),
                                           showlegend=False))
         
-        # Configurare axă X - arată doar câteva etichete pentru lizibilitate
+        tick_vals = []
+        tick_texts = []
+        if moonrise_next: 
+            tick_vals.append(moonrise_next.strftime('%H:%M'))
+            tick_texts.append('R')
+        if moon_culm_sup: 
+            tick_vals.append(moon_culm_sup.strftime('%H:%M'))
+            tick_texts.append('C')
+        if moonset_next: 
+            tick_vals.append(moonset_next.strftime('%H:%M'))
+            tick_texts.append('A')
+        
         fig_moon.update_layout(
-            xaxis=dict(
-                tickmode='array',
-                tickvals=[times_sin_moon[i] for i in range(0, len(times_sin_moon), len(times_sin_moon)//6)],
-                tickangle=45,
-                showgrid=False
-            ),
+            xaxis=dict(tickmode='array', tickvals=tick_vals, ticktext=tick_texts, showgrid=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            height=250,
-            margin=dict(l=20, r=20, t=20, b=60),
+            height=200, margin=dict(l=0, r=0, t=0, b=20),
             template="plotly_white"
         )
-        st.plotly_chart(fig_moon, use_container_width=True, config={'displayModeBar': False})       
+        st.plotly_chart(fig_moon, use_container_width=True, config={'displayModeBar': False})    
     
     
     # Expander 5: Faza Lunii
