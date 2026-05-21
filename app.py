@@ -810,6 +810,15 @@ st.markdown("""
     .stProgress > div {
         margin: 0 !important;
     }
+    
+    /* >>> NEW RULE TO FORCE SCROLLING <<< */
+    .main > div {
+        overflow-y: auto !important;
+        height: 100vh !important;
+    }
+    section.main > div {
+        overflow-y: auto !important;
+    }    
 </style>
 """, unsafe_allow_html=True)
 
