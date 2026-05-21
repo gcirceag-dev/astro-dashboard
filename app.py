@@ -498,25 +498,26 @@ def calculate_all_data(_now_utc, _now_local):
     # Conac Arabesc
     data['mansion_num'], data['mansion_name'], data['mansion_trans'] = get_lunar_mansion(data['moon_lon'])
     
-    # Răsărit/Apus Lună (caută de acum încoace, dar asigură-te că găsește evenimentul corect)
-    t0_moon = ts.from_datetime(_now_utc - timedelta(hours=12))  # începe cu 12 ore în urmă
-    t1_moon = ts.from_datetime(_now_utc + timedelta(days=2))
+    # Răsărit/Apus Lună - pentru ziua curentă (de la miezul nopții azi la miezul nopții mâine)
+    midnight_today_utc = _now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+    t0_moon = ts.from_datetime(midnight_today_utc)
+    t1_moon = ts.from_datetime(midnight_today_utc + timedelta(days=1))
     f_mr = almanac.risings_and_settings(eph, moon_eph, wgs84.latlon(LAT, LON))
     times_mr, events_mr = almanac.find_discrete(t0_moon, t1_moon, f_mr)
     moonrise_next = None
     moonset_next = None
     for t, ev in zip(times_mr, events_mr):
         t_local = t.astimezone(TZ)
-        if ev == 1 and t_local >= _now_local and moonrise_next is None:
+        if ev == 1:  # răsărit
             moonrise_next = t_local
-        elif ev == 0 and t_local >= _now_local and moonset_next is None:
+        elif ev == 0:  # apus
             moonset_next = t_local
     data['moonrise_next'] = moonrise_next
     data['moonset_next'] = moonset_next
     
-    # Culminații Lună (caută de acum încoace)
-    t0_moon = ts.from_datetime(_now_utc - timedelta(hours=12))
-    t1_moon = ts.from_datetime(_now_utc + timedelta(days=2))
+    # Culminații Lună - pentru ziua curentă
+    t0_moon = ts.from_datetime(midnight_today_utc)
+    t1_moon = ts.from_datetime(midnight_today_utc + timedelta(days=1))
     f_mc = almanac.meridian_transits(eph, moon_eph, wgs84.latlon(LAT, LON))
     times_mc, events_mc = almanac.find_discrete(t0_moon, t1_moon, f_mc)
     moon_culm_sup = None
@@ -526,10 +527,10 @@ def calculate_all_data(_now_utc, _now_local):
     for t, ev in zip(times_mc, events_mc):
         t_local = t.astimezone(TZ)
         alt_mc, _, _ = observer.at(t).observe(moon_eph).apparent().altaz()
-        if ev == 1 and t_local >= _now_local and moon_culm_sup is None:
+        if ev == 1:  # culminație superioară
             moon_culm_sup = t_local
             moon_alt_culm_sup = alt_mc.degrees
-        elif ev == 0 and t_local >= _now_local and moon_culm_inf is None:
+        elif ev == 0:  # culminație inferioară
             moon_culm_inf = t_local
             moon_alt_culm_inf = alt_mc.degrees
     data['moon_culm_sup'] = moon_culm_sup
