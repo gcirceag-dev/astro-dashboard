@@ -447,7 +447,7 @@ def calculate_all_data(_now_utc, _now_local):
     data['aphelion_t'], data['aphelion_d'] = refine_extremum(times_ph[max_idx], False, earth, sun, ts)
     
     # Anotimp
-    seasons = {(0, 90): "Primăvară (N)", (90, 180): "Vară (N)", (180, 270): "Toamnă (N)", (270, 360): "Iarnă (N)"}
+    seasons = {(0, 90): "Primăvară ", (90, 180): "Vară ", (180, 270): "Toamnă ", (270, 360): "Iarnă "}
     data['current_season'] = None
     for (s, e), name in seasons.items():
         if s <= data['sun_lon'] < e:
@@ -993,6 +993,17 @@ with tab1:
     
     # Expander 6: Sinusoida altitudinii Soarelui (24h)
     with st.expander("Sinusoida altitudinii Soarelui (24h)"):
+        # Verifică dacă Soarele este sub orizont
+        sun_below = sun_alt < 0
+        bg_color = "#1a1a2e" if sun_below else "white"
+        text_color = "white" if sun_below else "black"
+        line_color = "#f0c040"
+        horizon_color = "lightgray" if sun_below else "gray"
+        
+        st.markdown(f"""
+        <div style="background-color: {bg_color}; padding: 10px; border-radius: 10px;">
+        """, unsafe_allow_html=True)
+        
         times_sin = []
         alts_sin = []
         midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -1002,27 +1013,17 @@ with tab1:
             t = ts.from_datetime(dt.astimezone(pytz.UTC))
             alt, _, _ = observer.at(t).observe(sun).apparent().altaz()
             times_sin.append(dt.strftime('%H:%M'))
-            alts_sin.append(alt.degrees)        
+            alts_sin.append(alt.degrees)
+        
         import plotly.graph_objects as go
         
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=times_sin, y=alts_sin, mode='lines',
-                                 line=dict(color='#f0c040', width=1.5), showlegend=False))
-        fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.4)
+                                 line=dict(color=line_color, width=1.5), showlegend=False))
+        fig.add_hline(y=0, line_dash="dash", line_color=horizon_color, opacity=0.6)
         
         def closest_index(target_dt):
-            target_minutes = target_dt.hour * 60 + target_dt.minute
-            # Găsește indexul în times_sin list (care are valori din 5 în 5 minute)
-            best_idx = 0
-            best_diff = 9999
-            for i, t_str in enumerate(times_sin):
-                h, m = map(int, t_str.split(':'))
-                current_minutes = h * 60 + m
-                diff = abs(current_minutes - target_minutes)
-                if diff < best_diff:
-                    best_diff = diff
-                    best_idx = i
-            return best_idx
+            return round((target_dt.hour * 60 + target_dt.minute) / 5)
         
         alt_now_sun, _, _ = observer.at(t_now).observe(sun).apparent().altaz()
         idx_now = closest_index(now)
@@ -1052,7 +1053,6 @@ with tab1:
                                      text=['C'], textposition='bottom center', textfont=dict(size=9),
                                      showlegend=False))
         
-        # Ore pe axa X: doar răsărit, culminație, apus
         tick_vals = []
         tick_texts = []
         if sunrise_today: tick_vals.append(sunrise_today.strftime('%H:%M')); tick_texts.append('R')
@@ -1060,12 +1060,18 @@ with tab1:
         if sunset_today: tick_vals.append(sunset_today.strftime('%H:%M')); tick_texts.append('A')
         
         fig.update_layout(
-            xaxis=dict(tickmode='array', tickvals=tick_vals, ticktext=tick_texts, showgrid=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            xaxis=dict(tickmode='array', tickvals=tick_vals, ticktext=tick_texts, showgrid=False,
+                       tickfont=dict(color=text_color)),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False,
+                       tickfont=dict(color=text_color)),
             height=200, margin=dict(l=0, r=0, t=0, b=20),
-            template="plotly_white"
+            template="plotly_white",
+            paper_bgcolor=bg_color,
+            plot_bgcolor=bg_color
         )
+        
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        st.markdown(f"</div>", unsafe_allow_html=True)
     
     
     # Expander 7: Grafic proporție zi/noapte
@@ -1387,6 +1393,17 @@ with tab2:
     
     # Expander 4: Sinusoida altitudinii Lunii
     with st.expander("Sinusoida altitudinii Lunii"):
+        # Verifică dacă Luna este sub orizont
+        moon_below = moon_alt < 0
+        bg_color = "#1a1a2e" if moon_below else "white"
+        text_color = "white" if moon_below else "black"
+        line_color = "#4a6fa5" if moon_below else "#c0c0c0"
+        horizon_color = "lightgray" if moon_below else "gray"
+        
+        st.markdown(f"""
+        <div style="background-color: {bg_color}; padding: 10px; border-radius: 10px;">
+        """, unsafe_allow_html=True)
+        
         # Găsește timpii minim și maxim dintre evenimente și now
         all_times = [now]
         if moonrise_next:
@@ -1401,23 +1418,22 @@ with tab2:
         
         times_sin_moon = []
         alts_sin_moon = []
-        time_labels = []  # pentru etichete simple
+        time_labels = []
         
         current = start_time
         while current <= end_time:
             t = ts.from_datetime(current.astimezone(pytz.UTC))
             alt, _, _ = observer.at(t).observe(moon_eph).apparent().altaz()
             times_sin_moon.append(current)
-            time_labels.append(current.strftime('%H:%M'))  # doar ora pentru afișare
+            time_labels.append(current.strftime('%H:%M'))
             alts_sin_moon.append(alt.degrees)
             current += timedelta(minutes=5)
         
         fig_moon = go.Figure()
         fig_moon.add_trace(go.Scatter(x=list(range(len(times_sin_moon))), y=alts_sin_moon, mode='lines',
-                                      line=dict(color='#c0c0c0', width=1.5), showlegend=False))
-        fig_moon.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.4)
+                                      line=dict(color=line_color, width=1.5), showlegend=False))
+        fig_moon.add_hline(y=0, line_dash="dash", line_color=horizon_color, opacity=0.6)
         
-        # Funcție pentru a găsi indexul cel mai apropiat
         def find_index(target_dt):
             if target_dt is None:
                 return None
@@ -1431,7 +1447,6 @@ with tab2:
                     best_idx = i
             return best_idx
         
-        # Adaugă puncte
         alt_now_moon, _, _ = observer.at(t_now).observe(moon_eph).apparent().altaz()
         idx_now = find_index(now)
         if idx_now is not None:
@@ -1460,19 +1475,24 @@ with tab2:
                                               marker=dict(color='yellow', size=8, symbol='diamond'),
                                               text=['C'], textposition='bottom center', showlegend=False))
         
-        # Calculează tick-urile pentru axa X (afișează doar orele la fiecare 2 ore)
         total_points = len(times_sin_moon)
-        step = max(1, total_points // 12)  # aproximativ 12 tick-uri
+        step = max(1, total_points // 12)
         tick_indices = list(range(0, total_points, step))
         tick_labels = [time_labels[i] for i in tick_indices]
         
         fig_moon.update_layout(
-            xaxis=dict(tickmode='array', tickvals=tick_indices, ticktext=tick_labels, showgrid=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            xaxis=dict(tickmode='array', tickvals=tick_indices, ticktext=tick_labels, showgrid=False,
+                       tickfont=dict(color=text_color)),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False,
+                       tickfont=dict(color=text_color)),
             height=200, margin=dict(l=0, r=0, t=0, b=20),
-            template="plotly_white"
+            template="plotly_white",
+            paper_bgcolor=bg_color,
+            plot_bgcolor=bg_color
         )
-        st.plotly_chart(fig_moon, use_container_width=True, config={'displayModeBar': False})    
+        
+        st.plotly_chart(fig_moon, use_container_width=True, config={'displayModeBar': False})
+        st.markdown(f"</div>", unsafe_allow_html=True)    
     
     
     # Expander 5: Faza Lunii
