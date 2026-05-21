@@ -1309,8 +1309,8 @@ with tab2:
                         <span style='font-size: 32px; line-height: 1;'>{left_icon}</span>
                     </div>
                     <div style="flex: 1 1 auto; min-width: 100px;">
-                        <div style='background-color: #f0f0f0; border-radius: 5px; height: 20px;'>
-                            <div style='width: {progress_phase*100}%; background-color: #1a1a2e; height: 20px; border-radius: 5px;'></div>
+                        <div style='background-color: #e0e0e0; border-radius: 10px; height: 6px;'>
+                            <div style='width: {progress_phase*100}%; background-color: #3182ce; height: 6px; border-radius: 10px;'></div>
                         </div>
                     </div>
                     <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
@@ -1362,8 +1362,8 @@ with tab2:
                         <span style='font-size: 32px; line-height: 1;'>{left_icon}</span>
                     </div>
                     <div style="flex: 1 1 auto; min-width: 100px;">
-                        <div style='background-color: #f0f0f0; border-radius: 5px; height: 20px;'>
-                            <div style='width: {progress_node*100}%; background-color: #1a1a2e; height: 20px; border-radius: 5px;'></div>
+                        <div style='background-color: #e0e0e0; border-radius: 10px; height: 6px;'>
+                            <div style='width: {progress_node*100}%; background-color: #3182ce; height: 6px; border-radius: 10px;'></div>
                         </div>
                     </div>
                     <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
@@ -1407,8 +1407,8 @@ with tab2:
                     <span style='font-size: 32px; font-weight: bold; line-height: 1;'>{label_prev}</span>
                 </div>
                 <div style="flex: 1 1 auto; min-width: 100px;">
-                    <div style='background-color: #f0f0f0; border-radius: 5px; height: 20px;'>
-                        <div style='width: {progress_ap*100}%; background-color: #1a1a2e; height: 20px; border-radius: 5px;'></div>
+                    <div style='background-color: #e0e0e0; border-radius: 10px; height: 6px;'>
+                        <div style='width: {progress_ap*100}%; background-color: #3182ce; height: 6px; border-radius: 10px;'></div>
                     </div>
                 </div>
                 <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
