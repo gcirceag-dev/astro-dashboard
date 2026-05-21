@@ -1393,7 +1393,6 @@ with tab2:
         times_sin_moon = []
         alts_sin_moon = []
         
-        # Eșantionare din 5 în 5 minute
         current = start_time
         while current <= end_time:
             t = ts.from_datetime(current.astimezone(pytz.UTC))
@@ -1401,8 +1400,6 @@ with tab2:
             times_sin_moon.append(current.strftime('%H:%M'))
             alts_sin_moon.append(alt.degrees)
             current += timedelta(minutes=5)
-        
-        import plotly.graph_objects as go
         
         fig_moon = go.Figure()
         fig_moon.add_trace(go.Scatter(x=times_sin_moon, y=alts_sin_moon, mode='lines',
@@ -1450,22 +1447,11 @@ with tab2:
                                           text=['C'], textposition='bottom center', textfont=dict(size=9),
                                           showlegend=False))
         
-        tick_vals = []
-        tick_texts = []
-        if moonrise_next: 
-            tick_vals.append(moonrise_next.strftime('%H:%M'))
-            tick_texts.append('R')
-        if moon_culm_sup: 
-            tick_vals.append(moon_culm_sup.strftime('%H:%M'))
-            tick_texts.append('C')
-        if moonset_next: 
-            tick_vals.append(moonset_next.strftime('%H:%M'))
-            tick_texts.append('A')
-        
         fig_moon.update_layout(
-            xaxis=dict(tickmode='array', tickvals=tick_vals, ticktext=tick_texts, showgrid=False),
+            xaxis=dict(showgrid=False, showticklabels=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            height=200, margin=dict(l=0, r=0, t=0, b=20),
+            height=200,
+            margin=dict(l=0, r=0, t=0, b=20),
             template="plotly_white"
         )
         st.plotly_chart(fig_moon, use_container_width=True, config={'displayModeBar': False})    
