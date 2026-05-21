@@ -1378,27 +1378,38 @@ with tab2:
     
     
     # Expander 4: Sinusoida altitudinii Lunii (24h)
-    with st.expander("Sinusoida altitudinii Lunii (24h)"):
-        times_sin_moon = []
-        alts_sin_moon = []
-        midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        
-        for minutes in range(0, 24*60, 5):
-            dt = midnight + timedelta(minutes=minutes)
-            t = ts.from_datetime(dt.astimezone(pytz.UTC))
-            alt, _, _ = observer.at(t).observe(moon_eph).apparent().altaz()
-            times_sin_moon.append(dt.strftime('%H:%M'))
-            alts_sin_moon.append(alt.degrees)
-        
-        # DEBUG: Afișează valorile
-        if moon_culm_sup:
-            st.caption(f"DEBUG Culminație la: {moon_culm_sup.strftime('%H:%M')}")
-            # Găsește indexul culminației în listă
-            culm_str = moon_culm_sup.strftime('%H:%M')
-            if culm_str in times_sin_moon:
-                idx = times_sin_moon.index(culm_str)
-                st.caption(f"DEBUG Altitudine la culminație: {alts_sin_moon[idx]:.2f}°")
-                st.caption(f"DEBUG Altitudine max în grafic: {max(alts_sin_moon):.2f}°")
+        with st.expander("Sinusoida altitudinii Lunii (24h)"):
+            times_sin_moon = []
+            alts_sin_moon = []
+            midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            for minutes in range(0, 24*60, 5):
+                dt = midnight + timedelta(minutes=minutes)
+                t = ts.from_datetime(dt.astimezone(pytz.UTC))
+                alt, _, _ = observer.at(t).observe(moon_eph).apparent().altaz()
+                times_sin_moon.append(dt.strftime('%H:%M'))
+                alts_sin_moon.append(alt.degrees)
+            
+            # ===== DEBUG =====
+            st.caption("--- DEBUG Evenimente Lună ---")
+            if moonrise_next:
+                st.caption(f"Răsărit calculat: {moonrise_next.strftime('%H:%M')}")
+                # Găsește ora în sinusoidă când altitudinea trece prin 0
+                for i in range(1, len(alts_sin_moon)):
+                    if alts_sin_moon[i-1] <= 0 <= alts_sin_moon[i] or alts_sin_moon[i-1] >= 0 >= alts_sin_moon[i]:
+                        st.caption(f"Trece prin 0 în grafic între {times_sin_moon[i-1]} și {times_sin_moon[i]}")
+                        break
+            
+            if moonset_next:
+                st.caption(f"Apus calculat: {moonset_next.strftime('%H:%M')}")
+            
+            if moon_culm_sup:
+                st.caption(f"Culminație calculată: {moon_culm_sup.strftime('%H:%M')}")
+                # Găsește maximul în sinusoidă
+                max_alt = max(alts_sin_moon)
+                max_idx = alts_sin_moon.index(max_alt)
+                st.caption(f"Maxim în grafic: {times_sin_moon[max_idx]} ({max_alt:.1f}°)")
+            st.caption("--- END DEBUG ---")
         
         import plotly.graph_objects as go
         
