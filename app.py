@@ -222,6 +222,61 @@ def find_mean_node_crossings(jd_start, jd_end):
         jd_curr += step
     
     return crossings
+    
+def find_all_lunar_events(start_utc, end_utc, ts, eph, earth, moon_eph):
+    """Găsește toate evenimentele lunare importante într-un interval"""
+    events = []
+    
+    t_start = ts.from_datetime(start_utc)
+    t_end = ts.from_datetime(end_utc)
+    
+    # 1. Fazele Lunii
+    from skyfield import almanac
+    f_phases = almanac.moon_phases(eph)
+    phases_times, phases_events = almanac.find_discrete(t_start, t_end, f_phases)
+    phase_names = {0: "Lună Nouă 🌑", 1: "Primul Pătrar 🌓", 2: "Lună Plină 🌕", 3: "Ultimul Pătrar 🌗"}
+    for t, ev in zip(phases_times, phases_events):
+        if ev in phase_names:
+            events.append((t, phase_names[ev], 'phase'))
+    
+    # 2. Noduri
+    jd_start = swe.julday(start_utc.year, start_utc.month, start_utc.day,
+                          start_utc.hour + start_utc.minute/60.0 + start_utc.second/3600.0)
+    jd_end = swe.julday(end_utc.year, end_utc.month, end_utc.day,
+                        end_utc.hour + end_utc.minute/60.0 + end_utc.second/3600.0)
+    
+    node_jds = find_mean_node_crossings(jd_start, jd_end)
+    for jd_node in node_jds:
+        t_node = ts.tt_jd(jd_node)
+        # Determină tipul nodului din latitudine
+        moon_lat_before = swe.calc_ut(jd_node - 0.05, swe.MOON, swe.FLG_SWIEPH)[0][1]
+        moon_lat_after = swe.calc_ut(jd_node + 0.05, swe.MOON, swe.FLG_SWIEPH)[0][1]
+        if moon_lat_after > moon_lat_before:
+            label = "Nod Ascendent (☊)"
+        else:
+            label = "Nod Descendent (☋)"
+        events.append((t_node, label, 'node'))
+    
+    # 3. Perigeu și Apogeu
+    times_pg = []
+    t_p = t_start
+    while t_p.tt < t_end.tt:
+        times_pg.append(t_p)
+        t_p = ts.tt_jd(t_p.tt + 0.05)
+    distances_pg = [earth.at(t).observe(moon_eph).distance().km for t in times_pg]
+    
+    for i in range(1, len(distances_pg) - 1):
+        if distances_pg[i] < distances_pg[i-1] and distances_pg[i] < distances_pg[i+1]:
+            t_exact, d_exact = refine_extremum(times_pg[i], True, earth, moon_eph, ts)
+            events.append((t_exact, f"Perigeu ⬇ {d_exact:,.0f} km", 'perigee'))
+        elif distances_pg[i] > distances_pg[i-1] and distances_pg[i] > distances_pg[i+1]:
+            t_exact, d_exact = refine_extremum(times_pg[i], False, earth, moon_eph, ts)
+            events.append((t_exact, f"Apogeu ⬆ {d_exact:,.0f} km", 'apogee'))
+    
+    # Sortează după timp (FĂRĂ a elimina evenimente apropiate)
+    events.sort(key=lambda x: x[0])
+    
+    return events
 
 # ═══════════════════════════════════════════════════════════════
 # CACHE PENTRU CALCULE PRINCIPALE (1 minut)
@@ -480,11 +535,65 @@ def calculate_all_data(_now_utc, _now_local):
     jd_end_nodes = jd + 40
     node_jds = find_mean_node_crossings(jd_start_nodes, jd_end_nodes)
     node_labels = ["Nod Ascendent (☊)", "Nod Descendent (☋)"]
-    data['moon_nodes'] = []
-    for i, jd_node in enumerate(node_jds[:2]):
+
+    # Noduri Lunare (inclusiv anterioare, ±25 zile)
+    jd_start_nodes = jd - 25
+    jd_end_nodes = jd + 35
+    node_jds_all = find_mean_node_crossings(jd_start_nodes, jd_end_nodes)
+    
+    # Versiunea cu obiecte Time (pentru bara de progres)
+    data['moon_nodes_all_time'] = []
+    # Versiunea cu string-uri (pentru afișare)
+    data['moon_nodes_all_str'] = []
+    
+    for jd_node in node_jds_all[:6]:
         t_node = ts.tt_jd(jd_node)
-        label = node_labels[i % 2]
-        data['moon_nodes'].append((label, t_node.astimezone(TZ).strftime('%d %b %Y %H:%M')))
+        
+        # Determină dacă este Nod Ascendent sau Descendent
+        # Calculăm longitudinea Lunii cu 0.1 zile înainte pentru a vedea direcția
+        jd_test = jd_node + 0.1
+        moon_lon_now = swe.calc_ut(jd_node, swe.MOON, swe.FLG_SWIEPH)[0][0]
+        moon_lon_test = swe.calc_ut(jd_test, swe.MOON, swe.FLG_SWIEPH)[0][0]
+        
+        # La nodul ascendent, longitudinea Lunii crește trecând peste longitudinea nodului
+        # La nodul descendent, longitudinea Lunii scade
+        node_lon = swe.calc_ut(jd_node, swe.MEAN_NODE, swe.FLG_SWIEPH)[0][0]
+        
+        # Calculăm diferența
+        diff_now = (moon_lon_now - node_lon + 360) % 360
+        diff_test = (moon_lon_test - node_lon + 360) % 360
+        
+        # Dacă diff_test > diff_now, Luna se îndepărtează de nod (după trecere)
+        # Determinarea corectă:
+        if diff_test < 180 and diff_now < 180:
+            # Crește sau scade?
+            if diff_test > diff_now:
+                label = "Nod Ascendent (☊)"  # Trecând de la < la > longitudine nod
+            else:
+                label = "Nod Descendent (☋)"
+        else:
+            # Caz particular când diferența trece prin 0
+            if diff_test < diff_now and diff_test < 10:
+                label = "Nod Ascendent (☊)"
+            else:
+                label = "Nod Descendent (☋)"
+        
+        # O metodă mai simplă și mai sigură: folosim latitudinea Lunii
+        # La nodul ascendent, Luna trece de la latitudine negativă la pozitivă
+        # La nodul descendent, invers
+        moon_lat_now = swe.calc_ut(jd_node - 0.05, swe.MOON, swe.FLG_SWIEPH)[0][1]
+        moon_lat_test = swe.calc_ut(jd_node + 0.05, swe.MOON, swe.FLG_SWIEPH)[0][1]
+        
+        if moon_lat_test > moon_lat_now:
+            label = "Nod Ascendent (☊)"  # Latitudinea crește (trece de la - la +)
+        else:
+            label = "Nod Descendent (☋)"  # Latitudinea scade (trece de la + la -)
+        
+        data['moon_nodes_all_time'].append((label, t_node))
+        data['moon_nodes_all_str'].append((label, t_node.astimezone(TZ).strftime('%d %b %Y %H:%M')))
+    
+    data['moon_nodes_all'] = data['moon_nodes_all_str']
+    data['moon_nodes'] = data['moon_nodes_all'][:2]
     
     # Perigeu/Apogeu
     t_pg_start = ts.from_datetime(_now_utc)
@@ -500,6 +609,73 @@ def calculate_all_data(_now_utc, _now_local):
     data['perigee_t'], data['perigee_d'] = refine_extremum(times_pg[min_idx_pg], True, earth, moon_eph, ts)
     data['apogee_t'], data['apogee_d'] = refine_extremum(times_pg[max_idx_pg], False, earth, moon_eph, ts)
     
+    # Perigeu/Apogeu (inclusiv anterioare, ±25 zile) - găsește toate extremele locale
+    t_pg_all_start = ts.from_datetime(_now_utc - timedelta(days=25))
+    t_pg_all_end = ts.from_datetime(_now_utc + timedelta(days=25))
+    times_pg_all = []
+    t_p = t_pg_all_start
+    while t_p.tt < t_pg_all_end.tt:
+        times_pg_all.append(t_p)
+        t_p = ts.tt_jd(t_p.tt + 0.05)
+    distances_pg_all = [earth.at(t).observe(moon_eph).distance().km for t in times_pg_all]
+    
+    # Găsește toate perigeurile și apogeurile din interval
+    all_perigees = []
+    all_apogees = []
+    
+    for i in range(1, len(distances_pg_all) - 1):
+        if distances_pg_all[i] < distances_pg_all[i-1] and distances_pg_all[i] < distances_pg_all[i+1]:
+            # Minim local -> perigeu
+            t_exact, d_exact = refine_extremum(times_pg_all[i], True, earth, moon_eph, ts)
+            all_perigees.append((t_exact, d_exact))
+        elif distances_pg_all[i] > distances_pg_all[i-1] and distances_pg_all[i] > distances_pg_all[i+1]:
+            # Maxim local -> apogeu
+            t_exact, d_exact = refine_extremum(times_pg_all[i], False, earth, moon_eph, ts)
+            all_apogees.append((t_exact, d_exact))
+    
+    # Pentru secțiunea de evenimente (următoarele 35 zile) folosim primul din viitor
+    next_perigee = None
+    for t_exact, d_exact in all_perigees:
+        if t_exact.astimezone(TZ) > _now_local:
+            next_perigee = (t_exact, d_exact)
+            break
+    
+    next_apogee = None
+    for t_exact, d_exact in all_apogees:
+        if t_exact.astimezone(TZ) > _now_local:
+            next_apogee = (t_exact, d_exact)
+            break
+    
+    # Pentru barele de progres, avem nevoie de ultimul și următorul eveniment
+    # (indiferent dacă e perigeu sau apogeu)
+    all_events = []
+    for t_exact, d_exact in all_perigees:
+        all_events.append(('P', t_exact, d_exact))
+    for t_exact, d_exact in all_apogees:
+        all_events.append(('A', t_exact, d_exact))
+    all_events.sort(key=lambda x: x[1])
+    
+    # Găsește evenimentul anterior și următorul față de now
+    prev_event = None
+    next_event = None
+    for label, t_exact, d_exact in all_events:
+        if t_exact.astimezone(TZ) <= _now_local:
+            prev_event = (label, t_exact, d_exact)
+        else:
+            if next_event is None:
+                next_event = (label, t_exact, d_exact)
+                break
+    
+    # Salvează în data pentru a fi folosite în interfață
+    data['perigee_t_all'] = next_perigee[0] if next_perigee else None
+    data['perigee_d_all'] = next_perigee[1] if next_perigee else None
+    data['apogee_t_all'] = next_apogee[0] if next_apogee else None
+    data['apogee_d_all'] = next_apogee[1] if next_apogee else None
+    
+    # Salvează evenimentele pentru bara de progres
+    data['prev_ap_event'] = prev_event
+    data['next_ap_event'] = next_event       
+    
     # Fazele Lunii
     t_faze_start = ts.from_datetime(_now_utc)
     t_faze_end = ts.from_datetime(_now_utc + timedelta(days=35))
@@ -510,6 +686,16 @@ def calculate_all_data(_now_utc, _now_local):
     for t_f, ev_f in zip(times_faze, events_faze):
         if ev_f in faze_names:
             data['moon_phases'].append((faze_names[ev_f], t_f.astimezone(TZ).strftime('%d %b %Y %H:%M')))
+    
+    # Fazele Lunii (inclusiv anterioare, ±20 zile)
+    t_faze_all_start = ts.from_datetime(_now_utc - timedelta(days=20))
+    t_faze_all_end = ts.from_datetime(_now_utc + timedelta(days=35))
+    times_faze_all, events_faze_all = almanac.find_discrete(t_faze_all_start, t_faze_all_end, f_moon_phases)
+    data['moon_phases_all'] = []
+    for t_f, ev_f in zip(times_faze_all, events_faze_all):
+        if ev_f in faze_names:
+            data['moon_phases_all'].append((faze_names[ev_f], t_f.astimezone(TZ).strftime('%d %b %Y %H:%M')))    
+    
     
     # Planete
     planet_ids = {
@@ -576,6 +762,10 @@ def calculate_all_data(_now_utc, _now_local):
     data['planet_ids'] = planet_ids
     data['asteroid_ids'] = asteroid_ids
     
+    # Toate evenimentele lunare unificate (pentru afișare)
+    end_utc = _now_utc + timedelta(days=45)
+    data['all_lunar_events'] = find_all_lunar_events(_now_utc, end_utc, ts, eph, earth, moon_eph)
+        
     return data
     
 # ═══════════════════════════════════════════════════════════════
@@ -968,64 +1158,223 @@ with tab2:
         st.caption(f"Coord. Z (AU): {moon_xyz[2]:.6f}")
     
     # Expander 3: Evenimente Lunare
-    with st.expander("Evenimente Lunare (următoarele 35 zile)"):
-        all_events = []
+    with st.expander("Evenimente Lunare (următoarele 45 zile)"):
+        all_events = data.get('all_lunar_events', [])
         
-        for label, date_str in moon_nodes:
-            dt_event = datetime.strptime(date_str, '%d %b %Y %H:%M')
-            dt_event = TZ.localize(dt_event)
-            icon = "☊" if "Ascendent" in label else "☋"
-            all_events.append((dt_event, icon, f"{label}: {date_str}"))
+        if all_events:
+            for t_event, label, event_type in all_events:
+                dt_event = t_event.astimezone(TZ)
+                if dt_event >= now:  # doar evenimente din viitor
+                    # Formatare diferită pentru tipuri diferite
+                    if event_type == 'perigee' or event_type == 'apogee':
+                        # Deja conține distanța în label
+                        st.caption(f"{label}: {dt_event.strftime('%d %b %Y %H:%M')}")
+                    else:
+                        st.caption(f"{label}: {dt_event.strftime('%d %b %Y %H:%M')}")
+            
+            # Graficul timeline rămâne același
+            st.caption("")
+            
+            start_dt = now
+            end_dt = now + timedelta(days=45)
+            days_from_start = []
+            bar_labels = []
+            for t_event, label, event_type in all_events:
+                dt_event = t_event.astimezone(TZ)
+                if dt_event >= now:
+                    days = (dt_event - start_dt).total_seconds() / 86400
+                    days_from_start.append(days)
+                    # Extrage icon din label
+                    if "🌑" in label:
+                        icon = "🌑"
+                    elif "🌓" in label:
+                        icon = "🌓"
+                    elif "🌕" in label:
+                        icon = "🌕"
+                    elif "🌗" in label:
+                        icon = "🌗"
+                    elif "Ascendent" in label:
+                        icon = "☊"
+                    elif "Descendent" in label:
+                        icon = "☋"
+                    elif "Perigeu" in label:
+                        icon = "⬇"
+                    elif "Apogeu" in label:
+                        icon = "⬆"
+                    else:
+                        icon = "●"
+                    bar_labels.append(icon)
+            
+            if days_from_start:
+                fig_timeline = go.Figure()
+                fig_timeline.add_trace(go.Scatter(x=[0, 45], y=[0, 0], mode='lines',
+                                                  line=dict(color='gray', width=2), showlegend=False))
+                fig_timeline.add_trace(go.Scatter(x=days_from_start, y=[0]*len(days_from_start),
+                                                  mode='markers+text', marker=dict(size=18, color='#1a1a2e', symbol='circle'),
+                                                  text=bar_labels, textposition='top center',
+                                                  textfont=dict(size=14), showlegend=False))
+                
+                day_marks = list(range(0, 46, 5))
+                fig_timeline.update_layout(
+                    xaxis=dict(tickmode='array', tickvals=day_marks,
+                               ticktext=[(start_dt + timedelta(days=d)).strftime('%d %b') for d in day_marks],
+                               range=[-2, 47]),
+                    yaxis=dict(visible=False), height=120,
+                    margin=dict(l=20, r=20, t=10, b=30), template="plotly_white"
+                )
+                st.plotly_chart(fig_timeline, use_container_width=True)
+        else:
+            st.caption("Nu s-au găsit evenimente")
+    
+    
+    # Expander 3b: Bare de progres Lunare
+    with st.expander("Progres Lună (faze, noduri, distanță)"):
         
-        for label, date_str in moon_phases:
-            dt_event = datetime.strptime(date_str, '%d %b %Y %H:%M')
-            dt_event = TZ.localize(dt_event)
-            if "🌑" in label: icon = "🌑"
-            elif "🌓" in label: icon = "🌓"
-            elif "🌕" in label: icon = "🌕"
-            elif "🌗" in label: icon = "🌗"
-            else: icon = ""
-            all_events.append((dt_event, icon, f"{label}: {date_str}"))
+        # Folosim datele extinse (inclusiv anterioare)
+        moon_phases_all = data.get('moon_phases_all', moon_phases)
+        moon_nodes_all = data.get('moon_nodes_all', moon_nodes)
+        perigee_t_all = data.get('perigee_t_all', perigee_t)
+        perigee_d_all = data.get('perigee_d_all', perigee_d)
+        apogee_t_all = data.get('apogee_t_all', apogee_t)
+        apogee_d_all = data.get('apogee_d_all', apogee_d)
         
-        if perigee_t is not None:
-            dt_pg = perigee_t.astimezone(TZ)
-            pg_str = dt_pg.strftime('%d %b %Y %H:%M')
-            all_events.append((dt_pg, "⬇", f"Perigeu: {pg_str} — {perigee_d:,.0f} km"))
-        
-        if apogee_t is not None:
-            dt_ag = apogee_t.astimezone(TZ)
-            ag_str = dt_ag.strftime('%d %b %Y %H:%M')
-            all_events.append((dt_ag, "⬆", f"Apogeu: {ag_str} — {apogee_d:,.0f} km"))
-        
-        all_events.sort(key=lambda x: x[0])
-        
-        for _, _, label in all_events:
-            st.caption(label)
+        # ─── Bara 1: Faza anterioară → Faza următoare ───
+        if len(moon_phases_all) >= 2:
+            # Sortăm fazele
+            sorted_phases = []
+            for label, date_str in moon_phases_all:
+                dt = datetime.strptime(date_str, '%d %b %Y %H:%M')
+                dt = TZ.localize(dt)
+                sorted_phases.append((label, dt, date_str))
+            sorted_phases.sort(key=lambda x: x[1])
+            
+            # Găsim faza anterioară și următoarea
+            prev_phase = None
+            next_phase = None
+            for i, (label, dt, date_str) in enumerate(sorted_phases):
+                if dt <= now:
+                    prev_phase = (label, dt, date_str)
+                elif dt > now and next_phase is None:
+                    next_phase = (label, dt, date_str)
+                    break
+            
+            if prev_phase and next_phase:
+                def phase_icon(label):
+                    if "🌑" in label: return "🌑"
+                    elif "🌓" in label: return "🌓"
+                    elif "🌕" in label: return "🌕"
+                    elif "🌗" in label: return "🌗"
+                    return ""
+                
+                left_icon = phase_icon(prev_phase[0])
+                right_icon = phase_icon(next_phase[0])
+                
+                total_sec = (next_phase[1] - prev_phase[1]).total_seconds()
+                elapsed_sec = (now - prev_phase[1]).total_seconds()
+                progress_phase = max(0, min(1, elapsed_sec / total_sec))
+                
+                remaining_sec = total_sec - elapsed_sec
+                rem_d = int(remaining_sec // 86400)
+                rem_h = int((remaining_sec % 86400) // 3600)
+                rem_m = int((remaining_sec % 3600) // 60)
+                
+                col1, col2, col3 = st.columns([1, 8, 1])
+                with col1:
+                    st.markdown(f"<h1 style='text-align:center'>{left_icon}</h1>", unsafe_allow_html=True)
+                with col2:
+                    st.progress(float(progress_phase))
+                with col3:
+                    st.markdown(f"<h1 style='text-align:center'>{right_icon}</h1>", unsafe_allow_html=True)
+                
+                st.caption(f"{prev_phase[0]} → {next_phase[0]} ({rem_d}z {rem_h}h {rem_m}m)")
+            else:
+                st.caption("Faze: date insuficiente")
+        else:
+            st.caption("Faze: date insuficiente")
         
         st.caption("")
         
-        start_dt = now
-        end_dt = now + timedelta(days=35)
-        days_from_start = [(dt - start_dt).total_seconds() / 86400 for dt, _, _ in all_events]
-        bar_labels = [icon for _, icon, _ in all_events]
+        # ─── Bara 2: Noduri Lunare ───
+        moon_nodes_all_time = data.get('moon_nodes_all_time', [])
         
-        fig_timeline = go.Figure()
-        fig_timeline.add_trace(go.Scatter(x=[0, 35], y=[0, 0], mode='lines',
-                                          line=dict(color='gray', width=2), showlegend=False))
-        fig_timeline.add_trace(go.Scatter(x=days_from_start, y=[0]*len(days_from_start),
-                                          mode='markers+text', marker=dict(size=18, color='#1a1a2e', symbol='circle'),
-                                          text=bar_labels, textposition='top center',
-                                          textfont=dict(size=14), showlegend=False))
+        if len(moon_nodes_all_time) >= 2:
+            # Găsește nodul anterior și următorul
+            prev_node = None
+            next_node = None
+            
+            for label, t_node in moon_nodes_all_time:
+                dt_node = t_node.astimezone(TZ)
+                if dt_node <= now:
+                    prev_node = (label, dt_node)
+                elif dt_node > now and next_node is None:
+                    next_node = (label, dt_node)
+                    break
+            
+            if prev_node and next_node:
+                left_icon = "☊" if "Ascendent" in prev_node[0] else "☋"
+                right_icon = "☊" if "Ascendent" in next_node[0] else "☋"
+                
+                total_sec_n = (next_node[1] - prev_node[1]).total_seconds()
+                elapsed_sec_n = (now - prev_node[1]).total_seconds()
+                progress_node = max(0, min(1, elapsed_sec_n / total_sec_n))
+                
+                remaining_sec_n = total_sec_n - elapsed_sec_n
+                rem_d_n = int(remaining_sec_n // 86400)
+                rem_h_n = int((remaining_sec_n % 86400) // 3600)
+                rem_m_n = int((remaining_sec_n % 3600) // 60)
+                
+                col1, col2, col3 = st.columns([1, 8, 1])
+                with col1:
+                    st.markdown(f"<h1 style='text-align:center'>{left_icon}</h1>", unsafe_allow_html=True)
+                with col2:
+                    st.progress(float(progress_node))
+                with col3:
+                    st.markdown(f"<h1 style='text-align:center'>{right_icon}</h1>", unsafe_allow_html=True)
+                
+                st.caption(f"{prev_node[0]} → {next_node[0]} ({rem_d_n}z {rem_h_n}h {rem_m_n}m)")
+            else:
+                st.caption("Noduri: date insuficiente")
+        else:
+            st.caption("Noduri: date insuficiente")
         
-        day_marks = list(range(0, 36, 5))
-        fig_timeline.update_layout(
-            xaxis=dict(tickmode='array', tickvals=day_marks,
-                       ticktext=[(start_dt + timedelta(days=d)).strftime('%d %b') for d in day_marks],
-                       range=[-2, 37]),
-            yaxis=dict(visible=False), height=120,
-            margin=dict(l=20, r=20, t=10, b=30), template="plotly_white"
-        )
-        st.plotly_chart(fig_timeline, use_container_width=True)
+        st.caption("")
+        
+    
+        
+        # ─── Bara 3: Evenimentul anterior → Evenimentul următor ───
+        prev_event = data.get('prev_ap_event')
+        next_event = data.get('next_ap_event')
+        
+        if prev_event and next_event:
+            label_prev, t_prev, dist_prev = prev_event
+            label_next, t_next, dist_next = next_event
+            
+            # Convertim skyfield Time în datetime
+            dt_prev = t_prev.astimezone(TZ)
+            dt_next = t_next.astimezone(TZ)
+            
+            total_sec_ap = (dt_next - dt_prev).total_seconds()
+            elapsed_sec_ap = (now - dt_prev).total_seconds()
+            progress_ap = max(0, min(1, elapsed_sec_ap / total_sec_ap))
+            
+            remaining_sec_ap = total_sec_ap - elapsed_sec_ap
+            rem_d_ap = int(remaining_sec_ap // 86400)
+            rem_h_ap = int((remaining_sec_ap % 86400) // 3600)
+            rem_m_ap = int((remaining_sec_ap % 3600) // 60)
+            
+            col1, col2, col3 = st.columns([1, 8, 1])
+            with col1:
+                st.markdown(f"<h1 style='text-align:center'>{label_prev}</h1>", unsafe_allow_html=True)
+            with col2:
+                st.progress(float(progress_ap))
+            with col3:
+                st.markdown(f"<h1 style='text-align:center'>{label_next}</h1>", unsafe_allow_html=True)
+            
+            st.caption(f"{label_prev} ({dist_prev:,.0f} km) → {label_next} ({dist_next:,.0f} km) ({rem_d_ap}z {rem_h_ap}h {rem_m_ap}m)")
+        else:
+            st.caption("Perigeu/Apogeu: date insuficiente")
+    
+    
     
     # Expander 4: Sinusoida altitudinii Lunii (24h)
     with st.expander("Sinusoida altitudinii Lunii (24h)"):
