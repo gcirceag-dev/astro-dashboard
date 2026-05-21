@@ -1303,7 +1303,7 @@ with tab2:
                 rem_h = int((remaining_sec % 86400) // 3600)
                 rem_m = int((remaining_sec % 3600) // 60)
                 
-                col1, col2, col3 = st.columns([1, 3, 1])
+                col1, col2, col3 = st.columns([1, 2, 1])
                 with col1:
                     st.markdown(f"<div style='font-size: 32px; line-height: 1; text-align: center;'>{left_icon}</div>", unsafe_allow_html=True)
                 with col2:
