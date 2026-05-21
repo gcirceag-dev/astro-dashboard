@@ -1403,7 +1403,7 @@ with tab2:
                     <span style="color: #e53e3e;">─</span> Primul eveniment
                 </div>
                 """, unsafe_allow_html=True)
-                st.plotly_chart(fig_timeline, use_container_width=True)
+                
         else:
             st.caption("Nu s-au găsit evenimente")
     
