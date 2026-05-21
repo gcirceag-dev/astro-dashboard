@@ -1386,7 +1386,6 @@ with tab2:
     
     # Expander 4: Sinusoida altitudinii Lunii (36 ore)
     with st.expander("Sinusoida altitudinii Lunii (36 ore)"):
-        # Interval de 36 de ore: 18 ore în trecut, 18 ore în viitor
         start_time = now - timedelta(hours=18)
         end_time = now + timedelta(hours=18)
         
@@ -1450,8 +1449,7 @@ with tab2:
         fig_moon.update_layout(
             xaxis=dict(showgrid=False, showticklabels=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            height=200,
-            margin=dict(l=0, r=0, t=0, b=20),
+            height=200, margin=dict(l=0, r=0, t=0, b=20),
             template="plotly_white"
         )
         st.plotly_chart(fig_moon, use_container_width=True, config={'displayModeBar': False})    
