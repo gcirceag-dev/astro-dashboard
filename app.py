@@ -1303,21 +1303,21 @@ with tab2:
                 rem_h = int((remaining_sec % 86400) // 3600)
                 rem_m = int((remaining_sec % 3600) // 60)
                 
-            st.markdown(f"""
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap;">
-                <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
-                    <span style='font-size: 32px; line-height: 1;'>{left_icon}</span>
-                </div>
-                <div style="flex: 1 1 auto; min-width: 100px;">
-                    <div style='background-color: #f0f0f0; border-radius: 5px; height: 20px;'>
-                        <div style='width: {progress_phase*100}%; background-color: #1a1a2e; height: 20px; border-radius: 5px;'></div>
+                st.markdown(f"""
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap;">
+                    <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
+                        <span style='font-size: 32px; line-height: 1;'>{left_icon}</span>
+                    </div>
+                    <div style="flex: 1 1 auto; min-width: 100px;">
+                        <div style='background-color: #f0f0f0; border-radius: 5px; height: 20px;'>
+                            <div style='width: {progress_phase*100}%; background-color: #1a1a2e; height: 20px; border-radius: 5px;'></div>
+                        </div>
+                    </div>
+                    <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
+                        <span style='font-size: 32px; line-height: 1;'>{right_icon}</span>
                     </div>
                 </div>
-                <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
-                    <span style='font-size: 32px; line-height: 1;'>{right_icon}</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
                 
                 st.caption(f"{prev_phase[0]} → {next_phase[0]} ({rem_d}z {rem_h}h {rem_m}m)")
             else:
@@ -1356,21 +1356,21 @@ with tab2:
                 rem_h_n = int((remaining_sec_n % 86400) // 3600)
                 rem_m_n = int((remaining_sec_n % 3600) // 60)
                 
-            st.markdown(f"""
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap;">
-                <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
-                    <span style='font-size: 32px; line-height: 1;'>{left_icon}</span>
-                </div>
-                <div style="flex: 1 1 auto; min-width: 100px;">
-                    <div style='background-color: #f0f0f0; border-radius: 5px; height: 20px;'>
-                        <div style='width: {progress_phase*100}%; background-color: #1a1a2e; height: 20px; border-radius: 5px;'></div>
+                st.markdown(f"""
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap;">
+                    <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
+                        <span style='font-size: 32px; line-height: 1;'>{left_icon}</span>
+                    </div>
+                    <div style="flex: 1 1 auto; min-width: 100px;">
+                        <div style='background-color: #f0f0f0; border-radius: 5px; height: 20px;'>
+                            <div style='width: {progress_node*100}%; background-color: #1a1a2e; height: 20px; border-radius: 5px;'></div>
+                        </div>
+                    </div>
+                    <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
+                        <span style='font-size: 32px; line-height: 1;'>{right_icon}</span>
                     </div>
                 </div>
-                <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
-                    <span style='font-size: 32px; line-height: 1;'>{right_icon}</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
                 
                 st.caption(f"{prev_node[0]} → {next_node[0]} ({rem_d_n}z {rem_h_n}h {rem_m_n}m)")
             else:
@@ -1379,8 +1379,6 @@ with tab2:
             st.caption("Noduri: date insuficiente")
         
         st.caption("")
-        
-    
         
         # ─── Bara 3: Evenimentul anterior → Evenimentul următor ───
         prev_event = data.get('prev_ap_event')
@@ -1406,15 +1404,15 @@ with tab2:
             st.markdown(f"""
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap;">
                 <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
-                    <span style='font-size: 32px; line-height: 1;'>{left_icon}</span>
+                    <span style='font-size: 32px; font-weight: bold; line-height: 1;'>{label_prev}</span>
                 </div>
                 <div style="flex: 1 1 auto; min-width: 100px;">
                     <div style='background-color: #f0f0f0; border-radius: 5px; height: 20px;'>
-                        <div style='width: {progress_phase*100}%; background-color: #1a1a2e; height: 20px; border-radius: 5px;'></div>
+                        <div style='width: {progress_ap*100}%; background-color: #1a1a2e; height: 20px; border-radius: 5px;'></div>
                     </div>
                 </div>
                 <div style="flex: 0 0 auto; min-width: 50px; text-align: center;">
-                    <span style='font-size: 32px; line-height: 1;'>{right_icon}</span>
+                    <span style='font-size: 32px; font-weight: bold; line-height: 1;'>{label_next}</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
