@@ -784,9 +784,9 @@ def create_altitude_sinusoid(times, alts, events_dict, is_night, body_name):
                                  line=dict(color='orange', width=1)), showlegend=False))
     
     for event_key, marker_config in [
-        ('sunrise', dict(color='orange', symbol='triangle-up', text='R')),
+        ('sunrise', dict(color='red', symbol='triangle-up', text='R')),
         ('sunset', dict(color='red', symbol='triangle-down', text='A')),
-        ('culmination', dict(color='yellow', symbol='diamond', text='C'))
+        ('culmination', dict(color='red', symbol='arrow-down', text='C'))
     ]:
         if event_key in events_dict:
             fig.add_trace(go.Scatter(x=[events_dict[event_key]['idx']], y=[events_dict[event_key]['alt']],
