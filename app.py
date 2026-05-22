@@ -1207,15 +1207,25 @@ with tab2:
         st.caption(f"Coord. Y (AU): {moon_xyz[1]:.6f}")
         st.caption(f"Coord. Z (AU): {moon_xyz[2]:.6f}")
     
-    # Expander 3: Evenimente Lunare
-    with st.expander("Evenimente Lunare (următoarele 45 zile)"):
+    # Expander 3: Evenimente Lunare (următoarele 8 evenimente)
+    with st.expander("Evenimente Lunare (următoarele 8 evenimente)"):
         all_events = data.get('all_lunar_events', [])
         
         if all_events:
+            # Filtrează evenimentele viitoare și ia primele 8
+            future_events = []
             for t_event, label, event_type in all_events:
                 dt_event = t_event.astimezone(TZ)
-                if dt_event >= now:  # doar evenimente din viitor
-                    st.caption(f"{label}: {dt_event.strftime('%d %b %Y %H:%M')}")
+                if dt_event >= now:
+                    future_events.append((dt_event, label, event_type))
+            
+            # Ia doar primele 8
+            for dt_event, label, event_type in future_events[:8]:
+                st.caption(f"{label}: {dt_event.strftime('%d %b %Y %H:%M')}")
+            
+            # Opțional: arată câte evenimente au fost eliminate
+            #if len(future_events) > 8:
+            #    st.caption(f"... și încă {len(future_events) - 8} evenimente în zilele următoare")
         else:
             st.caption("Nu s-au găsit evenimente")
     
@@ -1494,8 +1504,189 @@ with tab2:
         st.plotly_chart(fig_moon, use_container_width=True, config={'displayModeBar': False})
         st.markdown(f"</div>", unsafe_allow_html=True)    
     
+    # Expander 5: Cercuri concentrice evenimente Lunare
+    with st.expander("Cercuri concentrice (faze, noduri, perigeu/apogeu)"):
+        import plotly.graph_objects as go
+        import numpy as np
+        from datetime import timedelta
+        
+        total_synodic_days = 29.53
+        all_events_list = data.get('all_lunar_events', [])
+        
+        # Selectăm primele 8 evenimente unice
+        selected_events = []
+        seen_types = set()
+        
+        for t_event, label, event_type in all_events_list:
+            dt_event = t_event.astimezone(TZ)
+            if dt_event >= now:
+                if event_type == 'phase':
+                    if "Lună Nouă" in label and 'new_moon' not in seen_types:
+                        selected_events.append((dt_event, label, event_type))
+                        seen_types.add('new_moon')
+                    elif "Primul Pătrar" in label and 'first_quarter' not in seen_types:
+                        selected_events.append((dt_event, label, event_type))
+                        seen_types.add('first_quarter')
+                    elif "Lună Plină" in label and 'full_moon' not in seen_types:
+                        selected_events.append((dt_event, label, event_type))
+                        seen_types.add('full_moon')
+                    elif "Ultimul Pătrar" in label and 'last_quarter' not in seen_types:
+                        selected_events.append((dt_event, label, event_type))
+                        seen_types.add('last_quarter')
+                elif event_type == 'node':
+                    if "Ascendent" in label and 'asc_node' not in seen_types:
+                        selected_events.append((dt_event, label, event_type))
+                        seen_types.add('asc_node')
+                    elif "Descendent" in label and 'desc_node' not in seen_types:
+                        selected_events.append((dt_event, label, event_type))
+                        seen_types.add('desc_node')
+                elif event_type == 'perigee' and 'perigee' not in seen_types:
+                    selected_events.append((dt_event, label, event_type))
+                    seen_types.add('perigee')
+                elif event_type == 'apogee' and 'apogee' not in seen_types:
+                    selected_events.append((dt_event, label, event_type))
+                    seen_types.add('apogee')
+                if len(selected_events) == 8:
+                    break
+        
+        if len(selected_events) < 8:
+            st.caption(f"Nu s-au găsit toate cele 8 evenimente (doar {len(selected_events)}).")
+        else:
+            selected_events.sort(key=lambda x: x[0])
+            last_date = selected_events[-1][0]
+            total_days = (last_date - now).total_seconds() / 86400 + 2
+            
+            # Găsim ancora (Luna Plină)
+            full_moon_date = None
+            for dt, label, et in selected_events:
+                if et == 'phase' and "Lună Plină" in label:
+                    full_moon_date = dt
+                    break
+            
+            if full_moon_date is None:
+                st.caption("Nu s-a găsit Lună Plină.")
+            else:
+                # Calculăm unghiurile evenimentelor relativ la Luna Plină
+                events_with_angles = []
+                for dt, label, et in selected_events:
+                    days_diff = (dt - full_moon_date).total_seconds() / 86400
+                    angle = (days_diff / total_synodic_days) * 360
+                    if angle < 0:
+                        angle = 360 + angle
+                    events_with_angles.append((angle, dt, label, et))
+                
+                # Unghiul pentru "Acum"
+                days_diff_now = (now - full_moon_date).total_seconds() / 86400
+                now_angle = (days_diff_now / total_synodic_days) * 360
+                if now_angle < 0:
+                    now_angle = 360 + now_angle
+                
+                # Razele cercurilor
+                r1, r2, r3 = 0.30, 0.55, 0.80
+                
+                fig = go.Figure()
+                
+                # Cercurile concentrice
+                theta = np.linspace(0, 360, 100)
+                for r, color in [(r1, '#cccccc'), (r2, '#cccccc'), (r3, '#cccccc')]:
+                    fig.add_trace(go.Scatterpolar(
+                        r=[r] * len(theta), theta=theta,
+                        mode='lines', line=dict(color=color, width=1),
+                        showlegend=False, hoverinfo='none'
+                    ))
+                
+                # Liniile radiale pentru zile
+                for day in range(0, int(total_days) + 1, 5):
+                    angle = (day / total_days) * 360
+                    fig.add_trace(go.Scatterpolar(
+                        r=[0, r3], theta=[angle, angle],
+                        mode='lines', line=dict(color='#eeeeee', width=0.5),
+                        showlegend=False, hoverinfo='none'
+                    ))
+                    if day % 10 == 0:
+                        fig.add_trace(go.Scatterpolar(
+                            r=[r3 + 0.05], theta=[angle],
+                            mode='text', text=[f"{day}z"],
+                            textfont=dict(size=8, color='#999999'),
+                            showlegend=False, hoverinfo='none'
+                        ))
+                
+                # Evenimentele
+                for angle, dt, label, et in events_with_angles:
+                    if et == 'phase':
+                        r = r1
+                        if "🌑" in label: icon = "🌑"
+                        elif "🌓" in label: icon = "🌓"
+                        elif "🌕" in label: icon = "🌕"
+                        elif "🌗" in label: icon = "🌗"
+                        else: icon = "●"
+                        color = '#333333'
+                    elif et == 'node':
+                        r = r2
+                        if "Ascendent" in label: icon = "☊"
+                        else: icon = "☋"
+                        color = '#4299e1'
+                    else:
+                        r = r3
+                        if "Perigeu" in label: icon = "P"
+                        else: icon = "A"
+                        color = '#9b59b6'
+                    
+                    fig.add_trace(go.Scatterpolar(
+                        r=[r], theta=[angle],
+                        mode='text', text=[icon],
+                        textfont=dict(size=20, color=color, family='Arial'),
+                        showlegend=False, hoverinfo='text',
+                        hovertext=f"{label}<br>{dt.strftime('%d %b %H:%M')}"
+                    ))
+                
+                # Limba roșie
+                fig.add_trace(go.Scatterpolar(
+                    r=[0, r1 - 0.02], theta=[now_angle, now_angle],
+                    mode='lines', line=dict(color='#e53e3e', width=3),
+                    showlegend=False, hoverinfo='none'
+                ))
+                
+                # Punctul central
+                fig.add_trace(go.Scatterpolar(
+                    r=[0], theta=[0],
+                    mode='markers', marker=dict(size=10, color='#e53e3e', symbol='circle'),
+                    showlegend=False, hoverinfo='text', hovertext='Acum'
+                ))
+                
+                # Layout
+                fig.update_layout(
+                    polar=dict(
+                        radialaxis=dict(visible=False, range=[0, 1]),
+                        angularaxis=dict(
+                            tickmode='array',
+                            tickvals=[0, 90, 180, 270],
+                            ticktext=['Lună Plină', '7 z', '14 z', '21 z'],
+                            direction='clockwise',
+                            rotation=90
+                        )
+                    ),
+                    height=550, margin=dict(l=20, r=20, t=20, b=20),
+                    template="plotly_white", showlegend=False
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Legendă
+                st.markdown(f"""
+                <div style="display: flex; gap: 20px; justify-content: center; margin-top: 10px; font-size: 12px;">
+                    <span style="color: #333; font-size: 18px;">🌑🌓🌕🌗</span> Faze Lunii
+                    <span style="color: #4299e1; font-size: 18px;">☊☋</span> Noduri
+                    <span style="color: #9b59b6; font-size: 18px; font-weight: bold;">P A</span> Perigeu/Apogeu
+                    <span style="color: #e53e3e;">⬤</span> Acum
+                    <span style="color: #e53e3e;">─</span> Limba
+                </div>
+                <div style="text-align: center; font-size: 11px; margin-top: 5px;">
+                    Ancoră: Lună Plină la 0° (sus) | Interval sinodic: 29.53 zile
+                </div>
+                """, unsafe_allow_html=True)    
     
-    # Expander 5: Faza Lunii
+    # Expander 6: Faza Lunii
     with st.expander("Faza Lunii (vizual)"):
         col1, col2 = st.columns([1, 2])
         
