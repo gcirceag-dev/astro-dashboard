@@ -3,4 +3,4 @@ skyfield
 streamlit
 plotly
 pytz
-matplotlib
+numpy
