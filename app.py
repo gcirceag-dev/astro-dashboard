@@ -1160,10 +1160,11 @@ st.set_page_config(page_title="Dashboard Astro", layout="wide")
 
 st.markdown("""
 <style>
-    .stApp, .stMarkdown, .stCaption, .stText, p, div, span, label {
+    .stApp, .stMarkdown, .stCaption, .stText, p, div, span, label, 
+    .streamlit-expanderHeader p, .streamlit-expanderContent p {
         font-size: 18px !important;
         color: #000000 !important;
-        font-weight: 500 !important;
+        font-weight: 400 !important;
     }
     h2, h3, .stSubheader {
         font-size: 18px !important;
