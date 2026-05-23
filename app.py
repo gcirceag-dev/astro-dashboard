@@ -1160,6 +1160,11 @@ st.set_page_config(page_title="Dashboard Astro", layout="wide")
 
 st.markdown("""
 <style>
+    
+    * {
+        font-family: 'Segoe UI', 'Roboto', -apple-system, sans-serif !important;
+    }    
+    
     .stApp, .stMarkdown, .stCaption, .stText, p, div, span, label {
         font-size: 18px !important;
         color: #000000 !important;
