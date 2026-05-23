@@ -1164,7 +1164,7 @@ st.markdown("""
     .streamlit-expanderHeader p, .streamlit-expanderContent p {
         font-size: 18px !important;
         color: #000000 !important;
-        font-weight: 400 !important;
+        font-weight: 600 !important;
     }
     h2, h3, .stSubheader {
         font-size: 18px !important;
