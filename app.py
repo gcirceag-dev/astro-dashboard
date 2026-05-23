@@ -899,7 +899,7 @@ def get_summary_events(now_local, positions, observational, long_term):
         except:
             pass
     
-    # 🌙 LUNA
+    # LUNA
     for label, date_str in long_term.get('moon_phases_all', []):
         try:
             dt = TZ.localize(datetime.strptime(date_str, '%d %b %Y %H:%M'))
@@ -925,26 +925,26 @@ def get_summary_events(now_local, positions, observational, long_term):
     
     mansion_info = long_term.get('next_mansion')
     if mansion_info is not None:
-        events['luna'].append(f"🏠 {mansion_info['current']}")
-        events['luna'].append(f"→ {mansion_info['next']} ({mansion_info['next_date']})")
+        events['luna'].append(f"**Conacul {mansion_info['current']}**")
+        events['luna'].append(f"→ **{mansion_info['next']}** ({mansion_info['next_date']})")
     
-    # 🪐 RETROGRADE
+    # RETROGRADE
     retro_list = []
     planet_data = positions.get('planet_data', {})
     for name in ['Mercur', 'Venus', 'Marte', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto']:
         if name in planet_data and planet_data[name].get('retro'):
             retro_list.append(name)
     if retro_list:
-        events['retrograde'] = [f"🪐 {', '.join(retro_list)} retrograd"]
+        events['retrograde'] = [f" {', '.join(retro_list)} retrograd"]
     
-    # 🪐 INGRESSURI
+    # INGRESSURI
     jd_now = observational.get('jd', swe.julday(now_local.year, now_local.month, now_local.day,
                                                  now_local.hour + now_local.minute/60))
     ingresses = find_ingresses(jd_now, planet_data, max_days=3)
     for name, sign, dt, days in ingresses:
         events['ingress'].append(f"{name} intră în {sign} în {int(days)}z {int((days%1)*24)}h ({dt.strftime('%d %b %H:%M')})")
     
-    # ⭐ ASPECTE (doar planete cu planete lente, sau planete cu stele fixe)
+    # ASPECTE (doar planete cu planete lente, sau planete cu stele fixe)
     planet_data_full = positions.get('planet_data', {})
     aspect_types = {'Conjuncție ☌': 0, 'Sextil ⚹': 60, 'Careu □': 90, 'Trigon △': 120, 'Opoziție ☍': 180}
     
@@ -1208,7 +1208,7 @@ st.markdown(f"""
 **{day_name_ro}, {now.strftime('%d %B %Y, %H:%M:%S %Z')}**  
 (UTC: {now_utc.strftime('%d-%m-%Y %H:%M:%S')}) · JD: {jd:.4f}  
 **București, Romania** ({LAT}° N, {LON}° E)  
-Ziua {day_of_year} din an · Săptămâna {week_number}  
+Ziua **{day_of_year}** din an · Săptămâna **{week_number}**  
 Guvernator zi: **{day_ruler}** · Guvernator oră: **{hour_ruler}**
 """)
 st.divider()
@@ -1236,7 +1236,7 @@ with tab0:
             elif sign in water: elements_count['Apa'] += 1
     
     parts = [f"{v} {k}" for k, v in elements_count.items() if v > 0]
-    st.caption("Elemente: " + ", ".join(parts))
+    st.caption("**Elemente**: " + ", ".join(parts))
     
     summary = get_summary_events(now, positions, observational, long_term)
     
@@ -1246,21 +1246,21 @@ with tab0:
             st.caption(e)
     
     if summary['luna']:
-        st.caption("**🌙 Lună**")
+        st.caption("**Evenimentele Lunii**")
         for e in summary['luna']:
             st.caption(e)
     
     if summary['retrograde']:
-        st.caption("**🪐 Retrograde**")
+        st.caption("**Planete Retrograde**")
         for e in summary['retrograde']:
             st.caption(e)
     
     if summary['ingress']:
-        st.caption("**🪐 Ingressuri**")
+        st.caption("**Ingressuri**")
         for e in summary['ingress']:
             st.caption(e)
     
-        # 🌙 NAKSHATRA
+        # NAKSHATRA
     sun_lon_sid = (positions['sun_lon'] - positions['ayanamsa']) % 360
     moon_lon_sid = (positions['moon_lon'] - positions['ayanamsa']) % 360
     
@@ -1268,7 +1268,7 @@ with tab0:
     moon_nak, moon_nak_name, moon_pada = get_nakshatra(moon_lon_sid)
     
     if sun_nak_name and moon_nak_name:
-        st.caption("**🌙 Nakshatra**")
+        st.caption("**Nakshatra**")
         
         # Soarele
         sun_current_end = NAKSHATRA_LIST[sun_nak - 1][3]
@@ -1278,7 +1278,7 @@ with tab0:
             sun_days = sun_dist / sun_speed
             sun_exit = now + timedelta(days=sun_days)
             sun_next = sun_nak + 1 if sun_nak < 27 else 1
-            st.caption(f"Soare: {sun_nak_name} (Pada {sun_pada}) — {format_zodiac(sun_lon_sid)} (sid)")
+            st.caption(f"**Soare**: {sun_nak_name} (Pada {sun_pada}) — {format_zodiac(sun_lon_sid)} (sid)")
             st.caption(f"→ {NAKSHATRA_LIST[sun_next-1][1]} ({sun_exit.strftime('%d %b %H:%M')})")
         
         # Luna
@@ -1289,11 +1289,11 @@ with tab0:
             moon_days = moon_dist / moon_speed
             moon_exit = now + timedelta(days=moon_days)
             moon_next = moon_nak + 1 if moon_nak < 27 else 1
-            st.caption(f"Luna: {moon_nak_name} (Pada {moon_pada}) — {format_zodiac(moon_lon_sid)} (sid)")
+            st.caption(f"**Luna**: {moon_nak_name} (Pada {moon_pada}) — {format_zodiac(moon_lon_sid)} (sid)")
             st.caption(f"→ {NAKSHATRA_LIST[moon_next-1][1]} ({moon_exit.strftime('%d %b %H:%M')})")
     
     if summary['aspecte']:
-        st.caption("**⭐ Aspecte majore (<2°)**")
+        st.caption("**Aspecte majore (<2°)**")
         for e in summary['aspecte']:
             st.caption(e)
     
