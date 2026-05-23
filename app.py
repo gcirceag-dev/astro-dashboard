@@ -886,6 +886,9 @@ def get_summary_events(now_local, positions, observational, long_term):
             for aspect_name, aspect_angle in aspect_types.items():
                 angle_diff = abs(diff - aspect_angle)
                 if angle_diff <= 2.0:
+                    # Pentru stele fixe, arată doar conjuncțiile
+                    if (body1 in fixed_stars or body2 in fixed_stars) and aspect_angle != 0:
+                        continue
                     events['aspecte'].append(f"{body1} – {body2}: {aspect_name} ({format_dms(angle_diff)})")
                     
     # Sortează aspectele după orb (diferența în grade, extrasă din paranteză)
