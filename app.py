@@ -1163,7 +1163,7 @@ st.markdown("""
     .stApp, .stMarkdown, .stCaption, .stText, p, div, span, label {
         font-size: 18px !important;
         color: #000000 !important;
-        font-weight: 400 !important;
+        font-weight: 500 !important;
     }
     h2, h3, .stSubheader {
         font-size: 18px !important;
