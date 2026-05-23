@@ -925,7 +925,8 @@ def get_summary_events(now_local, positions, observational, long_term):
     
     mansion_info = long_term.get('next_mansion')
     if mansion_info is not None:
-        events['luna'].append(f"🏠 {mansion_info['current']} → {mansion_info['next']} ({mansion_info['next_date']})")
+        events['luna'].append(f"🏠 {mansion_info['current']}")
+        events['luna'].append(f"→ {mansion_info['next']} ({mansion_info['next_date']})")
     
     # 🪐 RETROGRADE
     retro_list = []
@@ -941,9 +942,7 @@ def get_summary_events(now_local, positions, observational, long_term):
                                                  now_local.hour + now_local.minute/60))
     ingresses = find_ingresses(jd_now, planet_data, max_days=3)
     for name, sign, dt, days in ingresses:
-        emoji_map = {'Soare': '☉', 'Luna': '☽', 'Mercur': '☿', 'Venus': '♀', 'Marte': '♂', 'Jupiter': '♃', 'Saturn': '♄'}
-        emoji = emoji_map.get(name, '●')
-        events['ingress'].append(f"{emoji} {name} intră în {sign} în {int(days)}z {int((days%1)*24)}h ({dt.strftime('%d %b %H:%M')})")
+        events['ingress'].append(f"{name} intră în {sign} în {int(days)}z {int((days%1)*24)}h ({dt.strftime('%d %b %H:%M')})")
     
     # ⭐ ASPECTE (doar planete cu planete lente, sau planete cu stele fixe)
     planet_data_full = positions.get('planet_data', {})
@@ -1219,6 +1218,26 @@ tab0, tab1, tab2, tab3, tab4 = st.tabs(["Sumar", "Soare", "Lună", "Planete", "A
 # ═══════════ TAB 0: SUMAR ═══════════
 with tab0:
     st.subheader("Sumar evenimente (1-3 zile)")
+    
+    # Scor elemente
+    elements_count = {'Foc': 0, 'Pamant': 0, 'Aer': 0, 'Apa': 0}
+    fire = ['Ari', 'Leo', 'Sag']
+    earth_signs = ['Tau', 'Vir', 'Cap']
+    air = ['Gem', 'Lib', 'Aqu']
+    water = ['Can', 'Sco', 'Pis']
+    
+    for name in ['Soare', 'Luna', 'Mercur', 'Venus', 'Marte', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto']:
+        if name in positions.get('planet_data', {}):
+            lon = positions['planet_data'][name]['lon']
+            sign = ['Ari', 'Tau', 'Gem', 'Can', 'Leo', 'Vir', 'Lib', 'Sco', 'Sag', 'Cap', 'Aqu', 'Pis'][int(lon // 30)]
+            if sign in fire: elements_count['Foc'] += 1
+            elif sign in earth_signs: elements_count['Pamant'] += 1
+            elif sign in air: elements_count['Aer'] += 1
+            elif sign in water: elements_count['Apa'] += 1
+    
+    parts = [f"{v} {k}" for k, v in elements_count.items() if v > 0]
+    st.caption("Elemente: " + ", ".join(parts))
+    
     summary = get_summary_events(now, positions, observational, long_term)
     
     if summary['soare']:
@@ -1250,8 +1269,28 @@ with tab0:
     
     if sun_nak_name and moon_nak_name:
         st.caption("**🌙 Nakshatra**")
-        st.caption(f"☉ Soarele în {sun_nak_name} (Pada {sun_pada})")
-        st.caption(f"☽ Luna în {moon_nak_name} (Pada {moon_pada})")
+        
+        # Soarele
+        sun_current_end = NAKSHATRA_LIST[sun_nak - 1][3]
+        sun_dist = (sun_current_end - sun_lon_sid) % 360
+        sun_speed = positions['sun_speed']
+        if sun_speed > 0:
+            sun_days = sun_dist / sun_speed
+            sun_exit = now + timedelta(days=sun_days)
+            sun_next = sun_nak + 1 if sun_nak < 27 else 1
+            st.caption(f"Soare: {sun_nak_name} (Pada {sun_pada}) — {format_zodiac(sun_lon_sid)} (sid)")
+            st.caption(f"→ {NAKSHATRA_LIST[sun_next-1][1]} ({sun_exit.strftime('%d %b %H:%M')})")
+        
+        # Luna
+        moon_current_end = NAKSHATRA_LIST[moon_nak - 1][3]
+        moon_dist = (moon_current_end - moon_lon_sid) % 360
+        moon_speed = positions['moon_speed']
+        if moon_speed > 0:
+            moon_days = moon_dist / moon_speed
+            moon_exit = now + timedelta(days=moon_days)
+            moon_next = moon_nak + 1 if moon_nak < 27 else 1
+            st.caption(f"Luna: {moon_nak_name} (Pada {moon_pada}) — {format_zodiac(moon_lon_sid)} (sid)")
+            st.caption(f"→ {NAKSHATRA_LIST[moon_next-1][1]} ({moon_exit.strftime('%d %b %H:%M')})")
     
     if summary['aspecte']:
         st.caption("**⭐ Aspecte majore (<2°)**")
@@ -1339,7 +1378,7 @@ with tab1:
         if perihelion_t is not None and aphelion_t is not None:
             perihelion_d = long_term['perihelion_d']
             aphelion_d = long_term['aphelion_d']
-            current_dist = earth.at(t_now).observe(sun).distance().km
+            current_dist = resources['earth'].at(t_now).observe(resources['sun']).distance().km
             if aphelion_d != perihelion_d:
                 progress = (current_dist - perihelion_d) / (aphelion_d - perihelion_d)
             else:
@@ -1940,11 +1979,18 @@ with tab3:
     with st.expander("Altitudine (acum)"):
         altitudes = []
         
-        # Soarele și Luna
+        # Soarele și Luna (cu sens)
         sun_alt = observational.get('sun_alt', 0)
         moon_alt = observational.get('moon_alt', 0)
-        altitudes.append(('Soare', sun_alt))
-        altitudes.append(('Lună', moon_alt))
+        
+        t_later = ts.from_datetime(now_utc + timedelta(minutes=5))
+        sun2 = observer.at(t_later).observe(eph['sun']).apparent()
+        moon2 = observer.at(t_later).observe(eph['moon']).apparent()
+        sun_alt2, _, _ = sun2.altaz()
+        moon_alt2, _, _ = moon2.altaz()
+        
+        altitudes.append(('☉ Soare', sun_alt, '↑' if sun_alt2.degrees > sun_alt else '↓'))
+        altitudes.append(('☽ Lună', moon_alt, '↑' if moon_alt2.degrees > moon_alt else '↓'))
         
         # Planetele
         planet_sf_names = {
@@ -1958,22 +2004,29 @@ with tab3:
             try:
                 p = observer.at(t_now).observe(eph[sf_name]).apparent()
                 alt, az, _ = p.altaz()
-                altitudes.append((name, alt.degrees))
+                
+                # Verifică sensul mișcării (peste 5 minute)
+                t_later = ts.from_datetime(now_utc + timedelta(minutes=5))
+                p2 = observer.at(t_later).observe(eph[sf_name]).apparent()
+                alt2, _, _ = p2.altaz()
+                arrow = "↑" if alt2.degrees > alt.degrees else "↓"
+                
+                altitudes.append((name, alt.degrees, arrow))
             except:
                 pass
         
         # Sortăm descrescător după altitudine
         altitudes.sort(key=lambda x: x[1], reverse=True)
         
-        for name, alt in altitudes:
+        for name, alt, arrow in altitudes:
             if alt > 0:
-                st.caption(f"{name}: +{alt:.1f}°")
+                st.caption(f"{name}: +{alt:.1f}° {arrow}")
         
         st.caption("─── Orizont (0°) ───")
         
-        for name, alt in altitudes:
+        for name, alt, arrow in altitudes:
             if alt <= 0:
-                st.caption(f"{name}: {alt:.1f}°")
+                st.caption(f"{name}: {alt:.1f}° {arrow}")
         
     
     with st.expander("Fazele planetelor interioare"):
@@ -2074,6 +2127,8 @@ with tab4:
         speed1 = planet_data[body1]['speed']
         for j, body2 in enumerate(all_bodies_list):
             if j <= i or body2 not in planet_data:
+                continue
+            if body1 in positions.get('fixed_stars_names', []) and body2 in positions.get('fixed_stars_names', []):
                 continue
             if body1 in ['Nod Nord (Mean)', 'Nod Sud (Mean)'] and body2 in ['Nod Nord (Mean)', 'Nod Sud (Mean)']:
                 continue
