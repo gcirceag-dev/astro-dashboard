@@ -1287,33 +1287,48 @@ with tab2:
                         showlegend=False, hoverinfo='none'
                     ))
                 
-                for angle, dt, label, et in events_with_angles:
-                    if et == 'phase':
-                        r = r1
-                        if "🌑" in label: icon = "🌑"
-                        elif "🌓" in label: icon = "🌓"
-                        elif "🌕" in label: icon = "🌕"
-                        elif "🌗" in label: icon = "🌗"
-                        else: icon = "●"
-                        color_icon = '#333333'
-                    elif et == 'node':
-                        r = r2
-                        if "Ascendent" in label: icon = "☊"
-                        else: icon = "☋"
-                        color_icon = '#4299e1'
-                    else:
-                        r = r3
-                        if "Perigeu" in label: icon = "P"
-                        else: icon = "A"
-                        color_icon = '#9b59b6'
-                    
-                    fig.add_trace(go.Scatterpolar(
-                        r=[r], theta=[angle],
-                        mode='text', text=[icon],
-                        textfont=dict(size=20, color=color_icon, family='Arial'),
-                        showlegend=False, hoverinfo='text',
-                        hovertext=f"{label}<br>{dt.strftime('%d %b %H:%M')}"
-                    ))
+                    for angle, dt, label, et in events_with_angles:
+                        if et == 'phase':
+                            r = r1
+                            if "🌑" in label: icon = "🌑"
+                            elif "🌓" in label: icon = "🌓"
+                            elif "🌕" in label: icon = "🌕"
+                            elif "🌗" in label: icon = "🌗"
+                            else: icon = "●"
+                            color_icon = '#333333'
+                            icon_size = 20
+                            r_icon = r1 + 0.08
+                        elif et == 'node':
+                            r = r2
+                            if "Ascendent" in label: icon = "☊"
+                            else: icon = "☋"
+                            color_icon = '#4299e1'
+                            icon_size = 22
+                            r_icon = r2 + 0.08
+                        else:
+                            r = r3
+                            if "Perigeu" in label: icon = "⬇"
+                            else: icon = "⬆"
+                            color_icon = '#9b59b6'
+                            icon_size = 18
+                            r_icon = r3 + 0.08
+                        
+                        # Liniuța pe cerc (marker pe poziția exactă)
+                        fig.add_trace(go.Scatterpolar(
+                            r=[r - 0.02, r + 0.02], theta=[angle, angle],
+                            mode='lines', line=dict(color=color_icon, width=2),
+                            showlegend=False, hoverinfo='text',
+                            hovertext=f"{label}<br>{dt.strftime('%d %b %H:%M')}"
+                        ))
+                        
+                        # Iconița lângă liniuță (în exterior)
+                        fig.add_trace(go.Scatterpolar(
+                            r=[r_icon], theta=[angle],
+                            mode='text', text=[icon],
+                            textfont=dict(size=icon_size, color=color_icon, family='Arial'),
+                            showlegend=False, hoverinfo='text',
+                            hovertext=f"{label}<br>{dt.strftime('%d %b %H:%M')}"
+                        ))
                 
                 fig.add_trace(go.Scatterpolar(
                     r=[0, r1 - 0.02], theta=[now_angle, now_angle],
@@ -1356,6 +1371,131 @@ with tab2:
                 st.caption("Nu s-a găsit Luna Plină ca referință.")
         else:
             st.caption("Nu sunt suficiente evenimente pentru afișare.")
+
+    with st.expander("Unghi Soare-Lună (🍕 felie de pizza)"):
+        sun_lon = positions['sun_lon']
+        moon_lon = positions['moon_lon']
+        arc_sl = observational.get('arc_sl', 0)
+        
+        nn_lon = positions['planet_data']['Nod Nord (Mean)']['lon']
+        ns_lon = positions['planet_data']['Nod Sud (Mean)']['lon']
+        lilith_lon = positions['planet_data']['Lilith (Mean)']['lon']
+        priap_lon = (lilith_lon + 180) % 360
+        
+        fig_pizza = go.Figure()
+        
+        # INELUL ZODIACAL
+        r_inner = 0.65
+        r_outer = 0.80
+        
+        theta_cerc = np.linspace(0, 360, 360)
+        fig_pizza.add_trace(go.Scatterpolar(
+            r=[r_inner] * len(theta_cerc), theta=theta_cerc,
+            mode='lines', line=dict(color='#cccccc', width=1.5),
+            showlegend=False, hoverinfo='none'
+        ))
+        fig_pizza.add_trace(go.Scatterpolar(
+            r=[r_outer] * len(theta_cerc), theta=theta_cerc,
+            mode='lines', line=dict(color='#cccccc', width=1.5),
+            showlegend=False, hoverinfo='none'
+        ))
+        
+        # Segmente zodiacale
+        for i in range(12):
+            angle = i * 30
+            fig_pizza.add_trace(go.Scatterpolar(
+                r=[r_inner, r_outer], theta=[angle, angle],
+                mode='lines', line=dict(color='#dddddd', width=1),
+                showlegend=False, hoverinfo='none'
+            ))
+        
+        # Abrevieri zodii în engleză
+        signs_abbr = ['Ari', 'Tau', 'Gem', 'Can', 'Leo', 'Vir', 'Lib', 'Sco', 'Sag', 'Cap', 'Aqu', 'Pis']
+        for i, sign in enumerate(signs_abbr):
+            angle = i * 30 + 15
+            fig_pizza.add_trace(go.Scatterpolar(
+                r=[(r_inner + r_outer) / 2], theta=[angle],
+                mode='text', text=[sign],
+                textfont=dict(size=14, color='#666666'),
+                showlegend=False, hoverinfo='none'
+            ))
+        
+        # PUNCTELE ȘI LINIILE CĂTRE CENTRU
+        r_points = r_inner - 0.12
+        
+        def add_body(fig, lon, symbol, color, size, name, r_points, text_color='white'):
+            # Linia punctată către centru
+            fig.add_trace(go.Scatterpolar(
+                r=[0, r_points], theta=[lon, lon],
+                mode='lines', line=dict(color=color, width=1, dash='dot'),
+                showlegend=False, hoverinfo='none'
+            ))
+            # Punctul (fără background, doar text)
+            fig.add_trace(go.Scatterpolar(
+                r=[r_points], theta=[lon],
+                mode='text',
+                text=[symbol],
+                textfont=dict(size=size, color=color),
+                showlegend=False, hoverinfo='text',
+                hovertext=f"{name}: {format_zodiac(lon)}"
+            ))
+        
+        # Corpuri cerești (mărite, fără background)
+        add_body(fig_pizza, sun_lon, '☉', '#f0c040', 36, 'Soare', r_points - 0.01)
+        add_body(fig_pizza, moon_lon, '☽', '#f0c040', 28, 'Lună', r_points)
+        add_body(fig_pizza, nn_lon, '☊', '#4299e1', 28, 'Nod Nord', r_points)
+        add_body(fig_pizza, ns_lon, '☋', '#4299e1', 28, 'Nod Sud', r_points)
+        add_body(fig_pizza, lilith_lon, '⚸', '#9b59b6', 28, 'Lilith', r_points)
+        add_body(fig_pizza, priap_lon, 'P', '#9b59b6', 28, 'Priap', r_points)
+        
+        # FELIA DE PIZZA
+        if moon_lon > sun_lon:
+            theta_arc = np.linspace(sun_lon, moon_lon, 200)
+        else:
+            theta_arc = np.linspace(sun_lon, moon_lon + 360, 200) % 360
+        
+        r_arc = r_points
+        poly_r = np.concatenate([[0], [r_arc] * len(theta_arc), [0]])
+        poly_theta = np.concatenate([[theta_arc[0]], theta_arc, [theta_arc[-1]]])
+        
+        fig_pizza.add_trace(go.Scatterpolar(
+            r=poly_r, theta=poly_theta,
+            mode='lines', fill='toself',
+            fillcolor='rgba(200, 200, 200, 0.3)',
+            line=dict(color='#999999', width=1),
+            showlegend=False, hoverinfo='text',
+            hovertext=f"Arc solar-lunar: {format_dms(arc_sl)}<br>Iluminare: {observational.get('moon_illum', 0)*100:.1f}%"
+        ))
+        
+        fig_pizza.update_layout(
+            polar=dict(
+                radialaxis=dict(visible=False, range=[0, 1]),
+                angularaxis=dict(
+                    tickmode='array',
+                    tickvals=[0, 90, 180, 270],
+                    ticktext=['0° (Ari)', '90° (Can)', '180° (Lib)', '270° (Cap)'],
+                    direction='clockwise',
+                    rotation=90
+                )
+            ),
+            height=550, margin=dict(l=20, r=20, t=20, b=20),
+            template="plotly_white", showlegend=False
+        )
+        
+        st.plotly_chart(fig_pizza, use_container_width=True)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.caption(f"☉ Soare: {format_zodiac(sun_lon)}")
+            st.caption(f"☽ Lună: {format_zodiac(moon_lon)}")
+        with col2:
+            st.caption(f"Arc: {format_dms(arc_sl)}")
+            st.caption(f"Iluminare: {observational.get('moon_illum', 0)*100:.1f}%")
+        with col3:
+            st.caption(f"☊ NN: {format_zodiac(nn_lon)}")
+            st.caption(f"☋ NS: {format_zodiac(ns_lon)}")
+            st.caption(f"⚸ Lilith: {format_zodiac(lilith_lon)}")
+            st.caption(f"P Priap: {format_zodiac(priap_lon)}")
 
 # ═══════════ TAB 3: PLANETE ═══════════
 with tab3:
