@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-app_v4_final.py - Dashboard Astro cu Streamlit (TOATE CORECȚIILE APLICATE)
+app.py - Dashboard Astro cu Streamlit
 """
 
 import os
@@ -14,6 +14,7 @@ import pytz
 import streamlit as st
 import plotly.graph_objects as go
 import numpy as np
+from importlib.resources import read_binary
 
 # ═══════════════════════════════════════════════════════════════
 # CONFIGURARE GLOBALĂ
@@ -66,6 +67,64 @@ MANSIONS_LIST = [
     (27, "Al-Fargh al-Thani", "TBD", 334.28, 347.13),
     (28, "Batn al-Hut", "TBD", 347.13, 360.0),
 ]
+
+NAKSHATRA_LIST = [
+    (1, "Ashwini", 0.0, 13.3333),
+    (2, "Bharani", 13.3333, 26.6667),
+    (3, "Krittika", 26.6667, 40.0),
+    (4, "Rohini", 40.0, 53.3333),
+    (5, "Mrigashira", 53.3333, 66.6667),
+    (6, "Ardra", 66.6667, 80.0),
+    (7, "Punarvasu", 80.0, 93.3333),
+    (8, "Pushya", 93.3333, 106.6667),
+    (9, "Ashlesha", 106.6667, 120.0),
+    (10, "Magha", 120.0, 133.3333),
+    (11, "Purva Phalguni", 133.3333, 146.6667),
+    (12, "Uttara Phalguni", 146.6667, 160.0),
+    (13, "Hasta", 160.0, 173.3333),
+    (14, "Chitra", 173.3333, 186.6667),
+    (15, "Swati", 186.6667, 200.0),
+    (16, "Vishakha", 200.0, 213.3333),
+    (17, "Anuradha", 213.3333, 226.6667),
+    (18, "Jyeshtha", 226.6667, 240.0),
+    (19, "Mula", 240.0, 253.3333),
+    (20, "Purva Ashadha", 253.3333, 266.6667),
+    (21, "Uttara Ashadha", 266.6667, 280.0),
+    (22, "Shravana", 280.0, 293.3333),
+    (23, "Dhanishta", 293.3333, 306.6667),
+    (24, "Shatabhisha", 306.6667, 320.0),
+    (25, "Purva Bhadrapada", 320.0, 333.3333),
+    (26, "Uttara Bhadrapada", 333.3333, 346.6667),
+    (27, "Revati", 346.6667, 360.0),
+]
+
+
+IAU_CONSTELLATION_NAMES = {
+    'And': 'Andromeda', 'Ant': 'Antlia', 'Aps': 'Apus', 'Aqr': 'Aquarius',
+    'Aql': 'Aquila', 'Ara': 'Ara', 'Ari': 'Aries', 'Aur': 'Auriga',
+    'Boo': 'Bootes', 'Cae': 'Caelum', 'Cam': 'Camelopardalis', 'Cnc': 'Cancer',
+    'CVn': 'Canes Venatici', 'CMa': 'Canis Major', 'CMi': 'Canis Minor',
+    'Cap': 'Capricornus', 'Car': 'Carina', 'Cas': 'Cassiopeia', 'Cen': 'Centaurus',
+    'Cep': 'Cepheus', 'Cet': 'Cetus', 'Cha': 'Chamaeleon', 'Cir': 'Circinus',
+    'Col': 'Columba', 'Com': 'Coma Berenices', 'CrA': 'Corona Australis',
+    'CrB': 'Corona Borealis', 'Crv': 'Corvus', 'Crt': 'Crater', 'Cru': 'Crux',
+    'Cyg': 'Cygnus', 'Del': 'Delphinus', 'Dor': 'Dorado', 'Dra': 'Draco',
+    'Equ': 'Equuleus', 'Eri': 'Eridanus', 'For': 'Fornax', 'Gem': 'Gemini',
+    'Gru': 'Grus', 'Her': 'Hercules', 'Hor': 'Horologium', 'Hya': 'Hydra',
+    'Hyi': 'Hydrus', 'Ind': 'Indus', 'Lac': 'Lacerta', 'Leo': 'Leo',
+    'LMi': 'Leo Minor', 'Lep': 'Lepus', 'Lib': 'Libra', 'Lup': 'Lupus',
+    'Lyn': 'Lynx', 'Lyr': 'Lyra', 'Men': 'Mensa', 'Mic': 'Microscopium',
+    'Mon': 'Monoceros', 'Mus': 'Musca', 'Nor': 'Norma', 'Oct': 'Octans',
+    'Oph': 'Ophiuchus', 'Ori': 'Orion', 'Pav': 'Pavo', 'Peg': 'Pegasus',
+    'Per': 'Perseus', 'Phe': 'Phoenix', 'Pic': 'Pictor', 'Psc': 'Pisces',
+    'PsA': 'Piscis Austrinus', 'Pup': 'Puppis', 'Pyx': 'Pyxis', 'Ret': 'Reticulum',
+    'Sge': 'Sagitta', 'Sgr': 'Sagittarius', 'Sco': 'Scorpius', 'Scl': 'Sculptor',
+    'Sct': 'Scutum', 'Ser': 'Serpens', 'Sex': 'Sextans', 'Tau': 'Taurus',
+    'Tel': 'Telescopium', 'Tri': 'Triangulum', 'TrA': 'Triangulum Australe',
+    'Tuc': 'Tucana', 'UMa': 'Ursa Major', 'UMi': 'Ursa Minor', 'Vel': 'Vela',
+    'Vir': 'Virgo', 'Vol': 'Volans', 'Vul': 'Vulpecula',
+}
+
 
 PLANET_IDS = {
     'Soare': swe.SUN, 'Luna': swe.MOON, 'Mercur': swe.MERCURY,
@@ -173,6 +232,45 @@ def get_lunar_mansion(lon):
         if start <= lon < end:
             return number, name, trans
     return None, None, None
+    
+def get_nakshatra(lon_sidereal):
+    """Găsește Nakshatra și Pada pentru o longitudine siderală"""
+    for number, name, start, end in NAKSHATRA_LIST:
+        if start <= lon_sidereal < end:
+            # Calculează Pada (1-4)
+            pos_in_nakshatra = lon_sidereal - start
+            pada = int(pos_in_nakshatra // 3.3333) + 1
+            return number, name, pada
+    return None, None, None
+
+def get_real_constellation(ra_hours, dec_degrees):
+    """Determină constelația IAU reală din coordonate ecuatoriale"""
+    import numpy as np
+    from importlib.resources import read_binary
+    import io
+    
+    # Cache pentru grila de constelații (se încarcă o singură dată)
+    if not hasattr(get_real_constellation, 'grid'):
+        data = read_binary('skyfield.data', 'constellations.npz')
+        npz = np.load(io.BytesIO(data))
+        get_real_constellation.grid = {
+            'sorted_ra': npz['sorted_ra'],
+            'sorted_dec': npz['sorted_dec'],
+            'radec_to_index': npz['radec_to_index'],
+            'indexed_abbreviations': npz['indexed_abbreviations'],
+        }
+    
+    grid = get_real_constellation.grid
+    ra_idx = np.searchsorted(grid['sorted_ra'], ra_hours, side='right') - 1
+    dec_idx = np.searchsorted(grid['sorted_dec'], dec_degrees, side='right') - 1
+    
+    ra_idx = max(0, min(ra_idx, grid['radec_to_index'].shape[0] - 2))
+    dec_idx = max(0, min(dec_idx, grid['radec_to_index'].shape[1] - 2))
+    
+    const_idx = grid['radec_to_index'][ra_idx, dec_idx]
+    abbrev = grid['indexed_abbreviations'][const_idx]
+    
+    return IAU_CONSTELLATION_NAMES.get(abbrev, abbrev)
 
 def find_lunar_nodes_optimized(jd_start, jd_end):
     crossings = []
@@ -1143,6 +1241,18 @@ with tab0:
         for e in summary['ingress']:
             st.caption(e)
     
+        # 🌙 NAKSHATRA
+    sun_lon_sid = (positions['sun_lon'] - positions['ayanamsa']) % 360
+    moon_lon_sid = (positions['moon_lon'] - positions['ayanamsa']) % 360
+    
+    sun_nak, sun_nak_name, sun_pada = get_nakshatra(sun_lon_sid)
+    moon_nak, moon_nak_name, moon_pada = get_nakshatra(moon_lon_sid)
+    
+    if sun_nak_name and moon_nak_name:
+        st.caption("**🌙 Nakshatra**")
+        st.caption(f"☉ Soarele în {sun_nak_name} (Pada {sun_pada})")
+        st.caption(f"☽ Luna în {moon_nak_name} (Pada {moon_pada})")
+    
     if summary['aspecte']:
         st.caption("**⭐ Aspecte majore (<2°)**")
         for e in summary['aspecte']:
@@ -1349,6 +1459,26 @@ with tab2:
                 st.caption(f"**{num}. {display}** ({format_dms(start)} – {format_dms(end)})")
             else:
                 st.caption(f"{num}. {display} ({format_dms(start)} – {format_dms(end)})")
+    with st.expander("Nakshatra (27 de constelații siderale)"):
+        sun_lon_sid = (positions['sun_lon'] - positions['ayanamsa']) % 360
+        moon_lon_sid = (positions['moon_lon'] - positions['ayanamsa']) % 360
+        
+        sun_nak, sun_nak_name, sun_pada = get_nakshatra(sun_lon_sid)
+        moon_nak, moon_nak_name, moon_pada = get_nakshatra(moon_lon_sid)
+        
+        st.caption(f"Soarele în **{sun_nak_name}** (Pada {sun_pada}) — {format_zodiac(sun_lon_sid)} (sid)")
+        st.caption(f"Luna în **{moon_nak_name}** (Pada {moon_pada}) — {format_zodiac(moon_lon_sid)} (sid)")
+        st.caption("")
+        st.caption("Toate cele 27 de Nakshatra:")
+        
+        for num, name, start, end in NAKSHATRA_LIST:
+            pada_size = 3.3333
+            if (moon_nak == num):
+                st.caption(f"**{num}. {name}** ({format_dms(start)} – {format_dms(end)}) ⬅ Luna aici")
+            elif (sun_nak == num):
+                st.caption(f"**{num}. {name}** ({format_dms(start)} – {format_dms(end)}) ⬅ Soarele aici")
+            else:
+                st.caption(f"{num}. {name} ({format_dms(start)} – {format_dms(end)})")
     
     with st.expander("Date orbitale și coordonate"):
         st.caption(f"Longitudine ecliptică: {format_dms(moon_lon)}")
@@ -1807,43 +1937,60 @@ with tab3:
                 dec_str = f" | Decl {format_dms(equ_pos[1], True)}"
             st.caption(f"{name}: L {format_dms(pdata['lon'])} | B {format_dms(pdata['lat'], True)} | Dist {pdata['dist']:.6f} AU | V {pdata['speed']:.4f}°/zi{dec_str}")
     
-    with st.expander("Altitudine și Azimut (acum)"):
-        visible_planets = [('Soare', observational.get('sun_alt', 0), observational.get('sun_az', 0)),
-                          ('Luna', observational.get('moon_alt', 0), observational.get('moon_az', 0))]
-        for name in PLANET_IDS:
-            if name in ['Soare', 'Luna']:
-                continue
-            sname = SKYFIELD_NAMES[name]
+    with st.expander("Altitudine și vizibilitate (acum)"):
+        altitudes = []
+        
+        # Soarele și Luna
+        sun_alt = observational.get('sun_alt', 0)
+        moon_alt = observational.get('moon_alt', 0)
+        altitudes.append(('Soare', sun_alt, '#000000'))
+        altitudes.append(('Lună', moon_alt, '#000000'))
+        
+        # Planetele
+        planet_sf_names = {
+            'Mercur': 'MERCURY', 'Venus': 'VENUS', 'Marte': 'MARS BARYCENTER',
+            'Jupiter': 'JUPITER BARYCENTER', 'Saturn': 'SATURN BARYCENTER',
+            'Uranus': 'URANUS BARYCENTER', 'Neptun': 'NEPTUNE BARYCENTER',
+            'Pluto': 'PLUTO BARYCENTER',
+        }
+        
+        for name, sf_name in planet_sf_names.items():
             try:
-                p = observer.at(t_now).observe(eph[sname]).apparent()
+                p = observer.at(t_now).observe(eph[sf_name]).apparent()
                 alt, az, _ = p.altaz()
-                visible_planets.append((name, alt.degrees, az.degrees))
+                # Culori diferite pentru fiecare planetă, toate vizibile
+                altitudes.append((name, alt.degrees, '#333333'))
             except:
                 pass
-        for name, alt, az in visible_planets:
-            st.caption(f"{name}: alt {alt:.2f}° | az {az:.2f}°")
-    
-    with st.expander("Răsărit și Apus (următoarele 24h)"):
-        t0_planets = ts.from_datetime(now_utc)
-        t1_planets = ts.from_datetime(now_utc + timedelta(hours=24))
-        planet_rise_set = []
-        for name, sname in SKYFIELD_NAMES.items():
-            if name in ['Soare', 'Luna']:
-                continue
-            try:
-                f_rs = almanac.risings_and_settings(eph, eph[sname], wgs84.latlon(LAT, LON))
-                times_rs, events_rs = almanac.find_discrete(t0_planets, t1_planets, f_rs)
-                for t, ev in zip(times_rs, events_rs):
-                    event_name = 'Răsărit' if ev == 1 else 'Apus'
-                    planet_rise_set.append((name, event_name, t.astimezone(TZ).strftime('%H:%M')))
-            except:
-                pass
-        if planet_rise_set:
-            planet_rise_set.sort(key=lambda x: x[2])
-            for name, event, time_str in planet_rise_set:
-                st.caption(f"{name}: {event} {time_str}")
-        else:
-            st.caption("Nicio planetă nu răsare/apune în următoarele 24h")
+        
+        # Sortăm după altitudine
+        altitudes.sort(key=lambda x: x[1], reverse=True)
+        
+        # Grafic
+        fig_alt = go.Figure()
+        fig_alt.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+        
+        for name, alt, color in altitudes:
+            fig_alt.add_trace(go.Scatter(
+                x=[name], y=[alt],
+                mode='text',
+                text=[f"{name}  {alt:+.1f}°"],
+                textfont=dict(size=14, color=color),
+                textposition='middle right' if alt > 0 else 'middle left',
+                showlegend=False
+            ))
+        
+        fig_alt.update_layout(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            height=max(300, len(altitudes) * 25),
+            margin=dict(l=10, r=10, t=10, b=10),
+            template="plotly_white",
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)'
+        )
+        
+        st.plotly_chart(fig_alt, use_container_width=True, config={'displayModeBar': False})
     
     with st.expander("Fazele planetelor interioare"):
         col1, col2 = st.columns(2)
@@ -1864,6 +2011,59 @@ with tab3:
         for star_name in positions.get('fixed_stars_names', []):
             if star_name in planet_data:
                 st.caption(f"{star_name}: {format_zodiac(planet_data[star_name]['lon'])}")
+    
+    with st.expander("Constelații reale (IAU)"):
+        from skyfield.api import load as skyfield_load
+        resources = skyfield_load('de440s.bsp')
+        earth_iau = resources['earth']
+        ts_iau = load.timescale()
+        t_iau = ts_iau.from_datetime(now_utc)
+        
+        # Dicționar de nume Skyfield pentru toate corpurile
+        skyfield_bodies = {
+            'Soare': 'SUN', 'Luna': 'MOON', 'Mercur': 'MERCURY', 'Venus': 'VENUS',
+            'Marte': 'MARS BARYCENTER', 'Jupiter': 'JUPITER BARYCENTER',
+            'Saturn': 'SATURN BARYCENTER', 'Uranus': 'URANUS BARYCENTER',
+            'Neptun': 'NEPTUNE BARYCENTER', 'Pluto': 'PLUTO BARYCENTER',
+        }
+        
+        st.caption("**Planete:**")
+        for name, sf_name in skyfield_bodies.items():
+            try:
+                body = resources[sf_name]
+                position = earth_iau.at(t_iau).observe(body).apparent()
+                ra, dec, _ = position.radec()
+                constellation = get_real_constellation(ra.hours, dec.degrees)
+                st.caption(f"{name}: {constellation}")
+            except:
+                st.caption(f"{name}: n/a")
+        
+        # Pentru asteroizi, noduri, Lilith - folosim pozițiile ecliptice și convertim
+        st.caption("")
+        st.caption("**Asteroizi și puncte:**")
+        
+        obliquity = positions['obliquity']
+        
+        for name in list(ASTEROID_IDS.keys()) + ['Nod Nord (Mean)', 'Nod Sud (Mean)', 'Lilith (Mean)']:
+            if name not in planet_data:
+                continue
+            lon = planet_data[name]['lon']
+            lat = planet_data[name]['lat']
+            
+            # Conversie ecliptică → ecuatorială (aproximativă, dar suficientă)
+            from math import sin, cos, tan, asin, atan2, radians, degrees
+            lon_rad = radians(lon)
+            lat_rad = radians(lat)
+            eps_rad = radians(obliquity)
+            
+            dec_rad = asin(sin(lat_rad) * cos(eps_rad) + cos(lat_rad) * sin(eps_rad) * sin(lon_rad))
+            ra_rad = atan2(sin(lon_rad) * cos(eps_rad) - tan(lat_rad) * sin(eps_rad), cos(lon_rad))
+            
+            ra_hours = (degrees(ra_rad) % 360) / 15.0
+            dec_deg = degrees(dec_rad)
+            
+            constellation = get_real_constellation(ra_hours, dec_deg)
+            st.caption(f"{name}: {constellation}")
 
 # ═══════════ TAB 4: ASPECTE ═══════════
 with tab4:
