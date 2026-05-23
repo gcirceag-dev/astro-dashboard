@@ -1937,14 +1937,14 @@ with tab3:
                 dec_str = f" | Decl {format_dms(equ_pos[1], True)}"
             st.caption(f"{name}: L {format_dms(pdata['lon'])} | B {format_dms(pdata['lat'], True)} | Dist {pdata['dist']:.6f} AU | V {pdata['speed']:.4f}°/zi{dec_str}")
     
-    with st.expander("Altitudine și vizibilitate (acum)"):
+    with st.expander("Altitudine (acum)"):
         altitudes = []
         
         # Soarele și Luna
         sun_alt = observational.get('sun_alt', 0)
         moon_alt = observational.get('moon_alt', 0)
-        altitudes.append(('Soare', sun_alt, '#000000'))
-        altitudes.append(('Lună', moon_alt, '#000000'))
+        altitudes.append(('Soare', sun_alt))
+        altitudes.append(('Lună', moon_alt))
         
         # Planetele
         planet_sf_names = {
@@ -1958,39 +1958,23 @@ with tab3:
             try:
                 p = observer.at(t_now).observe(eph[sf_name]).apparent()
                 alt, az, _ = p.altaz()
-                # Culori diferite pentru fiecare planetă, toate vizibile
-                altitudes.append((name, alt.degrees, '#333333'))
+                altitudes.append((name, alt.degrees))
             except:
                 pass
         
-        # Sortăm după altitudine
+        # Sortăm descrescător după altitudine
         altitudes.sort(key=lambda x: x[1], reverse=True)
         
-        # Grafic
-        fig_alt = go.Figure()
-        fig_alt.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+        for name, alt in altitudes:
+            if alt > 0:
+                st.caption(f"{name}: +{alt:.1f}°")
         
-        for name, alt, color in altitudes:
-            fig_alt.add_trace(go.Scatter(
-                x=[name], y=[alt],
-                mode='text',
-                text=[f"{name}  {alt:+.1f}°"],
-                textfont=dict(size=14, color=color),
-                textposition='middle right' if alt > 0 else 'middle left',
-                showlegend=False
-            ))
+        st.caption("─── Orizont (0°) ───")
         
-        fig_alt.update_layout(
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            height=max(300, len(altitudes) * 25),
-            margin=dict(l=10, r=10, t=10, b=10),
-            template="plotly_white",
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
-        )
+        for name, alt in altitudes:
+            if alt <= 0:
+                st.caption(f"{name}: {alt:.1f}°")
         
-        st.plotly_chart(fig_alt, use_container_width=True, config={'displayModeBar': False})
     
     with st.expander("Fazele planetelor interioare"):
         col1, col2 = st.columns(2)
