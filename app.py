@@ -273,15 +273,23 @@ def find_next_mansion(jd, moon_lon, ts, tz):
     }
 
 def get_planetary_hours(sunrise, sunset, sunrise_next, now_dt):
+    """Calculează orele planetare"""
     if not all([sunrise, sunset, sunrise_next]):
         return [], None, 0, 0
+    
     chaldean = ['Saturn', 'Jupiter', 'Mars', 'Sun', 'Venus', 'Mercury', 'Moon']
-    day_rulers = {0: 'Moon', 1: 'Mars', 2: 'Mercur', 3: 'Jupiter', 4: 'Venus', 5: 'Saturn', 6: 'Sun'}
+    day_rulers = {0: 'Moon', 1: 'Mars', 2: 'Mercury', 3: 'Jupiter', 4: 'Venus', 5: 'Saturn', 6: 'Sun'}
+    
     durata_zi = sunset - sunrise
     durata_noapte = sunrise_next - sunset
     lungime_ora_zi = durata_zi.total_seconds() / 12
     lungime_ora_noapte = durata_noapte.total_seconds() / 12
-    weekday = sunrise.weekday()
+    
+    if now_dt < sunrise:
+        weekday = (sunrise.weekday() - 1) % 7
+    else:
+        weekday = sunrise.weekday()
+    
     stapan_pornire = day_rulers[weekday]
     index_curent = chaldean.index(stapan_pornire)
     
@@ -302,6 +310,7 @@ def get_planetary_hours(sunrise, sunset, sunrise_next, now_dt):
         timp_cursor += timedelta(seconds=lungime_ora_noapte)
         ore_noapte.append((i + 1, planeta, start_ora, timp_cursor, 'noapte'))
         index_curent = (index_curent + 1) % 7
+
     
     current_hour = None
     for ore in [ore_zi, ore_noapte]:
@@ -438,6 +447,16 @@ def get_observational_data(now_utc):
             sunrise_next = t.astimezone(TZ)
             break
     data['sunrise_next'] = sunrise_next
+
+    # CALCULĂM APUSUL DE IERI (necesar pentru orele planetare înainte de răsărit)
+    yesterday = now_utc - timedelta(days=1)
+    t0_yest = ts.from_datetime(yesterday.replace(hour=0, minute=0, second=0))
+    t1_yest = ts.from_datetime((yesterday + timedelta(days=1)).replace(hour=0, minute=0, second=0))
+    times_rs_yest, events_rs_yest = almanac.find_discrete(t0_yest, t1_yest, f_rs)
+    sunset_yesterday = None
+    for t, ev in zip(times_rs_yest, events_rs_yest):
+        if ev == 0:
+            sunset_yesterday = t.astimezone(TZ)
     
     data['sunrise_az'] = None
     data['sunset_az'] = None
@@ -496,8 +515,32 @@ def get_observational_data(now_utc):
     midnight_local = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
     data['twilights'] = calculate_twilights_optimized(observer, sun, ts, midnight_local, now_local)
     
+    # Determinăm sunset-ul corect pentru orele planetare
+    # Dacă suntem înainte de răsărit, noaptea a început ieri, deci folosim sunset-ul de ieri
+    if now_local < sunrise_today:
+        # Calculăm apusul de ieri
+        yesterday = now_utc - timedelta(days=1)
+        t0_yest = ts.from_datetime(yesterday.replace(hour=0, minute=0, second=0))
+        t1_yest = ts.from_datetime((yesterday + timedelta(days=1)).replace(hour=0, minute=0, second=0))
+        times_rs_yest, events_rs_yest = almanac.find_discrete(t0_yest, t1_yest, f_rs)
+        sunset_yesterday = None
+        for t, ev in zip(times_rs_yest, events_rs_yest):
+            if ev == 0:  # apus
+                sunset_yesterday = t.astimezone(TZ)
+        sunset_for_hours = sunset_yesterday
+    else:
+        sunset_for_hours = sunset_today
+    
+    # Determinăm sunset-ul și sunrise_next corecte pentru orele planetare
+    if now_local < sunrise_today:
+        sunset_for_hours = sunset_yesterday
+        sunrise_next_for_hours = sunrise_today
+    else:
+        sunset_for_hours = sunset_today
+        sunrise_next_for_hours = sunrise_next
+    
     data['hours_plan'], data['current_hour'], data['day_h'], data['night_h'] = get_planetary_hours(
-        sunrise_today, sunset_today, sunrise_next, now_local
+        sunrise_today, sunset_for_hours, sunrise_next_for_hours, now_local
     )
     
     moon_lon = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH)[0][0]
@@ -853,7 +896,7 @@ long_term = get_long_term_events(now_utc)
 day_of_year = now.timetuple().tm_yday
 week_number = now.isocalendar()[1]
 day_name_ro = ['Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă', 'Duminică'][now.weekday()]
-day_rulers = {0: 'Luna', 1: 'Marte', 2: 'Mercur', 3: 'Jupiter', 4: 'Venus', 5: 'Saturn', 6: 'Soare'}
+day_rulers = {0: 'Luna', 1: 'Marte', 2: 'Mercury', 3: 'Jupiter', 4: 'Venus', 5: 'Saturn', 6: 'Soare'}
 day_ruler = day_rulers[now.weekday()]
 current_hour_data = observational.get('current_hour')
 hour_ruler = current_hour_data[1] if current_hour_data else ""
