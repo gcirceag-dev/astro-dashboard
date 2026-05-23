@@ -8,6 +8,7 @@ import math
 import swisseph as swe
 from skyfield.api import load, wgs84
 from skyfield import almanac
+from skyfield.searchlib import find_maxima
 from datetime import datetime, timedelta
 import pytz
 import streamlit as st
@@ -639,19 +640,32 @@ def get_long_term_events(now_utc):
         data['moon_nodes_all_time'].append((label, t_node))
         data['moon_nodes_all'].append((label, t_node.astimezone(TZ).strftime('%d %b %Y %H:%M')))
     
-    jd_pg_start = jd - 25
-    jd_pg_end = jd + 25
-    apsides = find_lunar_apsides_optimized(jd_pg_start, jd_pg_end)
-    all_perigees = [(jd_exact, dist * AU_TO_KM) for jd_exact, dist, is_perigee in apsides if is_perigee]
-    all_apogees = [(jd_exact, dist * AU_TO_KM) for jd_exact, dist, is_perigee in apsides if not is_perigee]
-    data['next_perigee'] = next(((jd, dist) for jd, dist in all_perigees if ts.tt_jd(jd).astimezone(TZ) > now_local), None)
-    data['next_apogee'] = next(((jd, dist) for jd, dist in all_apogees if ts.tt_jd(jd).astimezone(TZ) > now_local), None)
+    # NOUA METODĂ: Skyfield find_maxima (mai precisă)
+    def moon_distance_km(t):
+        return earth.at(t).observe(moon).distance().km
+    moon_distance_km.rough_period = 27.5
+    
+    def neg_moon_distance_km(t):
+        return -earth.at(t).observe(moon).distance().km
+    neg_moon_distance_km.rough_period = 27.5
+    
+    t_pg_start = ts.from_datetime(now_utc - timedelta(days=30))
+    t_pg_end = ts.from_datetime(now_utc + timedelta(days=30))
+    
+    apogee_times, apogee_distances = find_maxima(t_pg_start, t_pg_end, moon_distance_km)
+    perigee_times, perigee_distances_neg = find_maxima(t_pg_start, t_pg_end, neg_moon_distance_km)
+    perigee_distances = [-d for d in perigee_distances_neg]
+    
+    all_apogees = [(t, d) for t, d in zip(apogee_times, apogee_distances)]
+    all_perigees = [(t, d) for t, d in zip(perigee_times, perigee_distances)]
+    data['next_perigee'] = next(((t, d) for t, d in all_perigees if t.astimezone(TZ) > now_local), None)
+    data['next_apogee'] = next(((t, d) for t, d in all_apogees if t.astimezone(TZ) > now_local), None)
     
     all_events = []
-    for jd_exact, dist in all_perigees:
-        all_events.append(('P', ts.tt_jd(jd_exact), dist))
-    for jd_exact, dist in all_apogees:
-        all_events.append(('A', ts.tt_jd(jd_exact), dist))
+    for t, dist in all_perigees:
+        all_events.append(('P', t, dist))
+    for t, dist in all_apogees:
+        all_events.append(('A', t, dist))
     all_events.sort(key=lambda x: x[1].tt)
     
     prev_event = None
@@ -674,7 +688,7 @@ def get_long_term_events(now_utc):
 def get_unified_lunar_events(now_utc, ts, eph, earth, moon):
     events = []
     t_start = ts.from_datetime(now_utc)
-    t_end = ts.from_datetime(now_utc + timedelta(days=45))
+    t_end = ts.from_datetime(now_utc + timedelta(days=35))
     f_phases = almanac.moon_phases(eph)
     phases_times, phases_events = almanac.find_discrete(t_start, t_end, f_phases)
     phase_names = {0: "Lună Nouă 🌑", 1: "Primul Pătrar 🌓", 2: "Lună Plină 🌕", 3: "Ultimul Pătrar 🌗"}
@@ -684,7 +698,7 @@ def get_unified_lunar_events(now_utc, ts, eph, earth, moon):
     
     jd_now = swe.julday(now_utc.year, now_utc.month, now_utc.day,
                         now_utc.hour + now_utc.minute/60.0 + now_utc.second/3600.0)
-    jd_end = jd_now + 45
+    jd_end = jd_now + 35
     node_jds = find_lunar_nodes_optimized(jd_now, jd_end)
     for jd_node in node_jds:
         t_node = ts.tt_jd(jd_node)
@@ -693,16 +707,204 @@ def get_unified_lunar_events(now_utc, ts, eph, earth, moon):
         label = "Nod Ascendent (☊)" if moon_lat_after > moon_lat_before else "Nod Descendent (☋)"
         events.append((t_node, label, 'node'))
     
-    apsides = find_lunar_apsides_optimized(jd_now, jd_end)
-    for jd_exact, dist, is_perigee in apsides:
-        t_exact = ts.tt_jd(jd_exact)
-        d_km = dist * AU_TO_KM
-        if is_perigee:
-            events.append((t_exact, f"Perigeu ⬇ {d_km:,.0f} km", 'perigee'))
-        else:
-            events.append((t_exact, f"Apogeu ⬆ {d_km:,.0f} km", 'apogee'))
+    # Perigeu/Apogeu - metoda Skyfield nativă
+    def moon_distance_km(t):
+        return earth.at(t).observe(moon).distance().km
+    moon_distance_km.rough_period = 27.5
+    
+    def neg_moon_distance_km(t):
+        return -earth.at(t).observe(moon).distance().km
+    neg_moon_distance_km.rough_period = 27.5
+    
+    t_apsides_start = ts.from_datetime(now_utc)
+    t_apsides_end = ts.from_datetime(now_utc + timedelta(days=45))
+    
+    apogee_times, apogee_distances = find_maxima(t_apsides_start, t_apsides_end, moon_distance_km)
+    perigee_times, perigee_distances_neg = find_maxima(t_apsides_start, t_apsides_end, neg_moon_distance_km)
+    perigee_distances = [-d for d in perigee_distances_neg]
+    
+    for t, d in zip(apogee_times, apogee_distances):
+        events.append((t, f"Apogeu ⬆ {d:,.0f} km", 'apogee'))
+    
+    for t, d in zip(perigee_times, perigee_distances):
+        events.append((t, f"Perigeu ⬇ {d:,.0f} km", 'perigee'))
     
     events.sort(key=lambda x: x[0].tt)
+    return events
+    
+
+def find_ingresses(jd_now, planet_data, max_days=3):
+    """Găsește intrări în zodie nouă în următoarele max_days zile"""
+    signs = ['Ari', 'Tau', 'Gem', 'Can', 'Leo', 'Vir', 'Lib', 'Sco', 'Sag', 'Cap', 'Aqu', 'Pis']
+    ingresses = []
+    
+    for name in ['Soare', 'Luna', 'Mercur', 'Venus', 'Marte', 'Jupiter', 'Saturn']:
+        if name not in planet_data:
+            continue
+        
+        current_lon = planet_data[name]['lon']
+        speed = planet_data[name]['speed']
+        current_sign_idx = int(current_lon // 30)
+        next_sign_idx = (current_sign_idx + 1) % 12
+        next_sign_start = next_sign_idx * 30
+        
+        distance = (next_sign_start - current_lon) % 360
+        if speed > 0:
+            days_to_ingress = distance / speed
+        else:
+            continue
+        
+        if 0 < days_to_ingress <= max_days:
+            jd_ingress = jd_now + days_to_ingress
+            dt_ingress = jd_to_datetime(jd_ingress)
+            ingresses.append((name, signs[next_sign_idx], dt_ingress, days_to_ingress))
+    
+    ingresses.sort(key=lambda x: x[3])
+    return ingresses
+
+
+def jd_to_datetime(jd):
+    """Convert JD to datetime in local timezone"""
+    from datetime import datetime as dt
+    year, month, day, hour_f = swe.revjul(jd, swe.GREG_CAL)
+    hour = int(hour_f)
+    minute = int((hour_f - hour) * 60)
+    second = int(((hour_f - hour) * 60 - minute) * 60)
+    return datetime(year, month, day, hour, minute, second, tzinfo=TZ)
+
+
+def get_summary_events(now_local, positions, observational, long_term):
+    """Colectează toate evenimentele pentru Sumar"""
+    events = {'soare': [], 'luna': [], 'retrograde': [], 'ingress': [], 'aspecte': []}
+    now_utc = now_local.astimezone(pytz.UTC)
+    
+    # ☀️ SOARE
+    perihelion_t = long_term.get('perihelion_t')
+    aphelion_t = long_term.get('aphelion_t')
+    for event_t, label, km in [
+        (perihelion_t, '☀️ Periheliu', long_term.get('perihelion_d', 0)),
+        (aphelion_t, '☀️ Afeliu', long_term.get('aphelion_d', 0))
+    ]:
+        if event_t is not None:
+            dt = event_t.astimezone(TZ) if hasattr(event_t, 'astimezone') else event_t
+            days = (dt - now_local).total_seconds() / 86400
+            if 0 <= days <= 3:
+                events['soare'].append(f"{label} în {int(days)}z ({dt.strftime('%d %b %H:%M')}, {km:,.0f} km)")
+    
+    for name, date_str in long_term.get('next_seasons', []):
+        try:
+            dt = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+            dt = TZ.localize(dt)
+            days = (dt - now_local).total_seconds() / 86400
+            if 0 <= days <= 3:
+                events['soare'].append(f"🌱 {name} în {int(days)}z ({dt.strftime('%d %b %H:%M')})")
+        except:
+            pass
+    
+    # 🌙 LUNA
+    for label, date_str in long_term.get('moon_phases_all', []):
+        try:
+            dt = TZ.localize(datetime.strptime(date_str, '%d %b %Y %H:%M'))
+            days = (dt - now_local).total_seconds() / 86400
+            if 0 <= days <= 2:
+                events['luna'].append(f"{label} în {int(days)}z {int((days%1)*24)}h ({date_str})")
+        except:
+            pass
+    
+    for label, t_node in long_term.get('moon_nodes_all_time', []):
+        dt = t_node.astimezone(TZ)
+        days = (dt - now_local).total_seconds() / 86400
+        if 0 <= days <= 2:
+            events['luna'].append(f"{label} în {int(days)}z {int((days%1)*24)}h ({dt.strftime('%d %b %H:%M')})")
+    
+    for prefix, event_data in [('⬇', long_term.get('next_perigee')), ('⬆', long_term.get('next_apogee'))]:
+        if event_data is not None:
+            t, d = event_data
+            dt = t.astimezone(TZ) if hasattr(t, 'astimezone') else t
+            days = (dt - now_local).total_seconds() / 86400
+            if 0 <= days <= 2:
+                events['luna'].append(f"{prefix} {'Perigeu' if prefix=='⬇' else 'Apogeu'} în {int(days)}z {int((days%1)*24)}h ({dt.strftime('%d %b %H:%M')}, {d:,.0f} km)")
+    
+    mansion_info = long_term.get('next_mansion')
+    if mansion_info is not None:
+        events['luna'].append(f"🏠 {mansion_info['current']} → {mansion_info['next']} ({mansion_info['next_date']})")
+    
+    # 🪐 RETROGRADE
+    retro_list = []
+    planet_data = positions.get('planet_data', {})
+    for name in ['Mercur', 'Venus', 'Marte', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto']:
+        if name in planet_data and planet_data[name].get('retro'):
+            retro_list.append(name)
+    if retro_list:
+        events['retrograde'] = [f"🪐 {', '.join(retro_list)} retrograd"]
+    
+    # 🪐 INGRESSURI
+    jd_now = observational.get('jd', swe.julday(now_local.year, now_local.month, now_local.day,
+                                                 now_local.hour + now_local.minute/60))
+    ingresses = find_ingresses(jd_now, planet_data, max_days=3)
+    for name, sign, dt, days in ingresses:
+        emoji_map = {'Soare': '☉', 'Luna': '☽', 'Mercur': '☿', 'Venus': '♀', 'Marte': '♂', 'Jupiter': '♃', 'Saturn': '♄'}
+        emoji = emoji_map.get(name, '●')
+        events['ingress'].append(f"{emoji} {name} intră în {sign} în {int(days)}z {int((days%1)*24)}h ({dt.strftime('%d %b %H:%M')})")
+    
+    # ⭐ ASPECTE (doar planete cu planete lente, sau planete cu stele fixe)
+    planet_data_full = positions.get('planet_data', {})
+    aspect_types = {'Conjuncție ☌': 0, 'Sextil ⚹': 60, 'Careu □': 90, 'Trigon △': 120, 'Opoziție ☍': 180}
+    
+    # Planete rapide (nu le combinăm între ele)
+    fast_planets = ['Soare', 'Luna', 'Mercur', 'Venus', 'Marte']
+    # Planete lente
+    slow_planets = ['Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto']
+    # Toate planetele
+    all_planets = fast_planets + slow_planets
+    # Stele fixe
+    fixed_stars = positions.get('fixed_stars_names', [])
+    
+    # Lista de corpuri de comparat: planete + stele fixe
+    bodies_to_check = all_planets + fixed_stars
+    
+    for i, body1 in enumerate(bodies_to_check):
+        if body1 not in planet_data_full:
+            continue
+        lon1 = planet_data_full[body1]['lon']
+        
+        for j, body2 in enumerate(bodies_to_check):
+            if j <= i or body2 not in planet_data_full:
+                continue
+            
+            # Sărim combinațiile Soare-Luna, rapid-rapid, stea-stea
+            if body1 in fast_planets and body2 in fast_planets:
+                continue  # fără rapid-rapid
+            if body1 in fixed_stars and body2 in fixed_stars:
+                continue  # fără stea-stea
+            
+            lon2 = planet_data_full[body2]['lon']
+            diff = abs(lon2 - lon1)
+            if diff > 180:
+                diff = 360 - diff
+            
+            for aspect_name, aspect_angle in aspect_types.items():
+                angle_diff = abs(diff - aspect_angle)
+                if angle_diff <= 2.0:
+                    events['aspecte'].append(f"{body1} – {body2}: {aspect_name} ({format_dms(angle_diff)})")
+                    
+    # Sortează aspectele după orb (diferența în grade, extrasă din paranteză)
+    import re
+    def extract_orb(aspect_str):
+        match = re.search(r'\((.*?)\)', aspect_str)
+        if match:
+            dms = match.group(1)
+            parts = dms.replace('°', '').replace("'", '').replace('"', '').split()
+            if len(parts) == 3:
+                return float(parts[0]) + float(parts[1])/60 + float(parts[2])/3600
+            elif len(parts) == 2:
+                return float(parts[0]) + float(parts[1])/60
+            else:
+                return float(parts[0])
+        return 999
+    
+    events['aspecte'].sort(key=extract_orb)
+    
     return events
 
 # ═══════════════════════════════════════════════════════════════
@@ -911,7 +1113,42 @@ Guvernator zi: **{day_ruler}** · Guvernator oră: **{hour_ruler}**
 """)
 st.divider()
 
-tab1, tab2, tab3, tab4 = st.tabs(["Soare", "Lună", "Planete", "Aspecte"])
+tab0, tab1, tab2, tab3, tab4 = st.tabs(["Sumar", "Soare", "Lună", "Planete", "Aspecte"])
+
+# ═══════════ TAB 0: SUMAR ═══════════
+with tab0:
+    st.subheader("Sumar evenimente (1-3 zile)")
+    summary = get_summary_events(now, positions, observational, long_term)
+    
+    if summary['soare']:
+        st.caption("**☀️ Soare**")
+        for e in summary['soare']:
+            st.caption(e)
+    
+    if summary['luna']:
+        st.caption("**🌙 Lună**")
+        for e in summary['luna']:
+            st.caption(e)
+    
+    if summary['retrograde']:
+        st.caption("**🪐 Retrograde**")
+        for e in summary['retrograde']:
+            st.caption(e)
+    
+    if summary['ingress']:
+        st.caption("**🪐 Ingressuri**")
+        for e in summary['ingress']:
+            st.caption(e)
+    
+    if summary['aspecte']:
+        st.caption("**⭐ Aspecte majore (<2°)**")
+        for e in summary['aspecte']:
+            st.caption(e)
+    
+    if not any(summary.values()):
+        st.caption("Niciun eveniment major în următoarele 3 zile.")
+
+
 
 # ═══════════ TAB 1: SOARE ═══════════
 with tab1:
