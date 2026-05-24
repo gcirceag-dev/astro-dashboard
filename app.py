@@ -1184,7 +1184,8 @@ st.markdown("""
     .stApp, .stMarkdown, .stCaption, .stText, p, div, span, label, 
     .streamlit-expanderHeader p, .streamlit-expanderContent p,
     .streamlit-expanderContent div, .streamlit-expanderContent span,
-    .streamlit-expanderContent .stCaption, .streamlit-expanderContent caption {
+    .streamlit-expanderContent .stCaption, .streamlit-expanderContent caption,
+    .stCaption p, .stCaption div, .stCaption span {
         font-size: 18px !important;
         color: #000000 !important;
         font-weight: 600 !important;
