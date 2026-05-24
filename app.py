@@ -935,7 +935,7 @@ def get_summary_events(now_local, positions, observational, long_term):
         if name in planet_data and planet_data[name].get('retro'):
             retro_list.append(name)
     if retro_list:
-        events['retrograde'] = [f" {', '.join(retro_list)} retrograd"]
+        events['retrograde'] = [f" {', '.join(retro_list)} "]
     
     # INGRESSURI
     jd_now = observational.get('jd', swe.julday(now_local.year, now_local.month, now_local.day,
@@ -1013,86 +1013,77 @@ def get_summary_events(now_local, positions, observational, long_term):
 
 def create_moon_phase_plotly(moon_illum, is_waning):
     """
-    Faza Lunii - CERC (nu oval), cu terminator eliptic
-    Replică fidelă a codului Matplotlib original
+    Faza Lunii - CERC cu terminator eliptic
+    Crescătoare: galbenul crește de la DREAPTA la STÂNGA
+    Descrescătoare: galbenul scade de la STÂNGA la DREAPTA
     """
     import numpy as np
     
     iluminare_procent = moon_illum * 100
-    
     c_lumina = '#fefeec'
     c_umbra = '#2c2c2c'
     
-    if not is_waning:
-        stanga_color = c_umbra
-        dreapta_color = c_lumina
-        elipsa_color = c_umbra if iluminare_procent < 50 else c_lumina
-    else:
-        stanga_color = c_lumina
-        dreapta_color = c_umbra
-        elipsa_color = c_lumina if iluminare_procent < 50 else c_umbra
-    
     fig = go.Figure()
     
-    # SEMICERCUL STÂNG (90° la 270°)
-    theta_left = np.linspace(np.pi/2, 3*np.pi/2, 150)
-    x_left = np.cos(theta_left)
-    y_left = np.sin(theta_left)
-    # Închidem forma: adăugăm punctul (0,0) la final
-    x_left_closed = np.append(x_left, 0)
-    y_left_closed = np.append(y_left, 0)
+    # CERCUL COMPLET - fundal negru
+    theta_cerc = np.linspace(0, 2*np.pi, 300)
+    x_cerc = np.cos(theta_cerc)
+    y_cerc = np.sin(theta_cerc)
     
     fig.add_trace(go.Scatter(
-        x=x_left_closed, y=y_left_closed,
+        x=x_cerc, y=y_cerc,
         fill='toself',
-        fillcolor=stanga_color,
+        fillcolor=c_umbra,
         line=dict(width=0),
         showlegend=False,
         hoverinfo='none'
     ))
     
-    # SEMICERCUL DREPT (-90° la 90°)
-    theta_right = np.linspace(-np.pi/2, np.pi/2, 150)
-    x_right = np.cos(theta_right)
-    y_right = np.sin(theta_right)
-    x_right_closed = np.append(x_right, 0)
-    y_right_closed = np.append(y_right, 0)
-    
-    fig.add_trace(go.Scatter(
-        x=x_right_closed, y=y_right_closed,
-        fill='toself',
-        fillcolor=dreapta_color,
-        line=dict(width=0),
-        showlegend=False,
-        hoverinfo='none'
-    ))
-    
-    # ELIPSA TERMINATORULUI (doar arcul din mijloc)
-    latime_elipsa = abs(2.0 * (iluminare_procent / 100.0) - 1.0)
-    if latime_elipsa > 0.001:
-        # Generăm puncte de-a lungul elipsei de la -90° la 90° (partea din față)
-        theta_el = np.linspace(-np.pi/2, np.pi/2, 150)
-        x_el = latime_elipsa * np.cos(theta_el)
-        y_el = np.sin(theta_el)
+    # PARTEA ILUMINATĂ
+    if iluminare_procent > 0.5:
+        # Lățimea elipsei: 1.0 la 0%, 0.0 la 50%, -1.0 la 100%
+        latime_elipsa = 1.0 - (iluminare_procent / 50.0)
         
-        # Închidem forma adăugând punctul (0,0)
-        x_el_closed = np.append(x_el, 0)
-        y_el_closed = np.append(y_el, 0)
+        if iluminare_procent <= 50:
+            # 0-50%: fâșie iluminată în dreapta, terminatorul e o elipsă
+            theta_el = np.linspace(-np.pi/2, np.pi/2, 200)
+            x_el = latime_elipsa * np.cos(theta_el)
+            y_el = np.sin(theta_el)
+            
+            # Arcul de cerc iluminat (partea dreaptă)
+            arc_limit = (iluminare_procent / 50.0) * (np.pi/2)
+            theta_arc = np.linspace(-arc_limit, arc_limit, 200)
+            x_arc = np.cos(theta_arc)
+            y_arc = np.sin(theta_arc)
+            
+            x_lumina = np.concatenate([x_el, x_arc[::-1]])
+            y_lumina = np.concatenate([y_el, y_arc[::-1]])
+        else:
+            # 50-100%: jumătatea dreaptă + elipsa în stânga
+            theta_dreapta = np.linspace(-np.pi/2, np.pi/2, 200)
+            x_dreapta = np.cos(theta_dreapta)
+            y_dreapta = np.sin(theta_dreapta)
+            
+            theta_el = np.linspace(np.pi/2, -np.pi/2, 200)
+            x_el = latime_elipsa * np.cos(theta_el)
+            y_el = np.sin(theta_el)
+            
+            x_lumina = np.concatenate([x_dreapta, x_el])
+            y_lumina = np.concatenate([y_dreapta, y_el])
+        
+        if is_waning:
+            x_lumina = [-x for x in x_lumina]
         
         fig.add_trace(go.Scatter(
-            x=x_el_closed, y=y_el_closed,
+            x=x_lumina, y=y_lumina,
             fill='toself',
-            fillcolor=elipsa_color,
+            fillcolor=c_lumina,
             line=dict(width=0),
             showlegend=False,
             hoverinfo='none'
         ))
     
-    # CONTURUL CERCULUI
-    theta_cerc = np.linspace(0, 2*np.pi, 300)
-    x_cerc = np.cos(theta_cerc)
-    y_cerc = np.sin(theta_cerc)
-    
+    # CONTUR
     fig.add_trace(go.Scatter(
         x=x_cerc, y=y_cerc,
         mode='lines',
@@ -1213,7 +1204,7 @@ st.markdown(f"""
 (UTC: {now_utc.strftime('%d-%m-%Y %H:%M:%S')}) · JD: {jd:.4f}  
 **București, Romania** ({LAT}° N, {LON}° E)  
 Ziua **{day_of_year}** din an · Săptămâna **{week_number}**  
-Guvernator zi: **{day_ruler}** · Guvernator oră: **{hour_ruler}**
+Guvernatori Zi: **{day_ruler}** · Oră: **{hour_ruler}**
 """)
 st.divider()
 
@@ -1264,7 +1255,7 @@ with tab0:
         for e in summary['ingress']:
             st.caption(e)
     
-        # NAKSHATRA
+    # NAKSHATRA
     sun_lon_sid = (positions['sun_lon'] - positions['ayanamsa']) % 360
     moon_lon_sid = (positions['moon_lon'] - positions['ayanamsa']) % 360
     
