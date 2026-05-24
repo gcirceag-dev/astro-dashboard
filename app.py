@@ -1499,9 +1499,9 @@ with tab2:
         for num, name, trans, start, end in MANSIONS_LIST:
             display = f"{name} — {trans}" if trans != "TBD" else name
             if positions.get('mansion_num') == num:
-                st.caption(f"**{num}. {display}** ({format_dms(start)} – {format_dms(end)})")
+                st.markdown(f"**{num}. {display}** ({format_dms(start)} – {format_dms(end)})")
             else:
-                st.caption(f"{num}. {display} ({format_dms(start)} – {format_dms(end)})")
+                st.markdown(f"{num}. {display} ({format_dms(start)} – {format_dms(end)})")
     with st.expander("Nakshatra (27 de constelații siderale)"):
         sun_lon_sid = (positions['sun_lon'] - positions['ayanamsa']) % 360
         moon_lon_sid = (positions['moon_lon'] - positions['ayanamsa']) % 360
@@ -1509,19 +1509,19 @@ with tab2:
         sun_nak, sun_nak_name, sun_pada = get_nakshatra(sun_lon_sid)
         moon_nak, moon_nak_name, moon_pada = get_nakshatra(moon_lon_sid)
         
-        st.caption(f"Soarele în **{sun_nak_name}** (Pada {sun_pada}) — {format_zodiac(sun_lon_sid)} (sid)")
-        st.caption(f"Luna în **{moon_nak_name}** (Pada {moon_pada}) — {format_zodiac(moon_lon_sid)} (sid)")
-        st.caption("")
-        st.caption("Toate cele 27 de Nakshatra:")
+        st.markdown(f"Soarele în **{sun_nak_name}** (Pada {sun_pada}) — {format_zodiac(sun_lon_sid)} (sid)")
+        st.markdown(f"Luna în **{moon_nak_name}** (Pada {moon_pada}) — {format_zodiac(moon_lon_sid)} (sid)")
+        st.markdown("")
+        st.markdown("Toate cele 27 de Nakshatra:")
         
         for num, name, start, end in NAKSHATRA_LIST:
             pada_size = 3.3333
             if (moon_nak == num):
-                st.caption(f"**{num}. {name}** ({format_dms(start)} – {format_dms(end)}) ⬅ Luna aici")
+                st.markdown(f"**{num}. {name}** ({format_dms(start)} – {format_dms(end)}) ⬅ Luna aici")
             elif (sun_nak == num):
-                st.caption(f"**{num}. {name}** ({format_dms(start)} – {format_dms(end)}) ⬅ Soarele aici")
+                st.markdown(f"**{num}. {name}** ({format_dms(start)} – {format_dms(end)}) ⬅ Soarele aici")
             else:
-                st.caption(f"{num}. {name} ({format_dms(start)} – {format_dms(end)})")
+                st.markdown(f"{num}. {name} ({format_dms(start)} – {format_dms(end)})")
     
     with st.expander("Date orbitale și coordonate"):
         st.caption(f"Longitudine ecliptică: {format_dms(moon_lon)}")
