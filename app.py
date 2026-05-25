@@ -5,16 +5,15 @@ app.py - Dashboard Astro cu Streamlit
 
 import os
 import math
+import numpy as np
 import swisseph as swe
 from skyfield.api import load, wgs84
 from skyfield import almanac
-from skyfield.searchlib import find_maxima
+from skyfield.searchlib import find_maxima, find_discrete
 from datetime import datetime, timedelta
 import pytz
 import streamlit as st
 import plotly.graph_objects as go
-import numpy as np
-from importlib.resources import read_binary
 
 # ═══════════════════════════════════════════════════════════════
 # CONFIGURARE GLOBALĂ
@@ -212,6 +211,10 @@ def format_dms(decimal_degrees, is_latitude=False):
         d += 1
     return f"{sign}{d}° {m:02d}' {s:05.2f}\""
 
+def round_jd_to_minute(jd):
+    """Rotunjește JD la cel mai apropiat minut"""
+    return round(jd * 1440) / 1440
+
 def format_zodiac(longitude):
     signs = ['Ari', 'Tau', 'Gem', 'Can', 'Leo', 'Vir',
              'Lib', 'Sco', 'Sag', 'Cap', 'Aqu', 'Pis']
@@ -250,24 +253,29 @@ def get_nakshatra(lon_sidereal):
             return number, name, pada
     return None, None, None
 
-def get_real_constellation(ra_hours, dec_degrees):
-    """Determină constelația IAU reală din coordonate ecuatoriale"""
+@st.cache_resource
+def load_constellation_grid():
+    """Încarcă grila de constelații IAU o singură dată"""
     import numpy as np
     from importlib.resources import read_binary
     import io
     
-    # Cache pentru grila de constelații (se încarcă o singură dată)
-    if not hasattr(get_real_constellation, 'grid'):
-        data = read_binary('skyfield.data', 'constellations.npz')
-        npz = np.load(io.BytesIO(data))
-        get_real_constellation.grid = {
-            'sorted_ra': npz['sorted_ra'],
-            'sorted_dec': npz['sorted_dec'],
-            'radec_to_index': npz['radec_to_index'],
-            'indexed_abbreviations': npz['indexed_abbreviations'],
-        }
+    data = read_binary('skyfield.data', 'constellations.npz')
+    npz = np.load(io.BytesIO(data))
+    return {
+        'sorted_ra': npz['sorted_ra'],
+        'sorted_dec': npz['sorted_dec'],
+        'radec_to_index': npz['radec_to_index'],
+        'indexed_abbreviations': npz['indexed_abbreviations'],
+    }
+
+
+def get_real_constellation(ra_hours, dec_degrees):
+    """Determină constelația IAU reală din coordonate ecuatoriale"""
+    import numpy as np
     
-    grid = get_real_constellation.grid
+    grid = load_constellation_grid()
+    
     ra_idx = np.searchsorted(grid['sorted_ra'], ra_hours, side='right') - 1
     dec_idx = np.searchsorted(grid['sorted_dec'], dec_degrees, side='right') - 1
     
@@ -276,87 +284,60 @@ def get_real_constellation(ra_hours, dec_degrees):
     
     const_idx = grid['radec_to_index'][ra_idx, dec_idx]
     abbrev = grid['indexed_abbreviations'][const_idx]
-    
     return IAU_CONSTELLATION_NAMES.get(abbrev, abbrev)
 
-def find_lunar_nodes_optimized(jd_start, jd_end):
-    crossings = []
-    step = 0.1
-    jd_curr = jd_start
-    prev_lat = swe.calc_ut(jd_curr, swe.MOON, swe.FLG_SWIEPH)[0][1]
-    while jd_curr < jd_end:
-        jd_curr += step
-        curr_lat = swe.calc_ut(jd_curr, swe.MOON, swe.FLG_SWIEPH)[0][1]
-        if prev_lat * curr_lat < 0:
-            jd_left = jd_curr - step
-            jd_right = jd_curr
-            for _ in range(10):
-                jd_mid = (jd_left + jd_right) / 2
-                lat_mid = swe.calc_ut(jd_mid, swe.MOON, swe.FLG_SWIEPH)[0][1]
-                if prev_lat * lat_mid < 0:
-                    jd_right = jd_mid
-                else:
-                    jd_left = jd_mid
-            crossings.append((jd_left + jd_right) / 2)
-        prev_lat = curr_lat
-    return crossings
-
-def find_lunar_apsides_optimized(jd_start, jd_end):
-    apsides = []
-    step = 0.15
-    jd_curr = jd_start
-    prev_dist = swe.calc_ut(jd_curr, swe.MOON, swe.FLG_SWIEPH)[0][2]
-    prev_diff = 1
-    while jd_curr < jd_end:
-        jd_curr += step
-        curr_dist = swe.calc_ut(jd_curr, swe.MOON, swe.FLG_SWIEPH)[0][2]
-        curr_diff = curr_dist - prev_dist
-        if prev_diff * curr_diff < 0:
-            jd_left = jd_curr - step
-            jd_right = jd_curr
-            for _ in range(10):
-                jd_mid = (jd_left + jd_right) / 2
-                dist_mid = swe.calc_ut(jd_mid, swe.MOON, swe.FLG_SWIEPH)[0][2]
-                dist_left = swe.calc_ut(jd_left, swe.MOON, swe.FLG_SWIEPH)[0][2]
-                if (dist_mid - dist_left) * prev_diff > 0:
-                    jd_left = jd_mid
-                else:
-                    jd_right = jd_mid
-            jd_exact = (jd_left + jd_right) / 2
-            dist_exact = swe.calc_ut(jd_exact, swe.MOON, swe.FLG_SWIEPH)[0][2]
-            apsides.append((jd_exact, dist_exact, prev_diff < 0))
-        prev_dist = curr_dist
-        prev_diff = curr_diff
-    return apsides
-
 def calculate_twilights_optimized(observer, sun, ts, midnight, now_local):
-    twilights = []
-    targets = [(-18, "astronomic"), (-12, "nautic"), (-6, "civil")]
-    step_minutes = 4
-    total_steps = int(24 * 60 / step_minutes)
-    times_array = []
-    alts_array = []
-    for i in range(total_steps + 1):
-        dt = midnight + timedelta(minutes=i * step_minutes)
-        t = ts.from_datetime(dt.astimezone(pytz.UTC))
-        alt, _, _ = observer.at(t).observe(sun).apparent().altaz()
-        times_array.append(dt)
-        alts_array.append(alt.degrees)
+    """Calculează amurgurile cu Skyfield - toate tipurile"""
+    targets = [-18, -12, -6, -4, -0.833, 6]
+    
+    t_start = ts.from_datetime(midnight.astimezone(pytz.UTC))
+    t_end = ts.from_datetime((midnight + timedelta(days=1)).astimezone(pytz.UTC))
+    
+    all_crossings = []
+    for target_alt in targets:
+        def sun_alt(t):
+            alt, _, _ = observer.at(t).observe(sun).apparent().altaz()
+            return alt.degrees - target_alt
+        sun_alt.rough_period = 0.25
+        
+        times, alts = find_discrete(t_start, t_end, sun_alt, epsilon=0.05)
+        for i in range(len(times) - 1):
+            if alts[i] * alts[i+1] < 0:
+                frac = abs(alts[i]) / (abs(alts[i]) + abs(alts[i+1]))
+                t_exact = ts.tt_jd(times[i].tt + (times[i+1].tt - times[i].tt) * frac)
+                all_crossings.append((t_exact.astimezone(TZ), target_alt))
+    
+    all_crossings.sort(key=lambda x: x[0])
+    
+    morning = [(t, alt) for t, alt in all_crossings if t.hour < 12]
+    evening = [(t, alt) for t, alt in all_crossings if t.hour >= 12]
+    
+    def get_time(target_alt, lst):
+        for t, a in lst:
+            if abs(a - target_alt) < 0.01:
+                return t
+        return None
     
     twilight_times = []
-    for target_alt, name in targets:
-        for i in range(len(alts_array) - 1):
-            if alts_array[i] < target_alt <= alts_array[i + 1]:
-                fraction = (target_alt - alts_array[i]) / (alts_array[i + 1] - alts_array[i])
-                exact_time = times_array[i] + timedelta(minutes=step_minutes * fraction)
-                twilight_times.append((exact_time, f"{name} (dim)", exact_time.strftime('%H:%M:%S')))
-                break
-        for i in range(len(alts_array) - 1):
-            if alts_array[i] > target_alt >= alts_array[i + 1]:
-                fraction = (alts_array[i] - target_alt) / (alts_array[i] - alts_array[i + 1])
-                exact_time = times_array[i] + timedelta(minutes=step_minutes * fraction)
-                twilight_times.append((exact_time, f"{name} (seară)", exact_time.strftime('%H:%M:%S')))
-                break
+    
+    definitions = [
+        (-18, -12, "astronomic"),
+        (-12, -6, "nautic"),
+        (-6, -4, "blue hour"),
+        (-6, -0.833, "civil"),
+        (-4, 6, "golden hour"),
+    ]
+    
+    for start_alt, end_alt, name in definitions:
+        t1 = get_time(start_alt, morning)
+        t2 = get_time(end_alt, morning)
+        t3 = get_time(end_alt, evening)
+        t4 = get_time(start_alt, evening)
+        
+        if t1 and t2:
+            twilight_times.append((t1, f"{name} (dim)", f"{t1.strftime('%H:%M')} - {t2.strftime('%H:%M')}"))
+        if t3 and t4:
+            twilight_times.append((t3, f"{name} (seară)", f"{t3.strftime('%H:%M')} - {t4.strftime('%H:%M')}"))
     
     twilight_times.sort(key=lambda x: x[0])
     return [(name, time_str) for _, name, time_str in twilight_times]
@@ -464,9 +445,9 @@ def get_positions_data(jd):
         pos = swe.calc_ut(jd, pid, swe.FLG_SWIEPH | swe.FLG_SPEED)[0]
         planet_data[name] = {'lon': pos[0], 'lat': pos[1], 'dist': pos[2], 'speed': pos[3], 'retro': pos[3] < 0}
     
-    nn_pos = swe.calc_ut(jd, swe.MEAN_NODE, swe.FLG_SWIEPH)[0]
-    planet_data['Nod Nord (Mean)'] = {'lon': nn_pos[0], 'lat': nn_pos[1], 'dist': nn_pos[2], 'speed': nn_pos[3], 'retro': False}
-    planet_data['Nod Sud (Mean)'] = {'lon': (nn_pos[0] + 180) % 360, 'lat': -nn_pos[1], 'dist': nn_pos[2], 'speed': nn_pos[3], 'retro': False}
+    nn_pos = swe.calc_ut(jd, swe.TRUE_NODE, swe.FLG_SWIEPH)[0]
+    planet_data['Nod Nord (True)'] = {'lon': nn_pos[0], 'lat': nn_pos[1], 'dist': nn_pos[2], 'speed': nn_pos[3], 'retro': True}
+    planet_data['Nod Sud (True)'] = {'lon': (nn_pos[0] + 180) % 360, 'lat': -nn_pos[1], 'dist': nn_pos[2], 'speed': nn_pos[3], 'retro': True}
     lilith_pos = swe.calc_ut(jd, swe.MEAN_APOG, swe.FLG_SWIEPH)[0]
     planet_data['Lilith (Mean)'] = {'lon': lilith_pos[0], 'lat': lilith_pos[1], 'dist': lilith_pos[2], 'speed': lilith_pos[3], 'retro': False}
     
@@ -624,27 +605,12 @@ def get_observational_data(now_utc):
     # Determinăm sunset-ul corect pentru orele planetare
     # Dacă suntem înainte de răsărit, noaptea a început ieri, deci folosim sunset-ul de ieri
     if now_local < sunrise_today:
-        # Calculăm apusul de ieri
-        yesterday = now_utc - timedelta(days=1)
-        t0_yest = ts.from_datetime(yesterday.replace(hour=0, minute=0, second=0))
-        t1_yest = ts.from_datetime((yesterday + timedelta(days=1)).replace(hour=0, minute=0, second=0))
-        times_rs_yest, events_rs_yest = almanac.find_discrete(t0_yest, t1_yest, f_rs)
-        sunset_yesterday = None
-        for t, ev in zip(times_rs_yest, events_rs_yest):
-            if ev == 0:  # apus
-                sunset_yesterday = t.astimezone(TZ)
-        sunset_for_hours = sunset_yesterday
-    else:
-        sunset_for_hours = sunset_today
-    
-    # Determinăm sunset-ul și sunrise_next corecte pentru orele planetare
-    if now_local < sunrise_today:
         sunset_for_hours = sunset_yesterday
         sunrise_next_for_hours = sunrise_today
     else:
         sunset_for_hours = sunset_today
         sunrise_next_for_hours = sunrise_next
-    
+
     data['hours_plan'], data['current_hour'], data['day_h'], data['night_h'] = get_planetary_hours(
         sunrise_today, sunset_for_hours, sunrise_next_for_hours, now_local
     )
@@ -666,6 +632,7 @@ def get_observational_data(now_utc):
     
     return data
 
+
 @st.cache_data(ttl=300)
 def get_long_term_events(now_utc):
     resources = load_resources()
@@ -674,16 +641,20 @@ def get_long_term_events(now_utc):
     earth = resources['earth']
     sun = resources['sun']
     moon = resources['moon']
-    
+
     now_local = now_utc.astimezone(TZ)
     jd = swe.julday(now_utc.year, now_utc.month, now_utc.day,
                     now_utc.hour + now_utc.minute/60.0 + now_utc.second/3600.0)
-    
+
     data = {}
-    
+
+    # ═══════════════════════════════════════════════════════════════
+    # PERIHELIU ȘI AFELIU (rămâne neschimbat)
+    # ═══════════════════════════════════════════════════════════════
     t_ph_start = ts.from_datetime(datetime(now_utc.year, 1, 1, tzinfo=pytz.UTC))
     t_ph_end = ts.from_datetime(datetime(now_utc.year + 1, 1, 1, tzinfo=pytz.UTC))
     step_days = 0.5
+
     times_ph = []
     distances_ph = []
     t = t_ph_start
@@ -693,7 +664,7 @@ def get_long_term_events(now_utc):
         times_ph.append(t)
         distances_ph.append(dist)
         t = ts.tt_jd(t.tt + step_days)
-    
+
     if distances_ph:
         min_idx = distances_ph.index(min(distances_ph))
         max_idx = distances_ph.index(max(distances_ph))
@@ -706,23 +677,31 @@ def get_long_term_events(now_utc):
         data['perihelion_d'] = 0
         data['aphelion_t'] = None
         data['aphelion_d'] = 0
-    
+
+    # ═══════════════════════════════════════════════════════════════
+    # ECHINOCȚII ȘI SOLSTIȚII (rămâne neschimbat)
+    # ═══════════════════════════════════════════════════════════════
     t_start_eq = ts.from_datetime(now_utc)
     t_end_eq = ts.from_datetime(datetime(now_utc.year + 2, 1, 1, tzinfo=pytz.UTC))
     f_seasons = almanac.seasons(eph)
     times_s, events_s = almanac.find_discrete(t_start_eq, t_end_eq, f_seasons)
-    s_names = {0: 'Echinocțiul de primăvară', 1: 'Solstițiul de vară', 2: 'Echinocțiul de toamnă', 3: 'Solstițiul de iarnă'}
+    s_names = {0: 'Echinocțiul de primăvară', 1: 'Solstițiul de vară',
+               2: 'Echinocțiul de toamnă', 3: 'Solstițiul de iarnă'}
     data['next_seasons'] = []
     for t, ev in zip(times_s, events_s):
         if len(data['next_seasons']) >= 4:
             break
         data['next_seasons'].append((s_names[ev], t.astimezone(TZ).strftime('%Y-%m-%d %H:%M:%S')))
-    
+
+    # ═══════════════════════════════════════════════════════════════
+    # FAZELE LUNII (rămâne neschimbat)
+    # ═══════════════════════════════════════════════════════════════
     t_faze_start = ts.from_datetime(now_utc - timedelta(days=20))
     t_faze_end = ts.from_datetime(now_utc + timedelta(days=35))
     f_moon_phases = almanac.moon_phases(eph)
     times_faze, events_faze = almanac.find_discrete(t_faze_start, t_faze_end, f_moon_phases)
-    faze_names = {0: "Lună Nouă 🌑", 1: "Primul Pătrar 🌓", 2: "Lună Plină 🌕", 3: "Ultimul Pătrar 🌗"}
+    faze_names = {0: "Lună Nouă 🌑", 1: "Primul Pătrar 🌓",
+                  2: "Lună Plină 🌕", 3: "Ultimul Pătrar 🌗"}
     data['moon_phases'] = []
     data['moon_phases_all'] = []
     for t_f, ev_f in zip(times_faze, events_faze):
@@ -731,48 +710,77 @@ def get_long_term_events(now_utc):
             data['moon_phases_all'].append(phase_info)
             if t_f.astimezone(TZ) >= now_local:
                 data['moon_phases'].append(phase_info)
-    
-    jd_start_nodes = jd - 25
-    jd_end_nodes = jd + 35
-    node_jds = find_lunar_nodes_optimized(jd_start_nodes, jd_end_nodes)
+
+    # ═══════════════════════════════════════════════════════════════
+    # NODURILE LUNARE (NOU - folosește Skyfield nativ)
+    # ═══════════════════════════════════════════════════════════════
     data['moon_nodes_all'] = []
     data['moon_nodes_all_time'] = []
-    for jd_node in node_jds[:6]:
-        t_node = ts.tt_jd(jd_node)
-        moon_lat_before = swe.calc_ut(jd_node - 0.05, swe.MOON, swe.FLG_SWIEPH)[0][1]
-        moon_lat_after = swe.calc_ut(jd_node + 0.05, swe.MOON, swe.FLG_SWIEPH)[0][1]
-        label = "Nod Ascendent (☊)" if moon_lat_after > moon_lat_before else "Nod Descendent (☋)"
+
+    def moon_ecliptic_latitude(t):
+        e = earth.at(t)
+        m = e.observe(moon).apparent()
+        return m.ecliptic_latlon('date')[0].degrees
+
+    moon_ecliptic_latitude.rough_period = 13.6
+
+    t_nodes_start = ts.from_datetime(now_utc - timedelta(days=25))
+    t_nodes_end = ts.from_datetime(now_utc + timedelta(days=35))
+
+    times_nodes, latitudes_nodes = find_discrete(t_nodes_start, t_nodes_end,
+                                                  moon_ecliptic_latitude, epsilon=0.1)
+
+    found_nodes = []
+    for i in range(len(times_nodes) - 1):
+        if latitudes_nodes[i] * latitudes_nodes[i+1] < 0:
+            fraction = abs(latitudes_nodes[i]) / (abs(latitudes_nodes[i]) + abs(latitudes_nodes[i+1]))
+            t_exact = ts.tt_jd(times_nodes[i].tt + (times_nodes[i+1].tt - times_nodes[i].tt) * fraction)
+
+            t_before = ts.tt_jd(t_exact.tt - 0.001)
+            lat_before = moon_ecliptic_latitude(t_before)
+
+            if lat_before < 0:
+                found_nodes.append(("Nod Ascendent (☊)", t_exact))
+            else:
+                found_nodes.append(("Nod Descendent (☋)", t_exact))
+
+    found_nodes.sort(key=lambda x: x[1].tt)
+
+    for label, t_node in found_nodes[:6]:
         data['moon_nodes_all_time'].append((label, t_node))
         data['moon_nodes_all'].append((label, t_node.astimezone(TZ).strftime('%d %b %Y %H:%M')))
-    
-    # NOUA METODĂ: Skyfield find_maxima (mai precisă)
+
+    # ═══════════════════════════════════════════════════════════════
+    # APSIDELE LUNARE (NOU - folosește Skyfield nativ)
+    # ═══════════════════════════════════════════════════════════════
     def moon_distance_km(t):
         return earth.at(t).observe(moon).distance().km
     moon_distance_km.rough_period = 27.5
-    
+
     def neg_moon_distance_km(t):
         return -earth.at(t).observe(moon).distance().km
     neg_moon_distance_km.rough_period = 27.5
-    
+
     t_pg_start = ts.from_datetime(now_utc - timedelta(days=30))
     t_pg_end = ts.from_datetime(now_utc + timedelta(days=30))
-    
+
     apogee_times, apogee_distances = find_maxima(t_pg_start, t_pg_end, moon_distance_km)
     perigee_times, perigee_distances_neg = find_maxima(t_pg_start, t_pg_end, neg_moon_distance_km)
     perigee_distances = [-d for d in perigee_distances_neg]
-    
+
     all_apogees = [(t, d) for t, d in zip(apogee_times, apogee_distances)]
     all_perigees = [(t, d) for t, d in zip(perigee_times, perigee_distances)]
+
     data['next_perigee'] = next(((t, d) for t, d in all_perigees if t.astimezone(TZ) > now_local), None)
     data['next_apogee'] = next(((t, d) for t, d in all_apogees if t.astimezone(TZ) > now_local), None)
-    
+
     all_events = []
     for t, dist in all_perigees:
         all_events.append(('P', t, dist))
     for t, dist in all_apogees:
         all_events.append(('A', t, dist))
     all_events.sort(key=lambda x: x[1].tt)
-    
+
     prev_event = None
     next_event = None
     for label, t_exact, d_exact in all_events:
@@ -781,102 +789,126 @@ def get_long_term_events(now_utc):
         elif next_event is None:
             next_event = (label, t_exact, d_exact)
             break
+
     data['prev_ap_event'] = prev_event
     data['next_ap_event'] = next_event
-    
+
+    # ═══════════════════════════════════════════════════════════════
+    # EVENIMENTE LUNARE UNIFICATE ȘI CONAC (rămâne neschimbat)
+    # ═══════════════════════════════════════════════════════════════
     data['all_lunar_events'] = get_unified_lunar_events(now_utc, ts, eph, earth, moon)
+
     moon_lon = swe.calc_ut(jd, swe.MOON, swe.FLG_SWIEPH)[0][0]
     data['next_mansion'] = find_next_mansion(jd, moon_lon, ts, TZ)
-    
+
     return data
 
 def get_unified_lunar_events(now_utc, ts, eph, earth, moon):
+    """
+    Colectează toate evenimentele lunare (faze, noduri, apside) 
+    folosind metodele native Skyfield.
+    """
     events = []
     t_start = ts.from_datetime(now_utc)
     t_end = ts.from_datetime(now_utc + timedelta(days=35))
+
+    # 1. FAZELE LUNII (rămâne neschimbat, deja folosea Skyfield)
     f_phases = almanac.moon_phases(eph)
     phases_times, phases_events = almanac.find_discrete(t_start, t_end, f_phases)
     phase_names = {0: "Lună Nouă 🌑", 1: "Primul Pătrar 🌓", 2: "Lună Plină 🌕", 3: "Ultimul Pătrar 🌗"}
     for t, ev in zip(phases_times, phases_events):
         if ev in phase_names:
             events.append((t, phase_names[ev], 'phase'))
+
+    # 2. NODURILE LUNARE (Metoda Skyfield nativă, verificată)
+    def moon_ecliptic_latitude(t):
+        e = earth.at(t)
+        m = e.observe(moon).apparent()
+        return m.ecliptic_latlon('date')[0].degrees
+
+    moon_ecliptic_latitude.rough_period = 13.6
     
-    jd_now = swe.julday(now_utc.year, now_utc.month, now_utc.day,
-                        now_utc.hour + now_utc.minute/60.0 + now_utc.second/3600.0)
-    jd_end = jd_now + 35
-    node_jds = find_lunar_nodes_optimized(jd_now, jd_end)
-    for jd_node in node_jds:
-        t_node = ts.tt_jd(jd_node)
-        moon_lat_before = swe.calc_ut(jd_node - 0.05, swe.MOON, swe.FLG_SWIEPH)[0][1]
-        moon_lat_after = swe.calc_ut(jd_node + 0.05, swe.MOON, swe.FLG_SWIEPH)[0][1]
-        label = "Nod Ascendent (☊)" if moon_lat_after > moon_lat_before else "Nod Descendent (☋)"
-        events.append((t_node, label, 'node'))
+    times, latitudes = find_discrete(t_start, t_end, moon_ecliptic_latitude, epsilon=0.1)
     
-    # Perigeu/Apogeu - metoda Skyfield nativă
+    for i in range(len(times) - 1):
+        if latitudes[i] * latitudes[i+1] < 0:
+            # Interpolare liniară pentru momentul exact
+            fraction = abs(latitudes[i]) / (abs(latitudes[i]) + abs(latitudes[i+1]))
+            t_exact = ts.tt_jd(times[i].tt + (times[i+1].tt - times[i].tt) * fraction)
+            
+            # Determinăm tipul nodului (Nord sau Sud)
+            lat_exact = moon_ecliptic_latitude(t_exact)
+            
+            # Pentru a determina dacă e nod nord sau sud, verificăm 
+            # latitudinea chiar înainte de trecere
+            t_before = ts.tt_jd(t_exact.tt - 0.001)
+            lat_before = moon_ecliptic_latitude(t_before)
+            
+            if lat_before < 0:
+                events.append((t_exact, "Nod Ascendent (☊)", 'node'))
+            else:
+                events.append((t_exact, "Nod Descendent (☋)", 'node'))
+
+    # 3. APSIDELE LUNARE (Metoda Skyfield nativă, verificată)
     def moon_distance_km(t):
         return earth.at(t).observe(moon).distance().km
     moon_distance_km.rough_period = 27.5
-    
+
     def neg_moon_distance_km(t):
         return -earth.at(t).observe(moon).distance().km
     neg_moon_distance_km.rough_period = 27.5
-    
+
     t_apsides_start = ts.from_datetime(now_utc)
     t_apsides_end = ts.from_datetime(now_utc + timedelta(days=45))
     
     apogee_times, apogee_distances = find_maxima(t_apsides_start, t_apsides_end, moon_distance_km)
     perigee_times, perigee_distances_neg = find_maxima(t_apsides_start, t_apsides_end, neg_moon_distance_km)
     perigee_distances = [-d for d in perigee_distances_neg]
-    
+
     for t, d in zip(apogee_times, apogee_distances):
         events.append((t, f"Apogeu ⬆ {d:,.0f} km", 'apogee'))
-    
     for t, d in zip(perigee_times, perigee_distances):
         events.append((t, f"Perigeu ⬇ {d:,.0f} km", 'perigee'))
-    
+
+    # Sortare finală
     events.sort(key=lambda x: x[0].tt)
     return events
+
     
+
+def jd_to_datetime(jd):
+    """Convert JD to datetime in UTC"""
+    year, month, day, hour_f = swe.revjul(jd, swe.GREG_CAL)
+    hour = int(hour_f)
+    minute = int((hour_f - hour) * 60)
+    second = int(((hour_f - hour) * 60 - minute) * 60)
+    return datetime(year, month, day, hour, minute, second, tzinfo=pytz.UTC)
+
 
 def find_ingresses(jd_now, planet_data, max_days=3):
     """Găsește intrări în zodie nouă în următoarele max_days zile"""
     signs = ['Ari', 'Tau', 'Gem', 'Can', 'Leo', 'Vir', 'Lib', 'Sco', 'Sag', 'Cap', 'Aqu', 'Pis']
     ingresses = []
-    
     for name in ['Soare', 'Luna', 'Mercur', 'Venus', 'Marte', 'Jupiter', 'Saturn']:
         if name not in planet_data:
             continue
-        
         current_lon = planet_data[name]['lon']
         speed = planet_data[name]['speed']
         current_sign_idx = int(current_lon // 30)
         next_sign_idx = (current_sign_idx + 1) % 12
         next_sign_start = next_sign_idx * 30
-        
         distance = (next_sign_start - current_lon) % 360
         if speed > 0:
             days_to_ingress = distance / speed
         else:
             continue
-        
         if 0 < days_to_ingress <= max_days:
             jd_ingress = jd_now + days_to_ingress
-            dt_ingress = jd_to_datetime(jd_ingress)
-            ingresses.append((name, signs[next_sign_idx], dt_ingress, days_to_ingress))
-    
+            dt_ingress_utc = jd_to_datetime(jd_ingress)
+            dt_ingress_local = dt_ingress_utc.astimezone(TZ)
+            ingresses.append((name, signs[next_sign_idx], dt_ingress_local, days_to_ingress))
     ingresses.sort(key=lambda x: x[3])
     return ingresses
-
-
-def jd_to_datetime(jd):
-    """Convert JD to datetime in local timezone"""
-    from datetime import datetime as dt
-    year, month, day, hour_f = swe.revjul(jd, swe.GREG_CAL)
-    hour = int(hour_f)
-    minute = int((hour_f - hour) * 60)
-    second = int(((hour_f - hour) * 60 - minute) * 60)
-    return datetime(year, month, day, hour, minute, second, tzinfo=TZ)
-
 
 def get_summary_events(now_local, positions, observational, long_term):
     """Colectează toate evenimentele pentru Sumar"""
@@ -1216,8 +1248,8 @@ t_now = ts.from_datetime(now_utc)
 
 jd = swe.julday(now_utc.year, now_utc.month, now_utc.day,
                 now_utc.hour + now_utc.minute/60.0 + now_utc.second/3600.0)
-
-positions = get_positions_data(jd)
+                
+positions = get_positions_data(round_jd_to_minute(jd))
 observational = get_observational_data(now_utc)
 long_term = get_long_term_events(now_utc)
 
@@ -1248,6 +1280,8 @@ with tab0:
     st.subheader("Sumar evenimente (1-3 zile)")
     st.divider()
     
+    st.caption(f"Ayanamsa: {format_dms(positions['ayanamsa'])}")
+       
     # Scor elemente
     elements_count = {'Foc': 0, 'Pamant': 0, 'Aer': 0, 'Apa': 0}
     fire = ['Ari', 'Leo', 'Sag']
@@ -1833,8 +1867,8 @@ with tab2:
         moon_lon = positions['moon_lon']
         arc_sl = observational.get('arc_sl', 0)
         
-        nn_lon = positions['planet_data']['Nod Nord (Mean)']['lon']
-        ns_lon = positions['planet_data']['Nod Sud (Mean)']['lon']
+        nn_lon = positions['planet_data']['Nod Nord (True)']['lon']
+        ns_lon = positions['planet_data']['Nod Sud (True)']['lon']
         lilith_lon = positions['planet_data']['Lilith (Mean)']['lon']
         priap_lon = (lilith_lon + 180) % 360
         
@@ -1958,7 +1992,7 @@ with tab3:
     st.subheader("Planete")
     
     planet_data = positions['planet_data']
-    all_bodies = list(PLANET_IDS.keys()) + ['Nod Nord (Mean)', 'Nod Sud (Mean)', 'Lilith (Mean)'] + list(ASTEROID_IDS.keys())
+    all_bodies = list(PLANET_IDS.keys()) + ['Nod Nord (True)', 'Nod Sud (True)', 'Lilith (Mean)'] + list(ASTEROID_IDS.keys())
     
     for name in all_bodies:
         if name not in planet_data:
@@ -2085,7 +2119,7 @@ with tab3:
         
         obliquity = positions['obliquity']
         
-        for name in list(ASTEROID_IDS.keys()) + ['Nod Nord (Mean)', 'Nod Sud (Mean)', 'Lilith (Mean)']:
+        for name in list(ASTEROID_IDS.keys()) + ['Nod Nord (True)', 'Nod Sud (True)', 'Lilith (Mean)']:
             if name not in planet_data:
                 continue
             lon = planet_data[name]['lon']
@@ -2112,7 +2146,7 @@ with tab4:
     orb = st.slider("Orb (grade)", min_value=1.0, max_value=8.0, value=0.5, step=0.5)
     
     planet_data = positions['planet_data']
-    all_bodies_list = (list(PLANET_IDS.keys()) + ['Nod Nord (Mean)', 'Nod Sud (Mean)', 'Lilith (Mean)'] + 
+    all_bodies_list = (list(PLANET_IDS.keys()) + ['Nod Nord (True)', 'Nod Sud (True)', 'Lilith (Mean)'] + 
                       list(ASTEROID_IDS.keys()) + positions.get('fixed_stars_names', []))
     
     aspect_types = {
@@ -2134,7 +2168,7 @@ with tab4:
                 continue
             if body1 in positions.get('fixed_stars_names', []) and body2 in positions.get('fixed_stars_names', []):
                 continue
-            if body1 in ['Nod Nord (Mean)', 'Nod Sud (Mean)'] and body2 in ['Nod Nord (Mean)', 'Nod Sud (Mean)']:
+            if body1 in ['Nod Nord (True)', 'Nod Sud (True)'] and body2 in ['Nod Nord (True)', 'Nod Sud (True)']:
                 continue
             lon2 = planet_data[body2]['lon']
             speed2 = planet_data[body2]['speed']
