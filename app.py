@@ -573,17 +573,18 @@ def get_observational_data(now_utc):
     
     midnight_today_utc = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
     t0_moon = ts.from_datetime(midnight_today_utc)
-    t1_moon = ts.from_datetime(midnight_today_utc + timedelta(days=1))
+    t1_moon = ts.from_datetime(midnight_today_utc + timedelta(days=2))
     f_mr = almanac.risings_and_settings(eph, moon, wgs84.latlon(LAT, LON))
     times_mr, events_mr = almanac.find_discrete(t0_moon, t1_moon, f_mr)
     data['moonrise_next'] = None
     data['moonset_next'] = None
     for t, ev in zip(times_mr, events_mr):
-        if ev == 1:
-            data['moonrise_next'] = t.astimezone(TZ)
-        else:
-            data['moonset_next'] = t.astimezone(TZ)
-    
+        dt = t.astimezone(TZ)
+        if dt > now_local:
+            if ev == 1 and data['moonrise_next'] is None:
+                data['moonrise_next'] = dt
+            elif ev == 0 and data['moonset_next'] is None:
+                data['moonset_next'] = dt    
     f_mc = almanac.meridian_transits(eph, moon, wgs84.latlon(LAT, LON))
     times_mc, events_mc = almanac.find_discrete(t0_moon, t1_moon, f_mc)
     data['moon_culm_sup'] = None
