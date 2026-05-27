@@ -2002,7 +2002,7 @@ with tab3:
         dign = get_dignity(name, pdata['lon'])
         retro_str = " R" if pdata['retro'] else ""
         dign_str = f" [{dign}]" if dign else ""
-        st.caption(f"{name}: {format_zodiac(pdata['lon'])}{retro_str}{dign_str} | V: {pdata['speed']:.4f}°/zi")
+        st.caption(f"{name}: {format_zodiac(pdata['lon'])}{retro_str}{dign_str} ")
     
     with st.expander("Date orbitale și coordonate"):
         for name in all_bodies:
